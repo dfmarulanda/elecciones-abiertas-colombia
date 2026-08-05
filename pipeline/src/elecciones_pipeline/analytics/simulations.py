@@ -57,7 +57,7 @@ from .spatial import (
     spatial_residual_signals,
 )
 
-METHODOLOGY_VERSION = "synthetic-validation-v7"
+METHODOLOGY_VERSION = "synthetic-validation-v8"
 _ARTIFACT_SCHEMA_VERSION = "simulation-validation-artifact-v7"
 _TARGET = 0.05
 _POWER_TARGET = 0.80
@@ -239,6 +239,7 @@ class InjectionEvidence:
     signal_key: str
     metric: str
     direction: Literal["positive", "negative"]
+    shape: Literal["scattered", "clustered"]
     denominator_band: str
     effect_boundary: str
     realized_effect_band: str
@@ -357,7 +358,12 @@ class SimulationSummary:
         "Power is conditional on the declared injected alternatives and is not a claim "
         "about unidentified real-world discrepancies.",
         "Pooled power is descriptive only; gates are evaluated separately by metric, direction, "
-        "denominator band, requested boundary, and realized-effect band.",
+        "injection shape, denominator band, requested boundary, and realized-effect band.",
+        "Cluster-shaped alternatives are measured as their own stratum. A leave-one-mesa-out "
+        "peer screen keeps the rest of a contaminated polling place in its own reference pool, "
+        "so a puesto-wide, jurado-wide, or transmission-batch irregularity partly masks itself "
+        "and measured clustered power is far below scattered power. Scattered power alone must "
+        "not be read as the detector's power.",
         "Production remains ineligible until an independently executed full-release artifact "
         "is reviewed and accepted outside this simulator.",
     )
@@ -654,6 +660,7 @@ def _injection_stratum(injection: InjectionEvidence) -> str:
         [
             injection.metric,
             injection.direction,
+            injection.shape,
             injection.denominator_band,
             injection.effect_boundary,
             injection.realized_effect_band,
@@ -910,6 +917,16 @@ def _run_evidence(
             else injection_size
         )
         injection_direction = "positive" if run_index % 2 == 0 else "negative"
+        # Alternatives alternate over direction AND shape.  A scattered arm of
+        # independent single mesas is the easy case for a leave-one-mesa-out
+        # peer screen; the irregularities an audit actually cares about are
+        # cluster-shaped -- one puesto, one jurado team, one transmission
+        # batch -- and those partly mask themselves because the contaminated
+        # peers stay in the reference pool.  Shape is a stratum dimension, so
+        # the per-stratum power gate must clear the clustered arm too.
+        injection_shape: Literal["scattered", "clustered"] = (
+            "scattered" if (run_index // 2) % 2 == 0 else "clustered"
+        )
         injectable_indices = []
         for index, row in enumerate(simulated_peer):
             _numerator, denominator = _simulation_pair(row)
@@ -917,11 +934,36 @@ def _run_evidence(
                 injectable_indices.append(index)
         if len(injectable_indices) < injected_discrepancies:
             raise ValueError("simulated family has too few non-saturated injectable records")
-        selected = np.random.default_rng([run_seed, 1]).choice(
-            injectable_indices,
-            size=injected_discrepancies,
-            replace=False,
-        )
+        selector = np.random.default_rng([run_seed, 1])
+        if injection_shape == "clustered":
+            clusters: dict[str, list[int]] = defaultdict(list)
+            for index in injectable_indices:
+                clusters[simulated_peer[index].place_id].append(index)
+            # A cluster must be a genuine multi-mesa *proper subset*: shifting
+            # every injectable mesa leaves no unshifted reference, which is a
+            # family-wide shift rather than a cluster-shaped irregularity.
+            usable = sorted(
+                place_id
+                for place_id, members in clusters.items()
+                if 2 <= len(members) < len(injectable_indices)
+            )
+            if usable:
+                chosen_place = usable[int(selector.integers(0, len(usable)))]
+                selected = np.array(clusters[chosen_place], dtype=int)
+            else:
+                # No multi-mesa cluster exists in this family.  Fall back rather
+                # than fabricate one: the shape is recorded honestly as
+                # scattered so no stratum claims clustered coverage it lacks.
+                injection_shape = "scattered"
+                selected = selector.choice(
+                    injectable_indices, size=injected_discrepancies, replace=False
+                )
+        else:
+            selected = selector.choice(
+                injectable_indices,
+                size=injected_discrepancies,
+                replace=False,
+            )
         for raw_index in selected:
             index = int(raw_index)
             before = simulated_peer[index]
@@ -942,6 +984,7 @@ def _run_evidence(
                     signal_key=key,
                     metric=after.metric,
                     direction=injection_direction,
+                    shape=injection_shape,
                     denominator_band=_denominator_band(denominator_before),
                     effect_boundary=_effect_boundary(effective_injection_size),
                     realized_effect_band=_realized_effect_band(realized_effect_pp),

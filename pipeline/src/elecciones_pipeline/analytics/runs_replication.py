@@ -136,6 +136,7 @@ class RunsReplicationSignal:
     permutation_p_value: float | None
     permutations: int
     permutation_resolution: float | None
+    randomization_seed: int
     adjustment_method: str
     input_artifact_hash: str
     cohort_hash: str
@@ -213,14 +214,29 @@ def _place_z(
     return (observed_runs - expected) / sqrt(variance) if variance > 0 else None
 
 
+def _family_seed(row: RunsMesa) -> int:
+    """Data-derived permutation seed, so no caller can shop for a draw."""
+    material = (
+        f"{row.election_year}|{row.election_round}|{row.input_artifact_hash}|"
+        f"{row.expected_family_digest}|runs-replication-max-t-v1"
+    ).encode()
+    return int.from_bytes(hashlib.sha256(material).digest()[:8], "big")
+
+
 def runs_replication_signals(
-    records: Iterable[RunsMesa], *, permutations: int = 9_999, seed: int = 0
+    records: Iterable[RunsMesa], *, permutations: int = 9_999
 ) -> tuple[RunsReplicationSignal, ...]:
-    """Run the preregistered within-place, family-synchronized max-T test."""
+    """Run the preregistered within-place, family-synchronized max-T test.
+
+    The permutation seed is derived from the data rather than accepted from the
+    caller, and is recorded on every signal.  A free seed moves every reported
+    p-value while leaving the code, method, input and cohort hashes identical,
+    so a producer could re-run across seeds and publish the most extreme draw
+    with the artifact's own provenance certifying it.  This mirrors
+    ``spatial._family_seed`` for the same synchronized max-T design.
+    """
     if type(permutations) is not int or permutations < _MIN_PERMUTATIONS:
         raise ValueError("runs replication needs at least 999 permutations")
-    if type(seed) is not int or seed < 0:
-        raise ValueError("runs replication seed must be a nonnegative integer")
     rows = tuple(sorted(records, key=lambda item: item.mesa_id))
     if not rows:
         return ()
@@ -271,7 +287,8 @@ def runs_replication_signals(
         if z_values:
             observed[key] = float(sum(z_values) / sqrt(len(z_values)))
     extremes = {key: 0 for key in observed}
-    rng = np.random.default_rng(seed)
+    randomization_seed = _family_seed(first)
+    rng = np.random.default_rng(randomization_seed)
     for _ in range(permutations):
         maximum = 0.0
         for _key, place_values in municipal_blocks.items():
@@ -305,6 +322,7 @@ def runs_replication_signals(
                 else None,
                 permutations=permutations,
                 permutation_resolution=1 / (permutations + 1) if value is not None else None,
+                randomization_seed=randomization_seed,
                 adjustment_method="synchronized-max-t-within-place-permutation",
                 input_artifact_hash=first.input_artifact_hash,
                 cohort_hash=first.cohort_hash,

@@ -41,9 +41,13 @@ def _rows() -> tuple[RunsMesa, ...]:
 
 
 def test_runs_replication_is_deterministic_neutral_and_resolution_bounded() -> None:
-    first = runs_replication_signals(_rows(), permutations=999, seed=7)
-    assert first == runs_replication_signals(_rows(), permutations=999, seed=7)
+    first = runs_replication_signals(_rows(), permutations=999)
+    assert first == runs_replication_signals(_rows(), permutations=999)
     assert len(first) == 2
+    # The permutation draw is data-derived and recorded, so an independent
+    # replicator can regenerate the p-value and no caller can shop for a seed.
+    assert all(item.randomization_seed == first[0].randomization_seed for item in first)
+    assert first[0].randomization_seed > 0
     assert all(item.eligible and not item.public_point_eligible for item in first)
     assert all(item.claim_state == "neutral_research_association" for item in first)
     assert all(

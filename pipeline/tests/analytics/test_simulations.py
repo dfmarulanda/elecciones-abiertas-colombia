@@ -199,7 +199,11 @@ def test_simulation_keys_are_canonical_and_original_cohort_must_authenticate(
 
 
 def test_real_peer_detector_has_deterministic_null_control_and_injection_power() -> None:
-    rows = _peer_family(31, data_version="real-detector-validation-v1")
+    # The strict research endpoint requires a pool large enough for the plug-in
+    # predictive tail to be calibrated, so the calibration family must exceed
+    # that floor: a 31-peer family can no longer produce any detection at all,
+    # which would make this null control vacuous rather than passing.
+    rows = _peer_family(220, data_version="real-detector-validation-v1")
     profile = replace(simulations.CI_PROFILE, name="test-seed-29", seed=29)
     first = simulations.run_end_to_end_validation(
         release_id="real-detector-validation-v1",
@@ -526,3 +530,93 @@ def test_family_without_injected_alternatives_reports_unmeasured_power(
         if item["injected"]:
             assert isinstance(item["power"], float)
             assert item["status"] == "measured"
+
+
+def _multi_place_peer_family(
+    per_place: int = 10, places: int = 4, *, data_version: str = "clustered-v1"
+) -> tuple[MesaMetrics, ...]:
+    """A family spanning several polling places, so a cluster is a proper subset."""
+    identifiers = tuple(
+        f"mesa-{place:02d}-{index:02d}" for place in range(places) for index in range(per_place)
+    )
+    expected_digest = family_digest(identifiers)
+    input_hash = "a" * 64
+    cohort_hash = cohort_digest(
+        election_slug="presidencia-2026-r2",
+        data_version=data_version,
+        source_layer="pre_count",
+        source_type="pre_count",
+        legal_status="preliminary",
+        metric="candidate_share",
+        candidate_id="candidate-a",
+        expected_family_count=len(identifiers),
+        expected_family_digest=expected_digest,
+        input_artifact_hash=input_hash,
+    )
+    return tuple(
+        MesaMetrics(
+            mesa_id=identifier,
+            place_id=f"place-{identifier.split('-')[1]}",
+            municipality_id="municipality-1",
+            department_id="department-1",
+            metric="candidate_share",
+            registered=1_200,
+            ballots=1_000,
+            candidate_votes=300,
+            valid_votes=950,
+            blank_votes=20,
+            null_unmarked_votes=50,
+            candidate_id="candidate-a",
+            election_slug="presidencia-2026-r2",
+            data_version=data_version,
+            source_layer="pre_count",
+            source_type="pre_count",
+            legal_status="preliminary",
+            expected_family_count=len(identifiers),
+            expected_family_digest=expected_digest,
+            input_artifact_hash=input_hash,
+            cohort_hash=cohort_hash,
+            source_links=("https://official.example/results.json",),
+            candidate_total_votes=930,
+            denominator_provenance="joined_official",
+        )
+        for identifier in identifiers
+    )
+
+
+def test_alternative_arm_measures_clustered_and_scattered_power_separately() -> None:
+    """Cluster-shaped irregularities -- one puesto, one jurado team, one
+    transmission batch -- partly mask themselves against a leave-one-mesa-out
+    peer screen, because the contaminated peers stay in the reference pool.
+    Shape is therefore a stratum dimension, and the per-stratum power gate has
+    to clear the clustered arm as well as the easy scattered one."""
+    summary = simulations.run_end_to_end_validation(
+        release_id="clustered-r1",
+        peer_records=_multi_place_peer_family(),
+        simulations=100,
+        injected_discrepancies=1,
+        injection_size=0.9,
+    )
+
+    shapes = {
+        injection.shape
+        for run in summary.alternative_runs
+        for injection in run.injections
+    }
+    assert shapes == {"scattered", "clustered"}, shapes
+
+    # Every clustered injection must name a whole polling place, and must leave
+    # unshifted peers behind: a family-wide shift is not a cluster.
+    for run in summary.alternative_runs:
+        clustered = [i for i in run.injections if i.shape == "clustered"]
+        if clustered:
+            assert len(clustered) >= 2
+            assert len(clustered) < len(_multi_place_peer_family())
+
+    by_shape: dict[str, list[str]] = {"scattered": [], "clustered": []}
+    for stratum in summary.power_by_stratum:
+        for shape in by_shape:
+            if f'"{shape}"' in stratum:
+                by_shape[shape].append(stratum)
+    assert by_shape["scattered"], summary.power_by_stratum
+    assert by_shape["clustered"], summary.power_by_stratum

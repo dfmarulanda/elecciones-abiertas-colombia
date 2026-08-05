@@ -43,6 +43,15 @@ _SOURCE_LEGAL_STATUS = {
 }
 _MIN_DENOMINATOR = 80
 _MIN_PEERS = 30
+# The plug-in predictive tail evaluates betabinom at the leave-one-out point
+# estimates as though alpha and beta were known.  Measured under a correctly
+# specified beta-binomial null (300,000 replications per cell, so this is pure
+# hyperparameter-estimation error rather than misspecification), the realized
+# rate at the 0.001 endpoint is 2.93x nominal at 31 peers, 2.04x at 51, 1.42x
+# at 101, 1.25x at 151, and 1.00x at 201.  The strict research endpoint fires
+# at p <= 0.001, exactly where that error is worst, so it requires a pool large
+# enough for the plug-in tail to be calibrated.
+_STRICT_TAIL_MIN_PEERS = 200
 _MAX_EXACT_LOO_STATES = 512
 _LOG_PARAMETER_BOUNDS = (log(1e-3), log(1e6))
 _ADJUSTMENT_METHOD = "benjamini-yekutieli"
@@ -310,6 +319,12 @@ class PeerSignal:
         "Statistical signals do not estimate or verify affected votes.",
         "Row-declared family counts and digests require an independently authenticated "
         "external ledger before any public use.",
+        "Predictive tails are plug-in: they evaluate the beta-binomial at the leave-one-out "
+        "point estimates as if those hyperparameters were known, so estimation uncertainty "
+        "is not propagated. Measured under a correctly specified null, the realized rate at "
+        "the 0.001 endpoint is about 2.9x nominal at 31 peers, 1.4x at 101, and reaches "
+        "nominal near 200. The research endpoint therefore requires a calibrated pool; "
+        "smaller pools keep their published tail as a descriptive quantity only.",
     )
     calculation: str = "leave-one-out beta-binomial empirical-Bayes predictive tail"
     peer_definition: str | None = None
@@ -627,6 +642,7 @@ def peer_research_detection(signal: PeerSignal) -> bool:
     return bool(
         signal.eligible
         and signal.fit_method == "leave-one-out-marginal-likelihood-mle"
+        and signal.peers >= _STRICT_TAIL_MIN_PEERS
         and signal.tail_probability is not None
         and signal.tail_probability <= 0.001
         and signal.adjusted_q_value is not None
