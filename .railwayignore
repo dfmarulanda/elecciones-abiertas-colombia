@@ -1,0 +1,16 @@
+.git/
+.venv/
+node_modules/
+.next/
+.turbo/
+.pipeline/
+.state/
+data/raw/
+output/
+apps/web/output/
+.playwright-cli/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+.design-lagann/
