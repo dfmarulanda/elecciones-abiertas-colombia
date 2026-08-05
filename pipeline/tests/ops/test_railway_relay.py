@@ -271,3 +271,24 @@ def test_client_disconnect_is_silent_and_not_a_successful_write(error: OSError) 
             raise error
 
     assert _write_client_body(DroppedClient(), b"official bytes") is False
+
+
+def test_divipole_is_one_reviewed_path_on_the_reviewed_observatory_host() -> None:
+    """The Registraduria Divipole is the only source that can supply 2018
+    municipality labels against Registraduria codes; DANE DIVIPOLA is a
+    different code system and joins 0/308. It is allowlisted as exactly one
+    literal path, with no wildcard that could widen into the rest of the site."""
+    target = resolve_target("/v1/geography/divipole")
+    assert target.host == "observatorio.registraduria.gov.co"
+    assert target.path == "/views/electoral/divipole.php"
+    assert target.target_id == "geography-divipole"
+    assert target.allowed_content_types == frozenset({"text/html"})
+
+    for rejected in (
+        "/v1/geography/divipole/",
+        "/v1/geography/divipole/extra",
+        "/v1/geography",
+        "/views/electoral/divipole.php",
+    ):
+        with pytest.raises(RelayError):
+            resolve_target(rejected)

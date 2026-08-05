@@ -46,9 +46,17 @@ _HISTORICAL_PATHS = {
     (2022, 2): "/anexos/MMV_NACIONAL_PRESIDENTE_2022_2v.zip",
 }
 _HISTORICAL_HOST = "observatorio.registraduria.gov.co"
+# The Registraduria publishes its own electoral geography ("Divipole") on the
+# same reviewed Observatory host. It is a distinct code system from DANE
+# DIVIPOLA -- a 0/308 join against the DANE 2018 catalogue confirmed that -- and
+# it is the only source that can supply 2018 municipality labels against the
+# Registraduria codes the election files actually use. One reviewed path, no
+# wildcards, same rate limit and same host cap as every other target.
+_DIVIPOLE_PATH = "/views/electoral/divipole.php"
 _PRECOUNT_ROOT = re.compile(r"^/v1/precount/([12])/(configuration|nomenclator)$")
 _PRECOUNT_ACT = re.compile(r"^/v1/precount/([12])/act/([A-Za-z0-9]{2,32})$")
 _HISTORICAL = re.compile(r"^/v1/history/(2018|2022)/([12])$")
+_DIVIPOLE = re.compile(r"^/v1/geography/divipole$")
 _CONTENT_RANGE = re.compile(r"^bytes 0-0/[1-9][0-9]*$")
 
 
@@ -138,6 +146,16 @@ def resolve_target(path: str) -> RelayTarget:
             accept="application/zip",
             allowed_content_types=frozenset({"application/zip"}),
             max_body_bytes=70 * 1024 * 1024,
+            permits_full_download=True,
+        )
+    if _DIVIPOLE.fullmatch(path):
+        return RelayTarget(
+            target_id="geography-divipole",
+            host=_HISTORICAL_HOST,
+            path=_DIVIPOLE_PATH,
+            accept="text/html",
+            allowed_content_types=frozenset({"text/html"}),
+            max_body_bytes=8 * 1024 * 1024,
             permits_full_download=True,
         )
     raise RelayError("resource identity is not allowlisted")
