@@ -131,5 +131,52 @@
     "body": "The configured API does not currently expose a queryable standard release. Pages that do not depend on an active release remain available.",
     "methodology": "View methodology",
     "sources": "View glossary"
+  },
+  "claims": {
+    "eyebrow": "Claims",
+    "title": "What people are saying",
+    "intro": "These are the claims about the result that circulate most. Each carries the short answer, the method behind it, and — where one exists — the exact figure that confirms or contradicts it. Two of them cannot be answered with what this site holds, and say so.",
+    "methodLabel": "How it is verified",
+    "openVerdict": "Not evaluable with what this site holds",
+    "lead": {
+      "verdict": "Claim · verifiable",
+      "claim": "“The pre-count and the scrutiny did not match.”",
+      "answer": "The pre-count is an informational transmission with no legal effect; the scrutiny is the count with legal value, and it finishes days later. That the two figures differ is not, by itself, a sign of anything: it is the procedure's intended order. Everything this site publishes about 2026 is pre-count.",
+      "method": "The layers are kept separate and every figure carries version, source and legal status. A comparison requires the same field, the same table and the same grain.",
+      "figureAlt": "Six hexagons representing a six-vote difference on a single table",
+      "figureNote": "Illustration over synthetic data. A real release brings its own figures."
+    },
+    "precount": {
+      "verdict": "Claim · internal figure",
+      "claim": "“The tables do not add up to the polling places.”",
+      "answer": "In the data we hold, each polling place is exactly the sum of its tables: they agree on all five ballot quantities and on the per-candidacy votes. That confirms our copy faithfully reproduces what was published; it says nothing about whether those figures are correct against the paper form.",
+      "method": "Polling-place and table records compared by their parent link, in both rounds. Exact agreement is expected when the place is the aggregate the server itself computes over the tables."
+    },
+    "metadata": {
+      "verdict": "Claim · measured in 2026",
+      "claim": "“The E-14 forms come out with no metadata.”",
+      "answer": "The 2026 E-14s we examined carry no document-information dictionary and no cryptographic signature. That is a real traceability gap: the file cannot attest its own origin. It is not proof that anything was altered, and a change of toolchain between elections explains it without supposing anything was removed.",
+      "method": "One hundred documents read with a PDF parser, against a positive control. What we did not measure: the 2022 E-14s, whose portal is no longer reachable, so we cannot date the change."
+    },
+    "coverage": {
+      "verdict": "Claim · corrected",
+      "claim": "“Acta coverage was 100%.”",
+      "answer": "The scrutiny channel declares 118,350 tables scrutinised at 100%. That is the national count minus the 3,670 consular tables, which that channel does not include by design: the scrutiny architecture has no commission for the exterior. A 100% from that channel covers the domestic count only, whoever states it.",
+      "method": "Document index for both rounds: 33 department codes, no code 88 (Consulados). Historical contrast: in 2018 there were published actas from the exterior, so this is a reversible gap, not a constant."
+    },
+    "hash": {
+      "verdict": "Claim · verifiable",
+      "claim": "“The file code does not verify integrity.”",
+      "answer": "In the channel we examined, the code inside the filename is not a fingerprint of its content: it is four characters, it repeats across documents, and the same name appears in both rounds naming two different documents. Such a value cannot verify integrity.",
+      "method": "118,343 first-round references: every code four characters, 2,743 distinct values, one shared by 76 documents. We did not test the citizen-viewer channel, where a different code is generated."
+    },
+    "transcription": {
+      "claim": "“The published numbers match what is written on the actas.”",
+      "answer": "Nothing on this site compares a published figure to the number handwritten on the corresponding E-14. That is the link that would settle the point, and it requires reading the forms: we did not."
+    },
+    "twentytwo": {
+      "claim": "“In 2022 the E-14s kept metadata and in 2026 they do not.”",
+      "answer": "We cannot answer it. The 2022 documents were served behind an anti-automation control with no direct links, so they were never archived and are not reachable by any legitimate route from here."
+    }
   }
 }

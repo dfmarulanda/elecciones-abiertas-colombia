@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { NationalSummary } from "@/components/national-summary";
 import { ReleaseUnavailable } from "@/components/release-unavailable";
+import { ClaimsRegister } from "@/components/claims-register";
 import { SeoStructuredData } from "@/components/seo-structured-data";
 import {
   dataAdapter,
@@ -60,14 +61,19 @@ export default async function LocaleHome({
   try {
     release = await dataAdapter.getRelease({ include: "review" });
   } catch {
+    // The national summary needs a release; the claims register does not.
+    // Keep the static narrative visible even when no release can be read.
     return (
-      <ReleaseUnavailable
-        locale={locale}
-        title={t("releaseUnavailable.title")}
-        body={t("releaseUnavailable.body")}
-        methodology={t("releaseUnavailable.methodology")}
-        sources={t("releaseUnavailable.sources")}
-      />
+      <>
+        <ReleaseUnavailable
+          locale={locale}
+          title={t("releaseUnavailable.title")}
+          body={t("releaseUnavailable.body")}
+          methodology={t("releaseUnavailable.methodology")}
+          sources={t("releaseUnavailable.sources")}
+        />
+        <ClaimsRegister locale={locale} t={t} />
+      </>
     );
   }
   const outcomeSensitivity = await getPublicOutcomeSensitivity({
@@ -89,6 +95,7 @@ export default async function LocaleHome({
         t={t}
         outcomeSensitivity={outcomeSensitivity}
       />
+      <ClaimsRegister locale={locale} t={t} />
     </>
   );
 }

@@ -131,5 +131,52 @@
     "body": "La API configurada no expone un release estándar consultable en este momento. Las páginas que no dependen de un release activo siguen disponibles.",
     "methodology": "Ver metodología",
     "sources": "Ver glosario"
+  },
+  "claims": {
+    "eyebrow": "Reclamos",
+    "title": "Lo que dice la gente",
+    "intro": "Estos son los reclamos que más circulan sobre el resultado. Cada uno lleva la respuesta corta, el método que la sostiene y, cuando existe, el dato exacto que la confirma o la contradice. Dos de ellos no se pueden responder con lo que este sitio tiene, y así se dice.",
+    "methodLabel": "Cómo se verifica",
+    "openVerdict": "No evaluable con lo que este sitio tiene",
+    "lead": {
+      "verdict": "Reclamo · verificable",
+      "claim": "«El preconteo y el escrutinio no dieron lo mismo.»",
+      "answer": "El preconteo es una transmisión informativa sin efectos jurídicos; el escrutinio es el conteo con valor legal, y termina días después. Que las dos cifras difieran no es, por sí solo, señal de nada: es el orden previsto del procedimiento. Todo lo que este sitio publica sobre 2026 es preconteo.",
+      "method": "Las capas se guardan separadas y cada cifra conserva versión, fuente y condición jurídica. Una comparación exige el mismo campo, la misma mesa y la misma granularidad.",
+      "figureAlt": "Seis hexágonos que representan una diferencia de seis votos en una sola mesa",
+      "figureNote": "Ilustración sobre datos sintéticos. Un release real trae sus propias cifras."
+    },
+    "precount": {
+      "verdict": "Reclamo · dato interno",
+      "claim": "«Las mesas no cuadran con los puestos.»",
+      "answer": "En los datos que guardamos, cada puesto es exactamente la suma de sus mesas: coinciden en las cinco cantidades de votación y en los votos por candidatura. Eso confirma que nuestra copia reproduce fielmente lo publicado; no dice nada sobre si esas cifras son correctas frente al acta.",
+      "method": "Registros de puesto y de mesa comparados por su vínculo de parentesco, en las dos vueltas. La coincidencia exacta es lo esperado cuando el puesto es el agregado que el propio servidor calcula sobre las mesas."
+    },
+    "metadata": {
+      "verdict": "Reclamo · medido en 2026",
+      "claim": "«Los formularios E-14 salen sin metadatos.»",
+      "answer": "En los E-14 de 2026 que revisamos no hay diccionario de información del documento ni firma criptográfica. Eso es una carencia real de trazabilidad: el archivo no permite comprobar por sí mismo su origen. No es prueba de que se haya alterado nada, y una diferencia de herramienta entre elecciones la explica sin necesidad de suponer que algo se borró.",
+      "method": "Cien documentos leídos con un lector de PDF, contra un control positivo. Lo que no medimos: los E-14 de 2022, cuyo portal ya no es alcanzable, así que no podemos fechar el cambio."
+    },
+    "coverage": {
+      "verdict": "Reclamo · corregido",
+      "claim": "«La cobertura de actas fue del 100 %.»",
+      "answer": "El canal de escrutinio declara 118.350 mesas escrutadas al 100 %. Esa es la cuenta nacional menos las 3.670 mesas del exterior, que ese canal no incluye por diseño: la arquitectura de escrutinio no contempla comisión para el exterior. Un 100 % de ese canal cubre solo la cuenta interna, lo diga quien lo diga.",
+      "method": "Índice de documentos de las dos vueltas: 33 códigos de departamento, sin el código 88 (Consulados). Contraste histórico: en 2018 sí hubo actas publicadas del exterior, así que es una brecha reversible, no una constante."
+    },
+    "hash": {
+      "verdict": "Reclamo · verificable",
+      "claim": "«El código del archivo no comprueba integridad.»",
+      "answer": "En el canal que revisamos, el código dentro del nombre del archivo no es una huella de su contenido: tiene cuatro caracteres, se repite entre documentos, y el mismo nombre aparece en las dos vueltas nombrando dos documentos distintos. Un valor así no puede comprobar integridad.",
+      "method": "118.343 referencias de primera vuelta: todos los códigos de cuatro caracteres, 2.743 valores distintos, uno compartido por 76 documentos. No probamos el canal del visor ciudadano, donde se genera otro código."
+    },
+    "transcription": {
+      "claim": "«Los números publicados coinciden con lo escrito en las actas.»",
+      "answer": "Nada en este sitio compara una cifra publicada con el número escrito a mano en el E-14 correspondiente. Ese es el eslabón que decidiría el punto, y exige leer las actas: no lo hicimos."
+    },
+    "twentytwo": {
+      "claim": "«En 2022 los E-14 conservaban metadatos y en 2026 no.»",
+      "answer": "No podemos responderlo. Los documentos de 2022 se servían tras un control anti-automatización sin enlaces directos, así que no quedaron archivados y no son alcanzables por ninguna vía legítima desde aquí."
+    }
   }
 }

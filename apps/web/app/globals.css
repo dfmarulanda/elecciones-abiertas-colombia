@@ -376,6 +376,17 @@ summary::-webkit-details-marker {
   font-variant-numeric: tabular-nums;
   text-transform: none;
 }
+/* Neon underline on a details summary. Colour is never the only signal — the
+   border weight carries it too — so it survives a monochrome or high-contrast
+   rendering. */
+.ec-ul {
+  border-bottom: 2px solid var(--neon);
+  transition: border-color 140ms;
+}
+summary:hover .ec-ul,
+summary:focus-visible .ec-ul {
+  border-color: var(--ink);
+}
 .ec-fig {
   font-family: var(--font-fig);
   font-weight: 700;

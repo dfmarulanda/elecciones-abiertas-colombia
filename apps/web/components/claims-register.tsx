@@ -1,0 +1,169 @@
+import { Gutter, SectionHeader } from "@/components/page-primitives";
+
+type Locale = "es" | "en";
+type Text = (key: string) => string;
+
+/**
+ * #reclamos — the claims register.
+ *
+ * Public claims about the election, recorded by CONTENT and by SOURCE TYPE
+ * ("autoridad electoral", "coalición ciudadana de auditoría", "figura política
+ * nacional") and NEVER by naming a person. Each claim carries its short answer,
+ * the method behind it, and — where one exists — the exact figure that confirms
+ * or contradicts it. Two of them cannot be answered with what this site holds,
+ * and say so.
+ *
+ * Static content: this section reads no release and therefore never degrades.
+ * Every string comes from the message bundle so both legs of the wording gate
+ * (ES and EN) are checked.
+ */
+
+const VERDICT_TONE: Record<string, string> = {
+  verifiable: "text-[color:var(--neon)]",
+  corrected: "text-[color:var(--neon)]",
+  mixed: "text-ink-3",
+  unanswerable: "text-ink-4",
+};
+
+function ClaimVerdict({ tone, children }: { tone: string; children: string }) {
+  return (
+    <p className={`ec-mono m-0 text-[12px] ${VERDICT_TONE[tone] ?? "text-ink-3"}`}>
+      {children}
+    </p>
+  );
+}
+
+/** The lead claim gets a figure panel; the six-vote difference on one mesa. */
+function LeadClaim({ t }: { t: Text }) {
+  return (
+    <article className="mt-11 grid items-center gap-x-16 gap-y-8 border-t border-ink pt-9 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div>
+        <ClaimVerdict tone="verifiable">{t("claims.lead.verdict")}</ClaimVerdict>
+        <h3 className="ec-claim mt-3.5 max-w-[34rem] text-[clamp(1.6rem,3.5vw,2rem)]">
+          {t("claims.lead.claim")}
+        </h3>
+        <p className="mt-5 max-w-[34rem] text-body leading-relaxed text-ink-2">
+          {t("claims.lead.answer")}
+        </p>
+        <details className="mt-4">
+          <summary className="inline-block cursor-pointer text-[13px] font-semibold">
+            <span className="ec-ul">{t("claims.methodLabel")}</span>
+          </summary>
+          <p className="mt-3.5 max-w-[34rem] text-[14px] leading-relaxed text-ink-3">
+            {t("claims.lead.method")}
+          </p>
+        </details>
+      </div>
+      <figure
+        className="ec-field-dark m-0 px-11 py-9"
+        aria-label={t("claims.lead.figureAlt")}
+      >
+        <div
+          className="grid grid-cols-6 gap-2"
+          role="img"
+          aria-label={t("claims.lead.figureAlt")}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 100 115"
+              aria-hidden="true"
+              className="block h-auto w-full"
+            >
+              <path
+                d="M50 2 L94 28 V86 L50 112 L6 86 V28 Z"
+                fill="var(--neon)"
+              />
+            </svg>
+          ))}
+        </div>
+        <p className="mt-7 text-[15px] leading-snug text-[color:var(--on-dark-2)]">
+          {t("claims.lead.figureNote")}
+        </p>
+      </figure>
+    </article>
+  );
+}
+
+const MID_CLAIMS = ["precount", "metadata", "coverage", "hash"] as const;
+const MID_TONE: Record<(typeof MID_CLAIMS)[number], string> = {
+  precount: "mixed",
+  metadata: "verifiable",
+  coverage: "corrected",
+  hash: "verifiable",
+};
+
+/** The unanswerable pair, marked as such rather than forced into a verdict. */
+const OPEN_CLAIMS = ["transcription", "twentytwo"] as const;
+
+export function ClaimsRegister({
+  locale,
+  t,
+}: {
+  locale: Locale;
+  t: Text;
+}) {
+  return (
+    <section
+      id="reclamos"
+      aria-label={t("claims.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+    >
+      <Gutter className="pt-20">
+        <SectionHeader
+          eyebrow={t("claims.eyebrow")}
+          title={t("claims.title")}
+          intro={t("claims.intro")}
+        />
+        <LeadClaim t={t} />
+
+        <div className="mt-2.5 grid gap-x-16 sm:grid-cols-2">
+          {MID_CLAIMS.map((key) => (
+            <article
+              key={key}
+              className="border-t border-rule/60 pb-8 pt-7"
+            >
+              <ClaimVerdict tone={MID_TONE[key]}>
+                {t(`claims.${key}.verdict`)}
+              </ClaimVerdict>
+              <h3 className="ec-claim mt-3.5 text-[clamp(1.25rem,2.5vw,1.5rem)]">
+                {t(`claims.${key}.claim`)}
+              </h3>
+              <p className="mt-4 text-[16px] leading-relaxed text-ink-2">
+                {t(`claims.${key}.answer`)}
+              </p>
+              <details className="mt-3.5">
+                <summary className="inline-block cursor-pointer text-[13px] font-semibold">
+                  <span className="ec-ul">{t("claims.methodLabel")}</span>
+                </summary>
+                <p className="mt-3.5 text-[14px] leading-relaxed text-ink-3">
+                  {t(`claims.${key}.method`)}
+                </p>
+              </details>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-2.5 grid gap-x-16 sm:grid-cols-2">
+          {OPEN_CLAIMS.map((key) => (
+            <article
+              key={key}
+              className="border-t border-dashed border-rule pb-8 pt-7"
+            >
+              <ClaimVerdict tone="unanswerable">
+                {t("claims.openVerdict")}
+              </ClaimVerdict>
+              <h3 className="ec-claim mt-3.5 text-[clamp(1.25rem,2.5vw,1.5rem)] text-ink-2">
+                {t(`claims.${key}.claim`)}
+              </h3>
+              <p className="mt-4 text-[16px] leading-relaxed text-ink-3">
+                {t(`claims.${key}.answer`)}
+              </p>
+            </article>
+          ))}
+        </div>
+      </Gutter>
+    </section>
+  );
+}
