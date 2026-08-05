@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/historical-rollup-row.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "round",
+    "geography_level",
+    "geography_id",
+    "election_slug",
+    "election_date",
+    "category_code",
+    "category_name",
+    "party_code",
+    "party_name",
+    "votes",
+    "source_url",
+    "content_hash",
+    "retrieved_at",
+    "data_version",
+    "source_type",
+    "legal_status",
+    "parser_version",
+    "transform_version"
+  ],
+  "properties": {
+    "round": { "type": "integer", "enum": [1, 2] },
+    "geography_level": {
+      "enum": [
+        "national",
+        "department",
+        "municipality",
+        "zone",
+        "polling_place",
+        "mesa"
+      ]
+    },
+    "geography_id": { "type": "string" },
+    "election_slug": { "type": "string" },
+    "election_date": { "type": "string", "format": "date" },
+    "category_code": { "type": "string" },
+    "category_name": { "type": "string" },
+    "party_code": { "type": "string" },
+    "party_name": { "type": "string" },
+    "votes": { "type": "integer", "minimum": 0 },
+    "source_url": { "type": "string", "format": "uri" },
+    "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "retrieved_at": { "type": "string", "format": "date-time" },
+    "data_version": { "type": "string" },
+    "source_type": { "const": "contextual_baseline" },
+    "legal_status": { "const": "context_only" },
+    "parser_version": { "type": "string" },
+    "transform_version": { "type": "string" }
+  }
+}

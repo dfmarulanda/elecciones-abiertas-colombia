@@ -1,0 +1,109 @@
+{
+  "$schema": "../../packages/contracts/schemas/release-manifest.schema.json",
+  "schema_version": "1.0.0",
+  "release_id": "fixture-2026-round2-v1",
+  "election_slug": "presidencia-2026-segunda-vuelta",
+  "data_version": "fixture-2026-round2-v1",
+  "status": "fixture",
+  "synthetic": true,
+  "created_at": "2026-07-15T12:00:00Z",
+  "methodology_version": "audit-priority-v1.0.0",
+  "parser_versions": {
+    "fixture": "fixture-parser@1.0.0",
+    "normalization": "fixture-normalizer@1.0.0"
+  },
+  "git_commit": "fixture",
+  "sources": [
+    {
+      "id": "fixture-precount",
+      "source_type": "pre_count",
+      "legal_status": "preliminary",
+      "source_url": "https://example.invalid/fixture/2026-round2.json",
+      "retrieved_at": "2026-07-15T11:50:00Z",
+      "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "media_type": "application/json",
+      "byte_size": 16384,
+      "parser_version": "fixture-parser@1.0.0",
+      "transform_version": "fixture-normalizer@1.0.0",
+      "coverage": {
+        "expected": 6,
+        "retrieved": 6,
+        "parsed": 6,
+        "missing": 0,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    },
+    {
+      "id": "fixture-e14-index",
+      "source_type": "e14_delegate",
+      "legal_status": "documentary_evidence",
+      "source_url": "https://example.invalid/fixture/e14/index.json",
+      "retrieved_at": "2026-07-15T11:50:00Z",
+      "content_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "media_type": "application/json",
+      "byte_size": 4096,
+      "parser_version": "fixture-indexer@1.0.0",
+      "transform_version": "fixture-indexer@1.0.0",
+      "coverage": {
+        "expected": 6,
+        "retrieved": 5,
+        "parsed": 5,
+        "missing": 1,
+        "ambiguous": 0,
+        "excluded": 0
+      }
+    }
+  ],
+  "datasets": [
+    {
+      "id": "fixture-results-json",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "json",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.json",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 8192,
+      "content_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "filters": {}
+    },
+    {
+      "id": "fixture-results-csv",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "csv",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.csv",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 2048,
+      "content_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+      "filters": {}
+    },
+    {
+      "id": "fixture-results-parquet",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "parquet",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.parquet",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 4096,
+      "content_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+      "filters": {}
+    }
+  ],
+  "aggregate_reconciled": true,
+  "statistical_validation_passed": false,
+  "wording_validation_passed": true,
+  "notes": {
+    "es": "Release sintético para desarrollo; no es publicable como dato electoral.",
+    "en": "Synthetic development release; it must not be published as election data."
+  }
+}

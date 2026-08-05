@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/dataset.schema.json",
+  "title": "Elecciones Abiertas downloadable dataset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "format",
+    "url",
+    "schema_url",
+    "record_count",
+    "byte_size",
+    "content_hash",
+    "filters"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["es", "en"],
+      "properties": {
+        "es": { "type": "string", "minLength": 1 },
+        "en": { "type": "string", "minLength": 1 }
+      }
+    },
+    "format": { "enum": ["csv", "parquet", "json"] },
+    "url": { "type": "string", "format": "uri" },
+    "schema_url": { "type": "string", "format": "uri" },
+    "record_count": { "type": "integer", "minimum": 0 },
+    "byte_size": { "type": "integer", "minimum": 0 },
+    "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "filters": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

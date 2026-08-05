@@ -1,0 +1,57 @@
+name: Reportar un problema de datos / Report a data issue
+description: Solicite una corrección verificable sin publicar datos personales ni acusaciones.
+title: "[Datos] "
+labels: ["data-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por ayudar a mejorar el conjunto de datos. No publique nombres de jurados, firmas, números de identificación u otros datos personales. Este formulario documenta diferencias verificables; no recibe denuncias públicas ni acusaciones.
+  - type: input
+    id: release
+    attributes:
+      label: Versión de datos / Data version
+      placeholder: fixture-2026-round2-v1
+    validations:
+      required: true
+  - type: input
+    id: mesa
+    attributes:
+      label: Identificador de mesa o ámbito geográfico
+      placeholder: 2026-R2-11-001-001-003
+    validations:
+      required: true
+  - type: dropdown
+    id: source_type
+    attributes:
+      label: Capa de fuente / Source layer
+      options:
+        - Declaración final / Final declaration
+        - Escrutinio / Scrutiny
+        - E-14 delegados / Delegate E-14
+        - E-14 transmisión / Transmission E-14
+        - Preconteo / Pre-count
+        - Contexto histórico / Historical context
+    validations:
+      required: true
+  - type: input
+    id: official_url
+    attributes:
+      label: Enlace oficial / Official link
+      placeholder: https://...
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Diferencia observada / Observed difference
+      description: Incluya el campo, el valor publicado y el valor de la fuente oficial.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacidad y alcance
+      options:
+        - label: Confirmo que no incluí datos personales ni acusaciones.
+          required: true

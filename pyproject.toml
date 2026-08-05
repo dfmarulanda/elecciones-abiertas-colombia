@@ -1,0 +1,40 @@
+[project]
+name = "elecciones-abiertas-colombia"
+version = "0.1.0"
+description = "Reproducible public election data viewer for Colombia"
+requires-python = ">=3.13,<3.14"
+license = "AGPL-3.0-only"
+
+[tool.uv.workspace]
+members = ["apps/api", "pipeline"]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.17.1",
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
+  "pytest-cov>=6.2.1",
+  "respx>=0.22.0",
+  "ruff>=0.12.7",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+testpaths = ["apps/api/tests", "pipeline/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["apps/api", "pipeline"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "S"]
+ignore = ["S101"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
+

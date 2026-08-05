@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "id": "cne-e26-2026-round2-pending-v1",
+  "election_slug": "presidencia-2026-segunda-vuelta",
+  "source_type": "final_declaration",
+  "legal_status": "controlling_final",
+  "published_grain": "national",
+  "source_url": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQC9VnOiSQbJT57LJMtDIPk4AftU2NJMVbqE769py_zgtAU?e=htzDOb",
+  "retrieved_at": "2026-08-03T22:56:31Z",
+  "content_hash": "8310e18658862a597737705ce7aa33a4bd30ee54921bf347a5350812470ba017",
+  "media_type": "application/pdf",
+  "byte_size": 405457,
+  "transcription_method": "machine-assisted visual reading",
+  "transcription_version": "cne-e26-visual-assist@1.0.0",
+  "verification_status": "pending_independent_human_double_entry",
+  "human_entries": [],
+  "usable_for_public_final_totals": false,
+  "values": {
+    "candidate_votes": {
+      "ivan-cepeda-aida-quilcue": 12708312,
+      "abelardo-de-la-espriella-jose-manuel-restrepo": 12960166
+    },
+    "candidate_vote_total": 25668478,
+    "blank_votes": 427026,
+    "valid_votes": 26095504,
+    "null_votes": 220790,
+    "unmarked_votes": 28666,
+    "total_ballots": 26344960
+  },
+  "arithmetic_checks": {
+    "candidate_sum_equals_candidate_vote_total": true,
+    "candidate_vote_total_plus_blank_equals_valid": true,
+    "valid_plus_null_plus_unmarked_equals_total_ballots": true
+  },
+  "declared_elected_ticket": "abelardo-de-la-espriella-jose-manuel-restrepo",
+  "limitations": {
+    "es": "Transcripción auxiliar no autoritativa. No puede controlar cifras públicas hasta que dos personas distintas la digiten de forma independiente, coincidan y se completen las demás puertas del release.",
+    "en": "Non-authoritative assisted transcription. It cannot control public figures until two different people independently enter matching values and the remaining release gates pass."
+  }
+}

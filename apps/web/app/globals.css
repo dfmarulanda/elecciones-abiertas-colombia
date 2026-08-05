@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@font-face {
+  font-family: "Monument Extended";
+  src: url("/fonts/monument-extended-regular.otf") format("opentype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tamil Sangam MN";
+  src:
+    url("/fonts/tamil-sangam-mn.ttc") format("truetype-collection"),
+    local("Tamil Sangam MN");
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  --black: #0a0a0a;
+  --white: #fff;
+  --gray: #9b9b9b;
+  --neon: #c4ff00;
+  --muted-green: #5a8a3a;
+
+  /* Legacy aliases keep un-migrated public surfaces coherent during the waves. */
+  --paper: var(--white);
+  --paper-deep: var(--white);
+  --ink: var(--black);
+  --muted: #6e6e6e;
+  --line: var(--black);
+  --saffron: var(--neon);
+  --civic-blue: var(--black);
+  --civic-red: var(--black);
+  --civic-teal-deep: var(--black);
+}
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-saffron: var(--saffron);
+  --color-civic-blue: var(--civic-blue);
+  --color-civic-red: var(--civic-red);
+  --color-civic-teal-deep: var(--civic-teal-deep);
+  --color-neon: var(--neon);
+  --color-muted-green: var(--muted-green);
+  --font-display: "Monument Extended", Impact, sans-serif;
+  --font-body:
+    "Tamil Sangam MN", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, monospace;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  background: var(--paper);
+  color: var(--ink);
+  scroll-behavior: smooth;
+}
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+::selection {
+  background: var(--neon);
+  color: var(--ink);
+}
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--neon);
+}
+a {
+  text-underline-offset: 0.18em;
+}
+button,
+select,
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
+  border-radius: 0;
+  font: inherit;
+}
+table {
+  border-collapse: collapse;
+}
+th {
+  font-weight: 700;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  a,
+  button,
+  summary,
+  select,
+  input,
+  textarea {
+    transition:
+      color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
+      background-color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
+      border-color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
+      transform 120ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  }
+  button:active,
+  [role="button"]:active {
+    transform: translateY(1px);
+  }
+}
+
+.ec-page-content {
+  counter-reset: editorial-module;
+}
+
+.ec-editorial-section {
+  counter-increment: editorial-module;
+}
+
+.ec-editorial-section > h2::before {
+  content: counter(editorial-module, decimal-leading-zero);
+  display: block;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

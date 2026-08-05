@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/historical-geography.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "round",
+    "election_slug",
+    "election_date",
+    "level",
+    "id",
+    "code",
+    "name",
+    "parent_id",
+    "source_url",
+    "content_hash",
+    "retrieved_at",
+    "data_version",
+    "source_type",
+    "legal_status",
+    "parser_version",
+    "transform_version"
+  ],
+  "properties": {
+    "round": { "type": "integer", "enum": [1, 2] },
+    "election_slug": { "type": "string" },
+    "election_date": { "type": "string", "format": "date" },
+    "level": {
+      "enum": [
+        "national",
+        "department",
+        "municipality",
+        "zone",
+        "polling_place",
+        "mesa"
+      ]
+    },
+    "id": { "type": "string" },
+    "code": { "type": "string" },
+    "name": { "type": "string" },
+    "parent_id": { "type": ["string", "null"] },
+    "source_url": { "type": "string", "format": "uri" },
+    "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "retrieved_at": { "type": "string", "format": "date-time" },
+    "data_version": { "type": "string" },
+    "source_type": { "const": "contextual_baseline" },
+    "legal_status": { "const": "context_only" },
+    "parser_version": { "type": "string" },
+    "transform_version": { "type": "string" }
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "$schema": "https://eleccionesabiertas.co/schemas/release-manifest.schema.json",
+  "aggregate_reconciled": false,
+  "created_at": "2026-08-03T23:29:43.947689Z",
+  "data_version": "candidate-2026-r2-516ac54cfa725ff7",
+  "datasets": [
+    {
+      "byte_size": 1163,
+      "content_hash": "c67c0e8b638dc402631c61cb9f78c2cd582ebbb5de4c4625003e5f179140da18",
+      "filters": {
+        "geography_level": "national",
+        "source_type": "pre_count"
+      },
+      "format": "json",
+      "id": "national-precount-results-json",
+      "record_count": 1,
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "title": {
+        "en": "Preliminary national result · JSON/Parquet",
+        "es": "Resultado nacional preliminar · JSON/Parquet"
+      },
+      "url": "https://eleccionesabiertas.co/releases/candidate-2026-r2-516ac54cfa725ff7/datasets/national-precount-results/c67c0e8b638dc402631c61cb9f78c2cd582ebbb5de4c4625003e5f179140da18.json"
+    },
+    {
+      "byte_size": 11035,
+      "content_hash": "f4ebd32bccf25f2c1e4f6eabf33793510fc9b3024b4a6557ddd5dbb5547e13f1",
+      "filters": {
+        "geography_level": "national",
+        "source_type": "pre_count"
+      },
+      "format": "parquet",
+      "id": "national-precount-results-parquet",
+      "record_count": 1,
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "title": {
+        "en": "Preliminary national result · JSON/Parquet",
+        "es": "Resultado nacional preliminar · JSON/Parquet"
+      },
+      "url": "https://eleccionesabiertas.co/releases/candidate-2026-r2-516ac54cfa725ff7/datasets/national-precount-results/f4ebd32bccf25f2c1e4f6eabf33793510fc9b3024b4a6557ddd5dbb5547e13f1.parquet"
+    },
+    {
+      "byte_size": 837,
+      "content_hash": "a1d90deb58a1be69e532950e1b620b8638392983d3e62a0a8f62d0809092bb48",
+      "filters": {
+        "geography_level": "national",
+        "source_type": "pre_count"
+      },
+      "format": "csv",
+      "id": "national-precount-results-flat-csv",
+      "record_count": 1,
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact-flat.schema.json",
+      "title": {
+        "en": "Preliminary national result · flat CSV",
+        "es": "Resultado nacional preliminar · CSV plano"
+      },
+      "url": "https://eleccionesabiertas.co/releases/candidate-2026-r2-516ac54cfa725ff7/datasets/national-precount-results-flat/a1d90deb58a1be69e532950e1b620b8638392983d3e62a0a8f62d0809092bb48.csv"
+    }
+  ],
+  "election_slug": "presidencia-2026-segunda-vuelta",
+  "git_commit": "uncommitted-worktree",
+  "methodology_version": "audit-priority-v1.0.0",
+  "notes": {
+    "en": "Local candidate: shows the national pre-count ACT. The CNE final declaration remains excluded from totals pending human double entry; the mesa crawl and statistical validation are incomplete.",
+    "es": "Candidato local: muestra el ACT nacional de preconteo. La declaración final CNE permanece excluida de los totales mientras espera doble digitación humana; faltan la recolección por mesa y las validaciones estadísticas."
+  },
+  "parser_versions": {
+    "cne-final-declaration-2026-r2": "cne-document-index@1.0.0",
+    "registraduria-precount-configuration-2026-r2": "registraduria-config@1.0.0",
+    "registraduria-precount-national-2026-r2": "registraduria-precount-act@1.0.0",
+    "registraduria-precount-nomenclator-2026-r2": "registraduria-nomenclator@1.0.0",
+    "registraduria-scrutiny-manifest-2026-r2": "registraduria-scrutiny-index@1.0.0"
+  },
+  "release_id": "candidate-2026-r2-516ac54cfa725ff7",
+  "schema_version": "1.0.0",
+  "sources": [
+    {
+      "byte_size": 931,
+      "content_hash": "6cf56876f26e690bce28ba4d19d190f0fe6f67e5b68c2d2bbf064ac5d3d7ab5f",
+      "coverage": {
+        "ambiguous": 0,
+        "excluded": 0,
+        "expected": 1,
+        "missing": 0,
+        "parsed": 1,
+        "retrieved": 1
+      },
+      "id": "registraduria-precount-configuration-2026-r2",
+      "legal_status": "preliminary",
+      "media_type": "application/json",
+      "parser_version": "registraduria-config@1.0.0",
+      "retrieved_at": "2026-08-03T23:29:39.796509+00:00",
+      "source_type": "pre_count",
+      "source_url": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/web/config.json",
+      "transform_version": "source-root@1.0.0"
+    },
+    {
+      "byte_size": 2561335,
+      "content_hash": "5bcced96b3195d9d4d0740236aa15c5504a951e4c8862d83869c600e13a24f5a",
+      "coverage": {
+        "ambiguous": 0,
+        "excluded": 0,
+        "expected": 1,
+        "missing": 0,
+        "parsed": 1,
+        "retrieved": 1
+      },
+      "id": "registraduria-precount-nomenclator-2026-r2",
+      "legal_status": "preliminary",
+      "media_type": "application/json",
+      "parser_version": "registraduria-nomenclator@1.0.0",
+      "retrieved_at": "2026-08-03T23:29:40.294303+00:00",
+      "source_type": "pre_count",
+      "source_url": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/nomenclator.json",
+      "transform_version": "geography-graph@1.0.0"
+    },
+    {
+      "byte_size": 19020,
+      "content_hash": "50164f6ace74fd1536c465aca9ed8e60cf911733a5c41e8265998c0a044ba166",
+      "coverage": {
+        "ambiguous": 0,
+        "excluded": 0,
+        "expected": 1,
+        "missing": 0,
+        "parsed": 1,
+        "retrieved": 1
+      },
+      "id": "registraduria-precount-national-2026-r2",
+      "legal_status": "preliminary",
+      "media_type": "application/json",
+      "parser_version": "registraduria-precount-act@1.0.0",
+      "retrieved_at": "2026-08-03T23:29:43.947689+00:00",
+      "source_type": "pre_count",
+      "source_url": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/ACT/PR/00.json",
+      "transform_version": "precount-national-candidate@1.0.0"
+    },
+    {
+      "byte_size": 2668746,
+      "content_hash": "051e549d7903ed6cd42e2b87f0c717e0a8a3702ac98ee7312aa2f66d07657b59",
+      "coverage": {
+        "ambiguous": 0,
+        "excluded": 0,
+        "expected": 22876,
+        "missing": 22875,
+        "parsed": 1,
+        "retrieved": 1
+      },
+      "id": "registraduria-scrutiny-manifest-2026-r2",
+      "legal_status": "official_scrutiny",
+      "media_type": "application/json",
+      "parser_version": "registraduria-scrutiny-index@1.0.0",
+      "retrieved_at": "2026-08-03T23:29:43.559338+00:00",
+      "source_type": "scrutiny",
+      "source_url": "https://escrutinios2vueltapresidente2026.registraduria.gov.co/data/index.json",
+      "transform_version": "manifest-plan@1.0.0"
+    },
+    {
+      "byte_size": 405457,
+      "content_hash": "8310e18658862a597737705ce7aa33a4bd30ee54921bf347a5350812470ba017",
+      "coverage": {
+        "ambiguous": 0,
+        "excluded": 1,
+        "expected": 1,
+        "missing": 0,
+        "parsed": 0,
+        "retrieved": 1
+      },
+      "id": "cne-final-declaration-2026-r2",
+      "legal_status": "controlling_final",
+      "media_type": "application/pdf",
+      "parser_version": "cne-document-index@1.0.0",
+      "retrieved_at": "2026-08-03T22:56:31Z",
+      "source_type": "final_declaration",
+      "source_url": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQC9VnOiSQbJT57LJMtDIPk4AftU2NJMVbqE769py_zgtAU?e=htzDOb",
+      "transform_version": "pending-double-entry@1.0.0"
+    }
+  ],
+  "statistical_validation_passed": false,
+  "status": "candidate",
+  "synthetic": false,
+  "wording_validation_passed": false
+}

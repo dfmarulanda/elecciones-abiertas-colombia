@@ -1,0 +1,6 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.collector"
+
+[deploy]
+restartPolicyType = "NEVER"

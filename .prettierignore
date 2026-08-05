@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+packages/contracts/src/generated/api.ts
+.playwright-cli/
+output/playwright/
+apps/web/public/maps/*.geojson
+data/manifests/*.json
+apps/web/.next/
+apps/web/test-results/

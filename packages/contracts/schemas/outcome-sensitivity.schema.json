@@ -1,0 +1,442 @@
+{
+  "$defs": {
+    "OutcomeGeographicScope": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "enum": ["mesa", "place", "municipality", "department", "national"],
+          "title": "Level",
+          "type": "string"
+        },
+        "key": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Key",
+          "type": "array"
+        }
+      },
+      "required": ["level", "key"],
+      "title": "OutcomeGeographicScope",
+      "type": "object"
+    },
+    "OutcomeSensitivityIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "record_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Record Ids",
+          "type": "array"
+        }
+      },
+      "required": ["code", "record_ids"],
+      "title": "OutcomeSensitivityIssue",
+      "type": "object"
+    },
+    "OutcomeSourceScope": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "fact_grain": {
+          "enum": ["mesa", "place", "municipality", "department", "national"],
+          "title": "Fact Grain",
+          "type": "string"
+        },
+        "source_type": {
+          "enum": [
+            "final_declaration",
+            "scrutiny",
+            "e14_delegate",
+            "e14_transmission",
+            "pre_count",
+            "contextual_baseline"
+          ],
+          "title": "Source Type",
+          "type": "string"
+        },
+        "legal_status": {
+          "enum": [
+            "controlling_final",
+            "official_scrutiny",
+            "documentary_evidence",
+            "preliminary",
+            "context_only"
+          ],
+          "title": "Legal Status",
+          "type": "string"
+        }
+      },
+      "required": ["source_id", "fact_grain", "source_type", "legal_status"],
+      "title": "OutcomeSourceScope",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Exact core artifact serialized by the pipeline, before API scoping.",
+  "properties": {
+    "status": {
+      "enum": [
+        "not_evaluable",
+        "robust_within_evaluated_bounds",
+        "tie_within_verified_bound",
+        "lead_change_within_verified_bound",
+        "tie_only_with_unresolved_bound",
+        "lead_change_only_with_unresolved_bound"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "evaluable": {
+      "title": "Evaluable",
+      "type": "boolean"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/OutcomeSensitivityIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "scope": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OutcomeGeographicScope"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "outcome_source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OutcomeSourceScope"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "leader_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Leader Id"
+    },
+    "runner_up_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Runner Up Id"
+    },
+    "leader_votes": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Leader Votes"
+    },
+    "runner_up_votes": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Runner Up Votes"
+    },
+    "observed_margin_votes": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Observed Margin Votes"
+    },
+    "verified_record_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verified Record Ids"
+    },
+    "unresolved_record_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unresolved Record Ids"
+    },
+    "verified_affected_votes": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verified Affected Votes"
+    },
+    "verified_margin_shift_bound": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verified Margin Shift Bound"
+    },
+    "unresolved_affected_vote_upper_bound": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unresolved Affected Vote Upper Bound"
+    },
+    "unresolved_margin_shift_upper_bound": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unresolved Margin Shift Upper Bound"
+    },
+    "combined_affected_vote_upper_bound": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Combined Affected Vote Upper Bound"
+    },
+    "combined_margin_shift_upper_bound": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Combined Margin Shift Upper Bound"
+    },
+    "verified_margin_headroom": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Verified Margin Headroom"
+    },
+    "combined_margin_headroom": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Combined Margin Headroom"
+    },
+    "tie_possible_from_verified": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Tie Possible From Verified"
+    },
+    "lead_change_possible_from_verified": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lead Change Possible From Verified"
+    },
+    "tie_possible_including_unresolved": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Tie Possible Including Unresolved"
+    },
+    "lead_change_possible_including_unresolved": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lead Change Possible Including Unresolved"
+    },
+    "source_links": {
+      "items": {
+        "format": "uri",
+        "maxLength": 2083,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Source Links",
+      "type": "array"
+    },
+    "evidence_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Evidence Hash"
+    },
+    "output_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Output Hash",
+      "type": "string"
+    },
+    "methodology_version": {
+      "const": "outcome-sensitivity-v3.0.0",
+      "title": "Methodology Version",
+      "type": "string"
+    },
+    "calculation": {
+      "minLength": 1,
+      "title": "Calculation",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "status",
+    "evaluable",
+    "issues",
+    "scope",
+    "outcome_source",
+    "leader_id",
+    "runner_up_id",
+    "leader_votes",
+    "runner_up_votes",
+    "observed_margin_votes",
+    "verified_record_ids",
+    "unresolved_record_ids",
+    "verified_affected_votes",
+    "verified_margin_shift_bound",
+    "unresolved_affected_vote_upper_bound",
+    "unresolved_margin_shift_upper_bound",
+    "combined_affected_vote_upper_bound",
+    "combined_margin_shift_upper_bound",
+    "verified_margin_headroom",
+    "combined_margin_headroom",
+    "tie_possible_from_verified",
+    "lead_change_possible_from_verified",
+    "tie_possible_including_unresolved",
+    "lead_change_possible_including_unresolved",
+    "source_links",
+    "evidence_hash",
+    "output_hash",
+    "methodology_version",
+    "calculation",
+    "limitations"
+  ],
+  "title": "OutcomeSensitivityArtifact",
+  "type": "object"
+}

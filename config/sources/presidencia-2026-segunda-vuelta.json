@@ -1,0 +1,101 @@
+{
+  "$schema": "../../packages/contracts/schemas/source-catalog.schema.json",
+  "catalog_version": "2026-08-03.3",
+  "election_slug": "presidencia-2026-segunda-vuelta",
+  "verified_at": "2026-08-03T17:56:31-05:00",
+  "publication_state": "ready_for_candidate_release",
+  "official_hub": "https://wapp.registraduria.gov.co/electoral/2026/presidente-de-la-republica-segunda-vuelta/",
+  "collection_policy": {
+    "maximum_concurrency_per_host": 2,
+    "requests_per_second_minimum": 2,
+    "requests_per_second_maximum": 5,
+    "require_https": true,
+    "follow_retry_after": true,
+    "conditional_requests": true,
+    "raw_bytes_before_parse": true
+  },
+  "allowed_hosts": [
+    "wapp.registraduria.gov.co",
+    "resultadosprecpresidente2026-2v.registraduria.gov.co",
+    "escrutinios2vueltapresidente2026.registraduria.gov.co",
+    "e14segundavueltapresidente.registraduria.gov.co",
+    "e14segundavueltapresidentet.registraduria.gov.co",
+    "www.cne.gov.co",
+    "cnegovco-my.sharepoint.com",
+    "observatorio.registraduria.gov.co"
+  ],
+  "sources": [
+    {
+      "id": "registraduria-precount-2026-round2",
+      "role": "preliminary_precount",
+      "legal_status": "informational_not_legally_binding",
+      "entrypoints": {
+        "configuration": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/web/config.json",
+        "nomenclator": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/nomenclator.json",
+        "national_results": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/ACT/PR/00.json",
+        "mesa_results_template": "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/ACT/PR/{mesa-id}.json"
+      },
+      "discovery": "configuration_then_nomenclator_then_verified_polling_place_manifests",
+      "notes": "Mesa identifiers must be discovered from official polling-place results or a verified manifest; the URL template is never used to invent identifiers."
+    },
+    {
+      "id": "registraduria-scrutiny-2026-round2",
+      "role": "legally_valid_scrutiny_by_published_grain",
+      "legal_status": "legally_binding_within_explicitly_published_scope",
+      "entrypoints": {
+        "manifest": "https://escrutinios2vueltapresidente2026.registraduria.gov.co/data/index.json"
+      },
+      "discovery": "manifest_only",
+      "notes": "Only paths explicitly listed by the official manifest may be collected. Aggregate scrutiny is never coerced into final mesa facts."
+    },
+    {
+      "id": "registraduria-e14-delegates-2026-round2",
+      "role": "documentary_evidence_delegate_copy",
+      "legal_status": "documentary_evidence_non_authoritative_extraction",
+      "entrypoints": {
+        "index": "https://e14segundavueltapresidente.registraduria.gov.co/"
+      },
+      "collection": "index_metadata_only_no_document_fetch"
+    },
+    {
+      "id": "registraduria-e14-transmission-2026-round2",
+      "role": "documentary_evidence_transmission_copy",
+      "legal_status": "documentary_evidence_non_authoritative_extraction",
+      "entrypoints": {
+        "index": "https://e14segundavueltapresidentet.registraduria.gov.co/"
+      },
+      "collection": "index_metadata_only_no_document_fetch"
+    },
+    {
+      "id": "cne-final-declaration-2026-round2",
+      "role": "controlling_final_declaration",
+      "legal_status": "controlling_final_national_declaration",
+      "entrypoints": {
+        "resolution_catalog": "https://www.cne.gov.co/resoluciones-cne-2026",
+        "presidential_results_page": "https://www.cne.gov.co/elecciones/elecciones-2026/resultados-elecciones-presidenciales-2026",
+        "e24_second_round": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQBTRtGaE_kWTZi8hHaBBWuPAflLdX_go8nDaX3r89M8Kq0?e=rgibDT",
+        "declaration": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQC9VnOiSQbJT57LJMtDIPk4AftU2NJMVbqE769py_zgtAU?e=htzDOb"
+      },
+      "collection": "catalog_metadata_only_no_document_fetch",
+      "status": "verified",
+      "notes": "Historical access observations and hashes are retained for provenance: E-24 SHA-256 acfc1ff49111ca1d7fdc724f30bde741891378a01d308df72812438f54d27965 and E-26 SHA-256 8310e18658862a597737705ce7aa33a4bd30ee54921bf347a5350812470ba017. Going forward these remain external official references only: no PDF is fetched, cached, proxied, OCRed, redacted, extracted, or transcribed."
+    }
+  ],
+  "contextual_sources": [
+    {
+      "id": "registraduria-2026-round1",
+      "role": "context_only",
+      "url": "https://wapp.registraduria.gov.co/electoral/2026/presidente-de-la-republica/"
+    },
+    {
+      "id": "registraduria-2022-presidential-results",
+      "role": "context_only",
+      "url": "https://wapp.registraduria.gov.co/electoral/Elecciones-presidente-2022/resultados/"
+    },
+    {
+      "id": "registraduria-historical-results-observatory",
+      "role": "context_only",
+      "url": "https://observatorio.registraduria.gov.co/views/electoral/historicos-resultados.php"
+    }
+  ]
+}

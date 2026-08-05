@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/source-catalog.schema.json",
+  "title": "Official source catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "catalog_version",
+    "election_slug",
+    "verified_at",
+    "publication_state",
+    "official_hub",
+    "collection_policy",
+    "allowed_hosts",
+    "sources",
+    "contextual_sources"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "catalog_version": { "type": "string", "minLength": 1 },
+    "election_slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "verified_at": { "type": "string", "format": "date-time" },
+    "publication_state": {
+      "enum": [
+        "awaiting_verified_final_declaration",
+        "ready_for_candidate_release"
+      ]
+    },
+    "official_hub": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "collection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_concurrency_per_host",
+        "requests_per_second_minimum",
+        "requests_per_second_maximum",
+        "require_https",
+        "follow_retry_after",
+        "conditional_requests",
+        "raw_bytes_before_parse"
+      ],
+      "properties": {
+        "maximum_concurrency_per_host": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "requests_per_second_minimum": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 5
+        },
+        "requests_per_second_maximum": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 5
+        },
+        "require_https": { "const": true },
+        "follow_retry_after": { "const": true },
+        "conditional_requests": { "const": true },
+        "raw_bytes_before_parse": { "const": true }
+      }
+    },
+    "allowed_hosts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9.-]+$" }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "contextual_sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contextualSource" }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "legal_status", "entrypoints"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "role": { "type": "string", "minLength": 1 },
+        "legal_status": { "type": "string", "minLength": 1 },
+        "entrypoints": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "string", "pattern": "^https://" }
+        },
+        "discovery": { "type": "string" },
+        "collection": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "contextualSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "url"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "role": { "const": "context_only" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    }
+  }
+}

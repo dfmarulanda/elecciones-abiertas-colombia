@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/result-fact-flat.schema.json",
+  "title": "Elecciones Abiertas flat result download row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "election_slug",
+    "geography_id",
+    "geography_level",
+    "mesa_id",
+    "source_type",
+    "legal_status",
+    "source_url",
+    "retrieved_at",
+    "content_hash",
+    "registered_electors_value",
+    "registered_electors_status",
+    "voters_value",
+    "voters_status",
+    "valid_votes_value",
+    "valid_votes_status",
+    "blank_votes_value",
+    "blank_votes_status",
+    "null_votes_value",
+    "null_votes_status",
+    "unmarked_votes_value",
+    "unmarked_votes_status"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "election_slug": { "type": "string", "minLength": 1 },
+    "geography_id": { "type": "string", "minLength": 1 },
+    "geography_level": {
+      "enum": [
+        "national",
+        "department",
+        "municipality",
+        "zone",
+        "polling_place",
+        "mesa"
+      ]
+    },
+    "mesa_id": { "type": ["string", "null"] },
+    "source_type": {
+      "enum": [
+        "final_declaration",
+        "scrutiny",
+        "e14_delegate",
+        "e14_transmission",
+        "pre_count",
+        "contextual_baseline"
+      ]
+    },
+    "legal_status": {
+      "enum": [
+        "controlling_final",
+        "official_scrutiny",
+        "documentary_evidence",
+        "preliminary",
+        "context_only"
+      ]
+    },
+    "source_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "retrieved_at": { "type": "string", "format": "date-time" },
+    "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "registered_electors_value": { "type": ["integer", "null"], "minimum": 0 },
+    "registered_electors_status": { "$ref": "#/$defs/status" },
+    "voters_value": { "type": ["integer", "null"], "minimum": 0 },
+    "voters_status": { "$ref": "#/$defs/status" },
+    "valid_votes_value": { "type": ["integer", "null"], "minimum": 0 },
+    "valid_votes_status": { "$ref": "#/$defs/status" },
+    "blank_votes_value": { "type": ["integer", "null"], "minimum": 0 },
+    "blank_votes_status": { "$ref": "#/$defs/status" },
+    "null_votes_value": { "type": ["integer", "null"], "minimum": 0 },
+    "null_votes_status": { "$ref": "#/$defs/status" },
+    "unmarked_votes_value": { "type": ["integer", "null"], "minimum": 0 },
+    "unmarked_votes_status": { "$ref": "#/$defs/status" }
+  },
+  "patternProperties": {
+    "^candidate_[a-z0-9-]+_votes$": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "status": {
+      "enum": ["observed", "unknown", "unavailable", "not_applicable"]
+    }
+  }
+}

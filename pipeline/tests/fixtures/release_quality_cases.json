@@ -1,0 +1,10 @@
+{
+  "fixture_notice": "Synthetic fixture only; never publish as election data.",
+  "arithmetic_failure": { "candidate": 3, "blank": 1, "total": 3 },
+  "duplicate_identity": "D/M/P/1",
+  "missing_source": "unknown-source",
+  "official_correction": { "previous": 4, "current": 5, "marker": true },
+  "ambiguous_join": { "department": "D", "municipality": "M", "place": "P" },
+  "transcription_mismatch": { "document": 10, "transcription": 9 },
+  "one_vote_documentary_difference": { "precount": 10, "document": 11 }
+}

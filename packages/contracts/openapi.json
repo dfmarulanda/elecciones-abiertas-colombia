@@ -1,0 +1,6269 @@
+{
+  "components": {
+    "schemas": {
+      "AnalysisAnomaly": {
+        "additionalProperties": false,
+        "properties": {
+          "anomaly_types": {
+            "items": {
+              "enum": [
+                "structural_arithmetic",
+                "identity_coverage",
+                "cross_source_documentary",
+                "peer_distribution",
+                "spatial"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Anomaly Types",
+            "type": "array"
+          },
+          "audit_priority_score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Audit Priority Score",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/SignalComponent"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/ExplanationMetadata"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "ineligible_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ineligible Reasons",
+            "type": "array"
+          },
+          "is_anomaly": {
+            "title": "Is Anomaly",
+            "type": "boolean"
+          },
+          "mesa_id": {
+            "minLength": 1,
+            "title": "Mesa Id",
+            "type": "string"
+          },
+          "methodology_version": {
+            "minLength": 1,
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "minimum_ballot_edits": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "minimum_ballot_edits_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Ballot Edits Reason"
+          },
+          "minimum_ballot_edits_status": {
+            "enum": [
+              "evaluable",
+              "not_evaluable"
+            ],
+            "title": "Minimum Ballot Edits Status",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "research_preview": {
+            "title": "Research Preview",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "mesa_id",
+          "anomaly_types",
+          "is_anomaly",
+          "audit_priority_score",
+          "explanation",
+          "minimum_ballot_edits",
+          "minimum_ballot_edits_status",
+          "components",
+          "research_preview",
+          "ineligible_reasons",
+          "methodology_version",
+          "disclosure",
+          "provenance"
+        ],
+        "title": "AnalysisAnomaly",
+        "type": "object"
+      },
+      "AnalysisAnomalyPage": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisAnomaly"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "methodology_version": {
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/components/schemas/CursorMeta"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "data_version",
+          "methodology_version",
+          "disclosure"
+        ],
+        "title": "AnalysisAnomalyPage",
+        "type": "object"
+      },
+      "AnalysisReport": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Hash"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "ineligible_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ineligible Reasons",
+            "type": "array"
+          },
+          "methodology_version": {
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SignalNumber"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "missingness": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "report_kind": {
+            "enum": [
+              "model_diagnostics",
+              "validation",
+              "local_sensitivity"
+            ],
+            "title": "Report Kind",
+            "type": "string"
+          },
+          "research_preview": {
+            "title": "Research Preview",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "research_preview",
+              "ineligible",
+              "not_evaluable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_kind",
+          "status",
+          "research_preview",
+          "ineligible_reasons",
+          "methodology_version",
+          "missingness",
+          "provenance",
+          "disclosure",
+          "metrics"
+        ],
+        "title": "AnalysisReport",
+        "type": "object"
+      },
+      "AnalysisSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "anomaly_count": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "anomaly_counts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SignalCount"
+            },
+            "propertyNames": {
+              "enum": [
+                "structural_arithmetic",
+                "identity_coverage",
+                "cross_source_documentary",
+                "peer_distribution",
+                "spatial"
+              ]
+            },
+            "title": "Anomaly Counts",
+            "type": "object"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "ineligible_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ineligible Reasons",
+            "type": "array"
+          },
+          "methodology_version": {
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "missingness": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "research_preview": {
+            "title": "Research Preview",
+            "type": "boolean"
+          },
+          "total_records_evaluated": {
+            "$ref": "#/components/schemas/SignalCount"
+          }
+        },
+        "required": [
+          "election_slug",
+          "data_version",
+          "methodology_version",
+          "total_records_evaluated",
+          "anomaly_count",
+          "anomaly_counts",
+          "missingness",
+          "research_preview",
+          "ineligible_reasons",
+          "disclosure",
+          "provenance"
+        ],
+        "title": "AnalysisSummary",
+        "type": "object"
+      },
+      "Bulletin": {
+        "additionalProperties": false,
+        "properties": {
+          "completion_percent": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Completion Percent",
+            "type": "number"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "expected_mesas": {
+            "title": "Expected Mesas",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "reported_mesas": {
+            "title": "Reported Mesas",
+            "type": "integer"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sequence",
+          "published_at",
+          "completion_percent",
+          "reported_mesas",
+          "expected_mesas",
+          "source_url",
+          "content_hash",
+          "data_version"
+        ],
+        "title": "Bulletin",
+        "type": "object"
+      },
+      "BulletinResult": {
+        "additionalProperties": false,
+        "properties": {
+          "bulletin": {
+            "$ref": "#/components/schemas/Bulletin"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ResultFact"
+          }
+        },
+        "required": [
+          "bulletin",
+          "result",
+          "provenance"
+        ],
+        "title": "BulletinResult",
+        "type": "object"
+      },
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "ballot_number": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ballot Number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "short_name": {
+            "$ref": "#/components/schemas/LocalizedText"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "short_name"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "CandidateResult": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "votes"
+        ],
+        "title": "CandidateResult",
+        "type": "object"
+      },
+      "CandidateSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/Candidate"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share"
+          },
+          "votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "candidate",
+          "votes",
+          "share"
+        ],
+        "title": "CandidateSummary",
+        "type": "object"
+      },
+      "ComparisonItem": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_vote_estimate": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Vote Estimate"
+          },
+          "compatible_grain": {
+            "title": "Compatible Grain",
+            "type": "boolean"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "left_source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Left Source Type",
+            "type": "string"
+          },
+          "left_value": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "notes": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "right_source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Right Source Type",
+            "type": "string"
+          },
+          "right_value": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "signed_difference": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Difference"
+          }
+        },
+        "required": [
+          "field",
+          "left_source_type",
+          "right_source_type",
+          "left_value",
+          "right_value",
+          "signed_difference",
+          "compatible_grain",
+          "notes"
+        ],
+        "title": "ComparisonItem",
+        "type": "object"
+      },
+      "ComparisonResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "mesa_id": {
+            "title": "Mesa Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mesa_id",
+          "items",
+          "data_version"
+        ],
+        "title": "ComparisonResponse",
+        "type": "object"
+      },
+      "Completion": {
+        "additionalProperties": false,
+        "properties": {
+          "expected": {
+            "title": "Expected",
+            "type": "integer"
+          },
+          "percent": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Percent",
+            "type": "number"
+          },
+          "reported": {
+            "title": "Reported",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected",
+          "reported",
+          "percent"
+        ],
+        "title": "Completion",
+        "type": "object"
+      },
+      "ContextElectionSummary": {
+        "additionalProperties": false,
+        "description": "Truthful historical summary with no invented completion denominator.",
+        "properties": {
+          "blank_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/UnknownCompletion"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/UnknownContextCoverage"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "election_date": {
+            "format": "date",
+            "title": "Election Date",
+            "type": "string"
+          },
+          "election_name": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "national_categories": {
+            "items": {
+              "$ref": "#/components/schemas/NormalizedCategoryResult"
+            },
+            "title": "National Categories",
+            "type": "array"
+          },
+          "null_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/PreviewProvenance"
+          },
+          "reconciliation": {
+            "$ref": "#/components/schemas/Reconciliation"
+          },
+          "registered_electors": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "release_class": {
+            "const": "context_only",
+            "title": "Release Class",
+            "type": "string"
+          },
+          "release_status": {
+            "enum": [
+              "candidate",
+              "published",
+              "withdrawn"
+            ],
+            "title": "Release Status",
+            "type": "string"
+          },
+          "round": {
+            "exclusiveMinimum": 0.0,
+            "title": "Round",
+            "type": "integer"
+          },
+          "synthetic": {
+            "const": false,
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "unmarked_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "valid_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "voters": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "election_slug",
+          "election_name",
+          "round",
+          "election_date",
+          "data_version",
+          "release_status",
+          "release_class",
+          "synthetic",
+          "completion",
+          "registered_electors",
+          "voters",
+          "valid_votes",
+          "blank_votes",
+          "null_votes",
+          "unmarked_votes",
+          "national_categories",
+          "coverage",
+          "reconciliation",
+          "provenance"
+        ],
+        "title": "ContextElectionSummary",
+        "type": "object"
+      },
+      "Coordinates": {
+        "additionalProperties": false,
+        "properties": {
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          },
+          "quality": {
+            "enum": [
+              "authoritative",
+              "approximate"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude",
+          "quality",
+          "source_url"
+        ],
+        "title": "Coordinates",
+        "type": "object"
+      },
+      "Coverage": {
+        "additionalProperties": false,
+        "properties": {
+          "ambiguous": {
+            "minimum": 0.0,
+            "title": "Ambiguous",
+            "type": "integer"
+          },
+          "excluded": {
+            "minimum": 0.0,
+            "title": "Excluded",
+            "type": "integer"
+          },
+          "expected": {
+            "minimum": 0.0,
+            "title": "Expected",
+            "type": "integer"
+          },
+          "missing": {
+            "minimum": 0.0,
+            "title": "Missing",
+            "type": "integer"
+          },
+          "parsed": {
+            "minimum": 0.0,
+            "title": "Parsed",
+            "type": "integer"
+          },
+          "retrieved": {
+            "minimum": 0.0,
+            "title": "Retrieved",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected",
+          "retrieved",
+          "parsed",
+          "missing",
+          "ambiguous",
+          "excluded"
+        ],
+        "title": "Coverage",
+        "type": "object"
+      },
+      "CursorMeta": {
+        "additionalProperties": false,
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more",
+          "limit"
+        ],
+        "title": "CursorMeta",
+        "type": "object"
+      },
+      "Dataset": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_size": {
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Filters",
+            "type": "object"
+          },
+          "format": {
+            "enum": [
+              "csv",
+              "parquet",
+              "json"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "record_count": {
+            "title": "Record Count",
+            "type": "integer"
+          },
+          "schema_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Schema Url",
+            "type": "string"
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "format",
+          "url",
+          "schema_url",
+          "record_count",
+          "byte_size",
+          "content_hash",
+          "filters"
+        ],
+        "title": "Dataset",
+        "type": "object"
+      },
+      "DocumentarySignalAnalysis": {
+        "additionalProperties": false,
+        "properties": {
+          "eligibility": {
+            "enum": [
+              "eligible",
+              "ineligible"
+            ],
+            "title": "Eligibility",
+            "type": "string"
+          },
+          "evidence_artifact_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Evidence Artifact Hash",
+            "type": "string"
+          },
+          "evidence_artifact_kind": {
+            "enum": [
+              "reconciliation_result",
+              "document_review"
+            ],
+            "title": "Evidence Artifact Kind",
+            "type": "string"
+          },
+          "kind": {
+            "const": "documentary",
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "kind",
+          "eligibility",
+          "reason",
+          "evidence_artifact_hash",
+          "evidence_artifact_kind"
+        ],
+        "title": "DocumentarySignalAnalysis",
+        "type": "object"
+      },
+      "ElectionSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "blank_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateSummary"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/Completion"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "election_date": {
+            "format": "date",
+            "title": "Election Date",
+            "type": "string"
+          },
+          "election_name": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "geographic_collection_coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeographicCollectionCoverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "null_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "reconciliation": {
+            "$ref": "#/components/schemas/Reconciliation"
+          },
+          "registered_electors": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "release_status": {
+            "enum": [
+              "fixture",
+              "candidate",
+              "published",
+              "withdrawn"
+            ],
+            "title": "Release Status",
+            "type": "string"
+          },
+          "round": {
+            "title": "Round",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "turnout": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnout"
+          },
+          "unmarked_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "valid_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "voters": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "election_slug",
+          "election_name",
+          "round",
+          "election_date",
+          "data_version",
+          "release_status",
+          "synthetic",
+          "completion",
+          "registered_electors",
+          "voters",
+          "turnout",
+          "valid_votes",
+          "blank_votes",
+          "null_votes",
+          "unmarked_votes",
+          "candidates",
+          "coverage",
+          "reconciliation",
+          "provenance"
+        ],
+        "title": "ElectionSummary",
+        "type": "object"
+      },
+      "EvidenceDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "document_type": {
+            "enum": [
+              "e14_delegate",
+              "e14_transmission"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "index_status": {
+            "enum": [
+              "indexed",
+              "unavailable",
+              "ambiguous"
+            ],
+            "title": "Index Status",
+            "type": "string"
+          },
+          "indexed_at": {
+            "format": "date-time",
+            "title": "Indexed At",
+            "type": "string"
+          },
+          "mesa_id": {
+            "title": "Mesa Id",
+            "type": "string"
+          },
+          "official_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Official Url",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "source_index_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Source Index Hash",
+            "type": "string"
+          },
+          "source_index_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Index Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mesa_id",
+          "document_type",
+          "official_url",
+          "source_index_url",
+          "source_index_hash",
+          "indexed_at",
+          "index_status",
+          "provenance"
+        ],
+        "title": "EvidenceDocument",
+        "type": "object"
+      },
+      "EvidenceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceDocument"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "mesa_id": {
+            "title": "Mesa Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mesa_id",
+          "documents",
+          "data_version"
+        ],
+        "title": "EvidenceResponse",
+        "type": "object"
+      },
+      "ExplanationMetadata": {
+        "additionalProperties": false,
+        "description": "Preregistered explanation-review metadata; it never changes detection.",
+        "properties": {
+          "available_data_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Data Hash"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preregistration_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preregistration Hash"
+          },
+          "quantitative_effect": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "quantitative_p_value": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "status": {
+            "enum": [
+              "explained",
+              "partially_explained",
+              "no_explanation_found_in_available_data",
+              "non_evaluable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "quantitative_effect",
+          "quantitative_p_value"
+        ],
+        "title": "ExplanationMetadata",
+        "type": "object"
+      },
+      "GeographicCollectionCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_mesas": {
+            "minimum": 0.0,
+            "title": "Expected Mesas",
+            "type": "integer"
+          },
+          "expected_polling_places": {
+            "minimum": 0.0,
+            "title": "Expected Polling Places",
+            "type": "integer"
+          },
+          "retrieved_mesas": {
+            "minimum": 0.0,
+            "title": "Retrieved Mesas",
+            "type": "integer"
+          },
+          "retrieved_polling_places": {
+            "minimum": 0.0,
+            "title": "Retrieved Polling Places",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "national_only",
+              "sample_limited",
+              "full_scope"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "expected_polling_places",
+          "retrieved_polling_places",
+          "expected_mesas",
+          "retrieved_mesas"
+        ],
+        "title": "GeographicCollectionCoverage",
+        "type": "object"
+      },
+      "Geography": {
+        "additionalProperties": false,
+        "properties": {
+          "authoritative_coordinates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Coordinates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "national",
+              "department",
+              "municipality",
+              "zone",
+              "polling_place",
+              "mesa"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "required": [
+          "id",
+          "level",
+          "code",
+          "name",
+          "parent_id",
+          "authoritative_coordinates"
+        ],
+        "title": "Geography",
+        "type": "object"
+      },
+      "GeographyChildPage": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScopedGeography"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/CursorMeta"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "data_version"
+        ],
+        "title": "GeographyChildPage",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HistoricalComparisonItem": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_category_key": {
+            "title": "Baseline Category Key",
+            "type": "string"
+          },
+          "baseline_fact_id": {
+            "title": "Baseline Fact Id",
+            "type": "string"
+          },
+          "baseline_provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "baseline_status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Baseline Status",
+            "type": "string"
+          },
+          "baseline_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Value"
+          },
+          "category_key": {
+            "title": "Category Key",
+            "type": "string"
+          },
+          "category_kind": {
+            "title": "Category Kind",
+            "type": "string"
+          },
+          "current_fact_id": {
+            "title": "Current Fact Id",
+            "type": "string"
+          },
+          "current_provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "current_status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Current Status",
+            "type": "string"
+          },
+          "current_value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Value"
+          },
+          "semantic_crosswalk_version": {
+            "title": "Semantic Crosswalk Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category_key",
+          "baseline_category_key",
+          "category_kind",
+          "semantic_crosswalk_version",
+          "current_fact_id",
+          "current_value",
+          "current_status",
+          "current_provenance",
+          "baseline_fact_id",
+          "baseline_value",
+          "baseline_status",
+          "baseline_provenance"
+        ],
+        "title": "HistoricalComparisonItem",
+        "type": "object"
+      },
+      "HistoricalComparisonResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_data_version": {
+            "title": "Baseline Data Version",
+            "type": "string"
+          },
+          "baseline_geography_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Geography Id"
+          },
+          "comparison_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Key"
+          },
+          "comparison_status": {
+            "enum": [
+              "not_comparable",
+              "comparable",
+              "descriptive_context_only"
+            ],
+            "title": "Comparison Status",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "eligible_for_integrity_analysis": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligible For Integrity Analysis"
+          },
+          "geography_approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geography Approved At"
+          },
+          "geography_crosswalk_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geography Crosswalk Version"
+          },
+          "geography_id": {
+            "title": "Geography Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HistoricalComparisonItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "missing_geography_crosswalk",
+                  "geography_crosswalk_unapproved",
+                  "missing_semantic_crosswalk",
+                  "semantic_crosswalk_unapproved",
+                  "no_compatible_facts",
+                  "no_approved_longitudinal_crosswalk",
+                  "missing_approved_context_crosswalk"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requested_grain": {
+            "enum": [
+              "national",
+              "department",
+              "municipality",
+              "zone",
+              "polling_place",
+              "mesa"
+            ],
+            "title": "Requested Grain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comparison_status",
+          "data_version",
+          "baseline_data_version",
+          "geography_id",
+          "requested_grain"
+        ],
+        "title": "HistoricalComparisonResponse",
+        "type": "object"
+      },
+      "LocalizedText": {
+        "additionalProperties": false,
+        "properties": {
+          "en": {
+            "title": "En",
+            "type": "string"
+          },
+          "es": {
+            "title": "Es",
+            "type": "string"
+          }
+        },
+        "required": [
+          "es",
+          "en"
+        ],
+        "title": "LocalizedText",
+        "type": "object"
+      },
+      "MesaDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "available_source_types": {
+            "items": {
+              "enum": [
+                "final_declaration",
+                "scrutiny",
+                "e14_delegate",
+                "e14_transmission",
+                "pre_count",
+                "contextual_baseline"
+              ],
+              "type": "string"
+            },
+            "title": "Available Source Types",
+            "type": "array"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "display_number": {
+            "title": "Display Number",
+            "type": "string"
+          },
+          "geography": {
+            "$ref": "#/components/schemas/Geography"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "polling_place": {
+            "$ref": "#/components/schemas/Geography"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ResultFact"
+          }
+        },
+        "required": [
+          "id",
+          "display_number",
+          "geography",
+          "polling_place",
+          "available_source_types",
+          "result",
+          "data_version"
+        ],
+        "title": "MesaDetail",
+        "type": "object"
+      },
+      "MetricValue": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status"
+        ],
+        "title": "MetricValue",
+        "type": "object"
+      },
+      "NormalizedCategoryPage": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NormalizedCategoryResult"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/CursorMeta"
+          },
+          "sparse_category_semantics": {
+            "title": "Sparse Category Semantics",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "data_version",
+          "sparse_category_semantics"
+        ],
+        "title": "NormalizedCategoryPage",
+        "type": "object"
+      },
+      "NormalizedCategoryResult": {
+        "additionalProperties": false,
+        "description": "A source-published MMV category; it is not necessarily a candidate.",
+        "properties": {
+          "category_code": {
+            "title": "Category Code",
+            "type": "string"
+          },
+          "category_key": {
+            "title": "Category Key",
+            "type": "string"
+          },
+          "category_kind": {
+            "title": "Category Kind",
+            "type": "string"
+          },
+          "category_name": {
+            "title": "Category Name",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "votes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Votes"
+          }
+        },
+        "required": [
+          "category_key",
+          "category_code",
+          "category_name",
+          "category_kind",
+          "votes",
+          "status",
+          "provenance"
+        ],
+        "title": "NormalizedCategoryResult",
+        "type": "object"
+      },
+      "OutcomeGeographicScope": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Key",
+            "type": "array"
+          },
+          "level": {
+            "enum": [
+              "mesa",
+              "place",
+              "municipality",
+              "department",
+              "national"
+            ],
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "key"
+        ],
+        "title": "OutcomeGeographicScope",
+        "type": "object"
+      },
+      "OutcomeSensitivity": {
+        "additionalProperties": false,
+        "description": "A core artifact bound to one immutable public release/election scope.",
+        "properties": {
+          "calculation": {
+            "minLength": 1,
+            "title": "Calculation",
+            "type": "string"
+          },
+          "combined_affected_vote_upper_bound": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combined Affected Vote Upper Bound"
+          },
+          "combined_margin_headroom": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combined Margin Headroom"
+          },
+          "combined_margin_shift_upper_bound": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combined Margin Shift Upper Bound"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "evaluable": {
+            "title": "Evaluable",
+            "type": "boolean"
+          },
+          "evidence_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Hash"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeSensitivityIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "lead_change_possible_from_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Change Possible From Verified"
+          },
+          "lead_change_possible_including_unresolved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lead Change Possible Including Unresolved"
+          },
+          "leader_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leader Id"
+          },
+          "leader_votes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leader Votes"
+          },
+          "limitations": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "margin_shift_factor": {
+            "const": 2,
+            "title": "Margin Shift Factor",
+            "type": "integer"
+          },
+          "methodology_version": {
+            "const": "outcome-sensitivity-v3.0.0",
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "observed_margin_votes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Margin Votes"
+          },
+          "outcome_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutcomeSourceScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Output Hash",
+            "type": "string"
+          },
+          "release_id": {
+            "title": "Release Id",
+            "type": "string"
+          },
+          "runner_up_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Id"
+          },
+          "runner_up_votes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Up Votes"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutcomeGeographicScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_links": {
+            "items": {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Source Links",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "not_evaluable",
+              "robust_within_evaluated_bounds",
+              "tie_within_verified_bound",
+              "lead_change_within_verified_bound",
+              "tie_only_with_unresolved_bound",
+              "lead_change_only_with_unresolved_bound"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tie_possible_from_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tie Possible From Verified"
+          },
+          "tie_possible_including_unresolved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tie Possible Including Unresolved"
+          },
+          "unresolved_affected_vote_upper_bound": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unresolved Affected Vote Upper Bound"
+          },
+          "unresolved_margin_shift_upper_bound": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unresolved Margin Shift Upper Bound"
+          },
+          "unresolved_record_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unresolved Record Ids"
+          },
+          "verified_affected_votes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Affected Votes"
+          },
+          "verified_margin_headroom": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Margin Headroom"
+          },
+          "verified_margin_shift_bound": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Margin Shift Bound"
+          },
+          "verified_record_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Record Ids"
+          }
+        },
+        "required": [
+          "status",
+          "evaluable",
+          "issues",
+          "scope",
+          "outcome_source",
+          "leader_id",
+          "runner_up_id",
+          "leader_votes",
+          "runner_up_votes",
+          "observed_margin_votes",
+          "verified_record_ids",
+          "unresolved_record_ids",
+          "verified_affected_votes",
+          "verified_margin_shift_bound",
+          "unresolved_affected_vote_upper_bound",
+          "unresolved_margin_shift_upper_bound",
+          "combined_affected_vote_upper_bound",
+          "combined_margin_shift_upper_bound",
+          "verified_margin_headroom",
+          "combined_margin_headroom",
+          "tie_possible_from_verified",
+          "lead_change_possible_from_verified",
+          "tie_possible_including_unresolved",
+          "lead_change_possible_including_unresolved",
+          "source_links",
+          "evidence_hash",
+          "output_hash",
+          "methodology_version",
+          "calculation",
+          "limitations",
+          "release_id",
+          "election_slug",
+          "data_version",
+          "margin_shift_factor"
+        ],
+        "title": "OutcomeSensitivity",
+        "type": "object"
+      },
+      "OutcomeSensitivityIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "record_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Record Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "record_ids"
+        ],
+        "title": "OutcomeSensitivityIssue",
+        "type": "object"
+      },
+      "OutcomeSourceScope": {
+        "additionalProperties": false,
+        "properties": {
+          "fact_grain": {
+            "enum": [
+              "mesa",
+              "place",
+              "municipality",
+              "department",
+              "national"
+            ],
+            "title": "Fact Grain",
+            "type": "string"
+          },
+          "legal_status": {
+            "enum": [
+              "controlling_final",
+              "official_scrutiny",
+              "documentary_evidence",
+              "preliminary",
+              "context_only"
+            ],
+            "title": "Legal Status",
+            "type": "string"
+          },
+          "source_id": {
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "fact_grain",
+          "source_type",
+          "legal_status"
+        ],
+        "title": "OutcomeSourceScope",
+        "type": "object"
+      },
+      "PackagedDataset": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_size": {
+            "minimum": 0.0,
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Filters",
+            "type": "object"
+          },
+          "format": {
+            "const": "parquet",
+            "title": "Format",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9._-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "record_count": {
+            "minimum": 0.0,
+            "title": "Record Count",
+            "type": "integer"
+          },
+          "schema_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema Url"
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "url": {
+            "pattern": "^/api/v1/",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "format",
+          "url",
+          "schema_url",
+          "record_count",
+          "byte_size",
+          "content_hash",
+          "filters"
+        ],
+        "title": "PackagedDataset",
+        "type": "object"
+      },
+      "PeerSignalAnalysis": {
+        "additionalProperties": false,
+        "description": "The complete, replayable peer-distribution decision surface.",
+        "properties": {
+          "adjusted_q": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "analyzer_methodology_version": {
+            "title": "Analyzer Methodology Version",
+            "type": "string"
+          },
+          "analyzer_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzer Reason"
+          },
+          "code_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Code Hash",
+            "type": "string"
+          },
+          "cohort_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Cohort Hash",
+            "type": "string"
+          },
+          "comparator": {
+            "title": "Comparator",
+            "type": "string"
+          },
+          "effect_pp": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "eligibility": {
+            "enum": [
+              "eligible",
+              "ineligible"
+            ],
+            "title": "Eligibility",
+            "type": "string"
+          },
+          "expected_rate": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "expected_unit_count": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "expected_unit_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Unit Digest",
+            "type": "string"
+          },
+          "family_id": {
+            "title": "Family Id",
+            "type": "string"
+          },
+          "fit_method": {
+            "title": "Fit Method",
+            "type": "string"
+          },
+          "input_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "kind": {
+            "const": "peer_distribution",
+            "title": "Kind",
+            "type": "string"
+          },
+          "method_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Method Hash",
+            "type": "string"
+          },
+          "observed_rate": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "output_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Output Hash",
+            "type": "string"
+          },
+          "peer_count": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "peer_definition": {
+            "title": "Peer Definition",
+            "type": "string"
+          },
+          "public_point_eligible": {
+            "title": "Public Point Eligible",
+            "type": "boolean"
+          },
+          "raw_p": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "standardized_residual": {
+            "$ref": "#/components/schemas/SignalNumber"
+          }
+        },
+        "required": [
+          "kind",
+          "eligibility",
+          "reason",
+          "public_point_eligible",
+          "analyzer_reason",
+          "observed_rate",
+          "expected_rate",
+          "comparator",
+          "peer_definition",
+          "peer_count",
+          "expected_unit_count",
+          "expected_unit_digest",
+          "standardized_residual",
+          "effect_pp",
+          "raw_p",
+          "adjusted_q",
+          "fit_method",
+          "family_id",
+          "cohort_hash",
+          "input_hash",
+          "output_hash",
+          "code_hash",
+          "method_hash",
+          "analyzer_methodology_version"
+        ],
+        "title": "PeerSignalAnalysis",
+        "type": "object"
+      },
+      "PreviewProvenance": {
+        "additionalProperties": false,
+        "description": "Provenance for a candidate release that must advertise its limitations.",
+        "properties": {
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "legal_status": {
+            "enum": [
+              "controlling_final",
+              "official_scrutiny",
+              "documentary_evidence",
+              "preliminary",
+              "context_only"
+            ],
+            "title": "Legal Status",
+            "type": "string"
+          },
+          "methodology_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology Version"
+          },
+          "parser_version": {
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "preview_caveat": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Caveat"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          },
+          "transform_version": {
+            "title": "Transform Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data_version",
+          "source_type",
+          "legal_status",
+          "source_url",
+          "retrieved_at",
+          "content_hash",
+          "parser_version",
+          "transform_version",
+          "methodology_version"
+        ],
+        "title": "PreviewProvenance",
+        "type": "object"
+      },
+      "Provenance": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "legal_status": {
+            "enum": [
+              "controlling_final",
+              "official_scrutiny",
+              "documentary_evidence",
+              "preliminary",
+              "context_only"
+            ],
+            "title": "Legal Status",
+            "type": "string"
+          },
+          "methodology_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology Version"
+          },
+          "parser_version": {
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          },
+          "transform_version": {
+            "title": "Transform Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "data_version",
+          "source_type",
+          "legal_status",
+          "source_url",
+          "retrieved_at",
+          "content_hash",
+          "parser_version",
+          "transform_version",
+          "methodology_version"
+        ],
+        "title": "Provenance",
+        "type": "object"
+      },
+      "Reconciliation": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_facts": {
+            "title": "Checked Facts",
+            "type": "integer"
+          },
+          "exceptions": {
+            "title": "Exceptions",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "blocked",
+              "not_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checked_facts",
+          "exceptions"
+        ],
+        "title": "Reconciliation",
+        "type": "object"
+      },
+      "ReleaseElectionRef": {
+        "additionalProperties": false,
+        "properties": {
+          "election_date": {
+            "format": "date",
+            "title": "Election Date",
+            "type": "string"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "exposure_approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Approved At"
+          },
+          "methodology_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodology Version"
+          },
+          "name_en": {
+            "title": "Name En",
+            "type": "string"
+          },
+          "name_es": {
+            "title": "Name Es",
+            "type": "string"
+          },
+          "release_class": {
+            "anyOf": [
+              {
+                "const": "context_only",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Class"
+          },
+          "release_id": {
+            "title": "Release Id",
+            "type": "string"
+          },
+          "release_manifest_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Release Manifest Hash",
+            "type": "string"
+          },
+          "round": {
+            "exclusiveMinimum": 0.0,
+            "title": "Round",
+            "type": "integer"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ReleaseSourceRef"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "fixture",
+              "candidate",
+              "published",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "release_id",
+          "election_slug",
+          "name_es",
+          "name_en",
+          "round",
+          "election_date",
+          "status",
+          "methodology_version",
+          "release_manifest_hash",
+          "exposure_approved_at",
+          "sources"
+        ],
+        "title": "ReleaseElectionRef",
+        "type": "object"
+      },
+      "ReleaseSourceRef": {
+        "additionalProperties": false,
+        "description": "Source metadata exposed by the release index.\n\nPostgreSQL-published releases currently expose the core five fields, while\npackaged historical candidates expose the complete source-manifest entry.\nOptional fields preserve that distinction instead of fabricating metadata.",
+        "properties": {
+          "byte_size": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byte Size"
+          },
+          "content_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Coverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "legal_status": {
+            "enum": [
+              "controlling_final",
+              "official_scrutiny",
+              "documentary_evidence",
+              "preliminary",
+              "context_only"
+            ],
+            "title": "Legal Status",
+            "type": "string"
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Type"
+          },
+          "parser_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser Version"
+          },
+          "published_grain": {
+            "anyOf": [
+              {
+                "enum": [
+                  "mesa",
+                  "place",
+                  "municipality",
+                  "department",
+                  "national"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Grain"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "source_type": {
+            "enum": [
+              "final_declaration",
+              "scrutiny",
+              "e14_delegate",
+              "e14_transmission",
+              "pre_count",
+              "contextual_baseline"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          },
+          "transform_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transform Version"
+          }
+        },
+        "required": [
+          "id",
+          "source_type",
+          "legal_status",
+          "source_url",
+          "content_hash"
+        ],
+        "title": "ReleaseSourceRef",
+        "type": "object"
+      },
+      "ResultFact": {
+        "additionalProperties": false,
+        "properties": {
+          "blank_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateResult"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "geography_id": {
+            "title": "Geography Id",
+            "type": "string"
+          },
+          "geography_level": {
+            "enum": [
+              "national",
+              "department",
+              "municipality",
+              "zone",
+              "polling_place",
+              "mesa"
+            ],
+            "title": "Geography Level",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mesa_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mesa Id"
+          },
+          "null_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "registered_electors": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "unmarked_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "valid_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "voters": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "id",
+          "election_slug",
+          "geography_id",
+          "geography_level",
+          "mesa_id",
+          "registered_electors",
+          "voters",
+          "valid_votes",
+          "blank_votes",
+          "null_votes",
+          "unmarked_votes",
+          "candidates",
+          "provenance"
+        ],
+        "title": "ResultFact",
+        "type": "object"
+      },
+      "ResultPage": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ResultFact"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/CursorMeta"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "data_version"
+        ],
+        "title": "ResultPage",
+        "type": "object"
+      },
+      "ReviewSignal": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_vote_estimate": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Vote Estimate"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/SignalComponent"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mesa_id": {
+            "title": "Mesa Id",
+            "type": "string"
+          },
+          "methodology_version": {
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "integer"
+          },
+          "tier": {
+            "enum": [
+              "documentary_review_prioritized",
+              "documentary_comparison_recommended",
+              "statistical_or_coverage_issue",
+              "no_review_signals"
+            ],
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mesa_id",
+          "score",
+          "tier",
+          "methodology_version",
+          "components",
+          "disclosure",
+          "provenance"
+        ],
+        "title": "ReviewSignal",
+        "type": "object"
+      },
+      "ReviewSignalPage": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "disclosure": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewSignal"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "methodology_version": {
+            "title": "Methodology Version",
+            "type": "string"
+          },
+          "page": {
+            "$ref": "#/components/schemas/CursorMeta"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "data_version",
+          "methodology_version",
+          "disclosure"
+        ],
+        "title": "ReviewSignalPage",
+        "type": "object"
+      },
+      "ScopedGeography": {
+        "additionalProperties": false,
+        "properties": {
+          "authoritative_coordinates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Coordinates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canonical_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canonical Path"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "has_published_facts": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Published Facts"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "national",
+              "department",
+              "municipality",
+              "zone",
+              "polling_place",
+              "mesa"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "required": [
+          "id",
+          "level",
+          "code",
+          "name",
+          "parent_id"
+        ],
+        "title": "ScopedGeography",
+        "type": "object"
+      },
+      "ScopedGeographyPathResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScopedGeography"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "data_version"
+        ],
+        "title": "ScopedGeographyPathResponse",
+        "type": "object"
+      },
+      "ScopedGeographyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ScopedGeography"
+          }
+        },
+        "required": [
+          "item",
+          "data_version"
+        ],
+        "title": "ScopedGeographyResponse",
+        "type": "object"
+      },
+      "ScopedMesa": {
+        "additionalProperties": false,
+        "properties": {
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "department_id": {
+            "title": "Department Id",
+            "type": "string"
+          },
+          "display_number": {
+            "title": "Display Number",
+            "type": "string"
+          },
+          "geography_path": {
+            "items": {
+              "$ref": "#/components/schemas/ScopedGeography"
+            },
+            "title": "Geography Path",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "municipality_id": {
+            "title": "Municipality Id",
+            "type": "string"
+          },
+          "polling_place_id": {
+            "title": "Polling Place Id",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ResultFact"
+            },
+            "maxItems": 200,
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "display_number",
+          "polling_place_id",
+          "municipality_id",
+          "department_id",
+          "geography_path",
+          "results",
+          "data_version"
+        ],
+        "title": "ScopedMesa",
+        "type": "object"
+      },
+      "SignalComponent": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustment_method": {
+            "anyOf": [
+              {
+                "const": "benjamini-yekutieli",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjustment Method"
+          },
+          "analysis": {
+            "discriminator": {
+              "mapping": {
+                "documentary": "#/components/schemas/DocumentarySignalAnalysis",
+                "peer_distribution": "#/components/schemas/PeerSignalAnalysis",
+                "spatial_cluster": "#/components/schemas/SpatialSignalAnalysis"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DocumentarySignalAnalysis"
+              },
+              {
+                "$ref": "#/components/schemas/PeerSignalAnalysis"
+              },
+              {
+                "$ref": "#/components/schemas/SpatialSignalAnalysis"
+              }
+            ],
+            "title": "Analysis"
+          },
+          "analysis_unit_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Unit Id"
+          },
+          "analyzer_mesa_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzer Mesa Id"
+          },
+          "analyzer_output_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyzer Output Hash"
+          },
+          "calculation": {
+            "title": "Calculation",
+            "type": "string"
+          },
+          "code_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Hash"
+          },
+          "cohort_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohort Hash"
+          },
+          "comparator": {
+            "title": "Comparator",
+            "type": "string"
+          },
+          "component_type": {
+            "enum": [
+              "verified_accounting_failure",
+              "conflicting_official_records",
+              "documentary_difference_major",
+              "documentary_difference_minor",
+              "document_missing_duplicated_ambiguous",
+              "peer_distribution",
+              "spatial_cluster"
+            ],
+            "title": "Component Type",
+            "type": "string"
+          },
+          "coordinate_accuracy_m": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinate Accuracy M"
+          },
+          "coordinate_grain": {
+            "anyOf": [
+              {
+                "enum": [
+                  "mesa",
+                  "polling_place"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinate Grain"
+          },
+          "coordinate_source_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinate Source Hash"
+          },
+          "coordinate_source_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinate Source Url"
+          },
+          "evidence_artifact_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Artifact Hash"
+          },
+          "evidence_artifact_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "reconciliation_result",
+                  "document_review"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Artifact Kind"
+          },
+          "expected_family_count": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Family Count"
+          },
+          "expected_family_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Family Digest"
+          },
+          "family_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Id"
+          },
+          "family_rank": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Rank"
+          },
+          "family_size": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Size"
+          },
+          "input_artifact_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Artifact Hash"
+          },
+          "limitations": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "method_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method Hash"
+          },
+          "observed_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Value"
+          },
+          "p_value": {
+            "anyOf": [
+              {
+                "maximum": 0.001,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Value"
+          },
+          "peer_definition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Definition"
+          },
+          "peer_methodology_version": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Methodology Version"
+          },
+          "peer_residual_artifact_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Residual Artifact Hash"
+          },
+          "points": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Points",
+            "type": "integer"
+          },
+          "q_value": {
+            "anyOf": [
+              {
+                "maximum": 0.05,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q Value"
+          },
+          "source_links": {
+            "items": {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Source Links",
+            "type": "array"
+          }
+        },
+        "required": [
+          "component_type",
+          "points",
+          "observed_value",
+          "comparator",
+          "calculation",
+          "peer_definition",
+          "limitations",
+          "source_links",
+          "evidence_artifact_hash",
+          "evidence_artifact_kind",
+          "analyzer_output_hash",
+          "family_id",
+          "expected_family_count",
+          "expected_family_digest",
+          "cohort_hash",
+          "input_artifact_hash",
+          "code_hash",
+          "method_hash",
+          "p_value",
+          "q_value",
+          "family_rank",
+          "family_size",
+          "adjustment_method",
+          "analysis"
+        ],
+        "title": "SignalComponent",
+        "type": "object"
+      },
+      "SignalCount": {
+        "additionalProperties": false,
+        "description": "An integer analytical count with explicit observed/unknown state.",
+        "properties": {
+          "status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status"
+        ],
+        "title": "SignalCount",
+        "type": "object"
+      },
+      "SignalNumber": {
+        "additionalProperties": false,
+        "description": "A numeric analytical value whose absence is never silently treated as zero.",
+        "properties": {
+          "status": {
+            "enum": [
+              "observed",
+              "unknown",
+              "unavailable",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status"
+        ],
+        "title": "SignalNumber",
+        "type": "object"
+      },
+      "SpatialSignalAnalysis": {
+        "additionalProperties": false,
+        "description": "The complete local-spatial decision surface, including exact membership.",
+        "properties": {
+          "adjusted_q": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "analysis_grain": {
+            "enum": [
+              "mesa",
+              "polling_place"
+            ],
+            "title": "Analysis Grain",
+            "type": "string"
+          },
+          "analysis_unit_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Unit Digest"
+          },
+          "analysis_unit_id": {
+            "title": "Analysis Unit Id",
+            "type": "string"
+          },
+          "analyzer_methodology_version": {
+            "title": "Analyzer Methodology Version",
+            "type": "string"
+          },
+          "code_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Code Hash",
+            "type": "string"
+          },
+          "coordinate_accuracy_m": {
+            "exclusiveMinimum": 0.0,
+            "title": "Coordinate Accuracy M",
+            "type": "number"
+          },
+          "eligibility": {
+            "enum": [
+              "eligible",
+              "ineligible"
+            ],
+            "title": "Eligibility",
+            "type": "string"
+          },
+          "expected_mesa_count": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "expected_mesa_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Mesa Digest"
+          },
+          "expected_mesa_membership_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Mesa Membership Digest"
+          },
+          "expected_unit_count": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "expected_unit_digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expected Unit Digest",
+            "type": "string"
+          },
+          "family_id": {
+            "title": "Family Id",
+            "type": "string"
+          },
+          "geocode_source_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Geocode Source Hash",
+            "type": "string"
+          },
+          "geocode_source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Geocode Source Url",
+            "type": "string"
+          },
+          "input_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "kind": {
+            "const": "spatial_cluster",
+            "title": "Kind",
+            "type": "string"
+          },
+          "local_residual": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "local_statistic": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "mesa_id": {
+            "title": "Mesa Id",
+            "type": "string"
+          },
+          "mesa_membership_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mesa Membership Digest"
+          },
+          "method_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Method Hash",
+            "type": "string"
+          },
+          "neighbor_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Neighbor Ids",
+            "type": "array"
+          },
+          "output_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Output Hash",
+            "type": "string"
+          },
+          "peer_methodology_version": {
+            "title": "Peer Methodology Version",
+            "type": "string"
+          },
+          "peer_residual_hash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Peer Residual Hash",
+            "type": "string"
+          },
+          "permutations": {
+            "$ref": "#/components/schemas/SignalCount"
+          },
+          "raw_p": {
+            "$ref": "#/components/schemas/SignalNumber"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "signal_kind": {
+            "title": "Signal Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "eligibility",
+          "reason",
+          "analysis_unit_id",
+          "analysis_grain",
+          "neighbor_ids",
+          "signal_kind",
+          "local_statistic",
+          "local_residual",
+          "raw_p",
+          "adjusted_q",
+          "seed",
+          "permutations",
+          "expected_unit_count",
+          "expected_unit_digest",
+          "family_id",
+          "mesa_id",
+          "peer_residual_hash",
+          "input_hash",
+          "output_hash",
+          "code_hash",
+          "method_hash",
+          "geocode_source_url",
+          "geocode_source_hash",
+          "coordinate_accuracy_m",
+          "analyzer_methodology_version",
+          "peer_methodology_version",
+          "analysis_unit_digest",
+          "expected_mesa_count",
+          "expected_mesa_digest",
+          "mesa_membership_digest",
+          "expected_mesa_membership_digest"
+        ],
+        "title": "SpatialSignalAnalysis",
+        "type": "object"
+      },
+      "UnknownCompletion": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "const": "unknown",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reason"
+        ],
+        "title": "UnknownCompletion",
+        "type": "object"
+      },
+      "UnknownContextCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "observed_category_facts": {
+            "minimum": 0.0,
+            "title": "Observed Category Facts",
+            "type": "integer"
+          },
+          "observed_geographies": {
+            "minimum": 0.0,
+            "title": "Observed Geographies",
+            "type": "integer"
+          },
+          "observed_result_facts": {
+            "minimum": 0.0,
+            "title": "Observed Result Facts",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "const": "unknown",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "observed_geographies",
+          "observed_result_facts",
+          "observed_category_facts"
+        ],
+        "title": "UnknownContextCoverage",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Release-scoped, provenance-first election data. Historical candidate releases are contextual baselines and never integrity findings.",
+    "license": {
+      "identifier": "AGPL-3.0-only",
+      "name": "AGPL-3.0-only"
+    },
+    "title": "Elecciones Abiertas Colombia API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/bulletins": {
+      "get": {
+        "operationId": "list_bulletins_api_v1_bulletins_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Bulletin"
+                  },
+                  "title": "Response List Bulletins Api V1 Bulletins Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Bulletins"
+      }
+    },
+    "/api/v1/bulletins/{id}/results": {
+      "get": {
+        "operationId": "bulletin_results_api_v1_bulletins__id__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulletinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bulletin Results"
+      }
+    },
+    "/api/v1/datasets": {
+      "get": {
+        "operationId": "list_datasets_api_v1_datasets_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dataset"
+                  },
+                  "title": "Response List Datasets Api V1 Datasets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Datasets"
+      }
+    },
+    "/api/v1/datasets/{id}/download": {
+      "get": {
+        "operationId": "download_dataset_api_v1_datasets__id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "raw",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Raw",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Dataset"
+      }
+    },
+    "/api/v1/elections/{slug}/results": {
+      "get": {
+        "operationId": "election_results_api_v1_elections__slug__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "final_declaration",
+                    "scrutiny",
+                    "e14_delegate",
+                    "e14_transmission",
+                    "pre_count",
+                    "contextual_baseline"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "national",
+                    "department",
+                    "municipality",
+                    "zone",
+                    "polling_place",
+                    "mesa"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Level"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Election Results"
+      }
+    },
+    "/api/v1/elections/{slug}/summary": {
+      "get": {
+        "operationId": "election_summary_api_v1_elections__slug__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ElectionSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Election Summary"
+      }
+    },
+    "/api/v1/geographies/{id}": {
+      "get": {
+        "operationId": "get_geography_api_v1_geographies__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Geography"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Geography"
+      }
+    },
+    "/api/v1/mesas/{id}": {
+      "get": {
+        "operationId": "get_mesa_api_v1_mesas__id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "final_declaration",
+                    "scrutiny",
+                    "e14_delegate",
+                    "e14_transmission",
+                    "pre_count",
+                    "contextual_baseline"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MesaDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Mesa"
+      }
+    },
+    "/api/v1/mesas/{id}/comparisons": {
+      "get": {
+        "operationId": "mesa_comparisons_api_v1_mesas__id__comparisons_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mesa Comparisons"
+      }
+    },
+    "/api/v1/mesas/{id}/evidence": {
+      "get": {
+        "operationId": "mesa_evidence_api_v1_mesas__id__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mesa Evidence"
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "operationId": "openapi_document_api_v1_openapi_json_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The exact versioned API contract served by this deployment.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Immutable cache policy.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Validator for the frozen contract bytes.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Frozen OpenAPI document"
+      }
+    },
+    "/api/v1/release-elections": {
+      "get": {
+        "operationId": "release_elections_api_v1_release_elections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReleaseElectionRef"
+                  },
+                  "title": "Response Release Elections Api V1 Release Elections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Release Elections"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/anomalies": {
+      "get": {
+        "operationId": "analysis_anomalies_api_v1_releases__release_id__elections__election_slug__analysis_anomalies_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "anomaly_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "structural_arithmetic",
+                    "identity_coverage",
+                    "cross_source_documentary",
+                    "peer_distribution",
+                    "spatial"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomaly Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisAnomalyPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analysis Anomalies"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/anomalies/{anomaly_id}": {
+      "get": {
+        "operationId": "analysis_anomaly_detail_api_v1_releases__release_id__elections__election_slug__analysis_anomalies__anomaly_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "anomaly_id",
+            "required": true,
+            "schema": {
+              "title": "Anomaly Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analysis Anomaly Detail"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/summary": {
+      "get": {
+        "operationId": "analysis_summary_api_v1_releases__release_id__elections__election_slug__analysis_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analysis Summary"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/{report_kind}": {
+      "get": {
+        "operationId": "analysis_report_api_v1_releases__release_id__elections__election_slug__analysis__report_kind__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "report_kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "model_diagnostics",
+                "validation",
+                "local_sensitivity"
+              ],
+              "title": "Report Kind",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analysis Report"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/datasets": {
+      "get": {
+        "operationId": "normalized_datasets_api_v1_releases__release_id__elections__election_slug__datasets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackagedDataset"
+                  },
+                  "title": "Response Normalized Datasets Api V1 Releases  Release Id  Elections  Election Slug  Datasets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Datasets"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/datasets/{dataset_id}/download": {
+      "get": {
+        "operationId": "normalized_dataset_download_api_v1_releases__release_id__elections__election_slug__datasets__dataset_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dataset_id",
+            "required": true,
+            "schema": {
+              "title": "Dataset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.apache.parquet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Exact immutable Parquet bytes declared by the release manifest.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "Attachment filename for the immutable artifact.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Quoted SHA-256 content hash.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "307": {
+            "description": "Redirect to an allowlisted immutable Parquet artifact.",
+            "headers": {
+              "ETag": {
+                "description": "Quoted SHA-256 content hash.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Allowlisted HTTPS artifact URL.",
+                "schema": {
+                  "format": "uri",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Dataset Download"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}": {
+      "get": {
+        "operationId": "normalized_geography_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "geography_id",
+            "required": true,
+            "schema": {
+              "title": "Geography Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopedGeographyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Geography"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/children": {
+      "get": {
+        "operationId": "normalized_geography_children_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__children_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "geography_id",
+            "required": true,
+            "schema": {
+              "title": "Geography Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographyChildPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Geography Children"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/path": {
+      "get": {
+        "operationId": "normalized_geography_path_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__path_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "geography_id",
+            "required": true,
+            "schema": {
+              "title": "Geography Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopedGeographyPathResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Geography Path"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/historical-comparison": {
+      "get": {
+        "description": "Comparison authorization is an explicit code crosswalk, never a name match.",
+        "operationId": "historical_comparison_api_v1_releases__release_id__elections__election_slug__historical_comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "baseline_release_id",
+            "required": true,
+            "schema": {
+              "title": "Baseline Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "baseline_election_slug",
+            "required": true,
+            "schema": {
+              "title": "Baseline Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_id",
+            "required": true,
+            "schema": {
+              "title": "Geography Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grain",
+            "required": true,
+            "schema": {
+              "title": "Grain",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Historical Comparison"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/mesas/{mesa_id}": {
+      "get": {
+        "operationId": "normalized_mesa_api_v1_releases__release_id__elections__election_slug__mesas__mesa_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mesa_id",
+            "required": true,
+            "schema": {
+              "title": "Mesa Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScopedMesa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Mesa"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/outcome-sensitivity": {
+      "get": {
+        "description": "A bounded documentary sensitivity artifact at one public release scope.",
+        "operationId": "normalized_outcome_sensitivity_api_v1_releases__release_id__elections__election_slug__outcome_sensitivity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeSensitivity"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Outcome Sensitivity"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/result-facts/{fact_id}/categories": {
+      "get": {
+        "operationId": "normalized_categories_api_v1_releases__release_id__elections__election_slug__result_facts__fact_id__categories_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fact_id",
+            "required": true,
+            "schema": {
+              "title": "Fact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NormalizedCategoryPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Categories"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/results": {
+      "get": {
+        "operationId": "normalized_results_api_v1_releases__release_id__elections__election_slug__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Path"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Level"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "observed",
+                    "unavailable"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultPage"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Cursor-paginated JSON facts or a filter-equivalent CSV export."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Results"
+      }
+    },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/summary": {
+      "get": {
+        "operationId": "normalized_summary_api_v1_releases__release_id__elections__election_slug__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "release_id",
+            "required": true,
+            "schema": {
+              "title": "Release Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextElectionSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Normalized Summary"
+      }
+    },
+    "/api/v1/review-signals": {
+      "get": {
+        "operationId": "list_review_signals_api_v1_review_signals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "election_slug",
+            "required": true,
+            "schema": {
+              "title": "Election Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Data Version"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minimum_score",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Minimum Score"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tier",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "documentary_review_prioritized",
+                    "documentary_comparison_recommended",
+                    "statistical_or_coverage_issue",
+                    "no_review_signals"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tier"
+            }
+          },
+          {
+            "in": "query",
+            "name": "geography_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Geography Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewSignalPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Review Signals"
+      }
+    }
+  }
+}

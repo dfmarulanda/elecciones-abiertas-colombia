@@ -1,0 +1,815 @@
+{
+  "fixture_notice": {
+    "es": "Datos sintéticos para desarrollo. No representan resultados electorales reales.",
+    "en": "Synthetic development data. These are not real election results."
+  },
+  "release": {
+    "release_id": "fixture-2026-round2-v1",
+    "data_version": "fixture-2026-round2-v1",
+    "status": "fixture",
+    "synthetic": true,
+    "created_at": "2026-07-15T12:00:00Z",
+    "methodology_version": "audit-priority-v1.0.0"
+  },
+  "election": {
+    "slug": "presidencia-2026-segunda-vuelta",
+    "name": {
+      "es": "Presidencia 2026 · segunda vuelta",
+      "en": "2026 presidential election · second round"
+    },
+    "round": 2,
+    "election_date": "2026-06-21",
+    "candidates": [
+      {
+        "id": "candidatura-horizonte",
+        "ballot_number": 1,
+        "name": { "es": "Candidatura Horizonte", "en": "Horizon ticket" },
+        "short_name": { "es": "Horizonte", "en": "Horizon" }
+      },
+      {
+        "id": "candidatura-rio",
+        "ballot_number": 2,
+        "name": { "es": "Candidatura Río", "en": "River ticket" },
+        "short_name": { "es": "Río", "en": "River" }
+      }
+    ]
+  },
+  "provenance": {
+    "data_version": "fixture-2026-round2-v1",
+    "source_type": "pre_count",
+    "legal_status": "preliminary",
+    "source_url": "https://example.invalid/fixture/2026-round2.json",
+    "retrieved_at": "2026-07-15T11:50:00Z",
+    "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "parser_version": "fixture-parser@1.0.0",
+    "transform_version": "fixture-normalizer@1.0.0",
+    "methodology_version": null
+  },
+  "summary": {
+    "election_slug": "presidencia-2026-segunda-vuelta",
+    "election_name": {
+      "es": "Presidencia 2026 · segunda vuelta",
+      "en": "2026 presidential election · second round"
+    },
+    "round": 2,
+    "election_date": "2026-06-21",
+    "data_version": "fixture-2026-round2-v1",
+    "release_status": "fixture",
+    "synthetic": true,
+    "completion": { "expected": 6, "reported": 6, "percent": 1.0 },
+    "registered_electors": { "value": 1500, "status": "observed" },
+    "voters": { "value": 1200, "status": "observed" },
+    "turnout": 0.8,
+    "valid_votes": { "value": 1150, "status": "observed" },
+    "blank_votes": { "value": 28, "status": "observed" },
+    "null_votes": { "value": 13, "status": "observed" },
+    "unmarked_votes": { "value": 9, "status": "observed" },
+    "candidates": [
+      {
+        "candidate": {
+          "id": "candidatura-horizonte",
+          "ballot_number": 1,
+          "name": { "es": "Candidatura Horizonte", "en": "Horizon ticket" },
+          "short_name": { "es": "Horizonte", "en": "Horizon" }
+        },
+        "votes": { "value": 602, "status": "observed" },
+        "share": 0.5234782609
+      },
+      {
+        "candidate": {
+          "id": "candidatura-rio",
+          "ballot_number": 2,
+          "name": { "es": "Candidatura Río", "en": "River ticket" },
+          "short_name": { "es": "Río", "en": "River" }
+        },
+        "votes": { "value": 548, "status": "observed" },
+        "share": 0.4765217391
+      }
+    ],
+    "coverage": {
+      "expected": 6,
+      "retrieved": 6,
+      "parsed": 6,
+      "missing": 0,
+      "ambiguous": 0,
+      "excluded": 0
+    },
+    "reconciliation": {
+      "status": "passed",
+      "checked_facts": 6,
+      "exceptions": 0
+    },
+    "provenance": {
+      "data_version": "fixture-2026-round2-v1",
+      "source_type": "pre_count",
+      "legal_status": "preliminary",
+      "source_url": "https://example.invalid/fixture/2026-round2.json",
+      "retrieved_at": "2026-07-15T11:50:00Z",
+      "content_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "parser_version": "fixture-parser@1.0.0",
+      "transform_version": "fixture-normalizer@1.0.0",
+      "methodology_version": "audit-priority-v1.0.0"
+    }
+  },
+  "geographies": [
+    {
+      "id": "CO",
+      "level": "national",
+      "code": "CO",
+      "name": "Colombia",
+      "parent_id": null,
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "CO-DC",
+      "level": "department",
+      "code": "11",
+      "name": "Bogotá, D. C.",
+      "parent_id": "CO",
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "CO-DC-BOG",
+      "level": "municipality",
+      "code": "001",
+      "name": "Bogotá, D. C.",
+      "parent_id": "CO-DC",
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "CO-ANT",
+      "level": "department",
+      "code": "05",
+      "name": "Antioquia",
+      "parent_id": "CO",
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "CO-ANT-MDE",
+      "level": "municipality",
+      "code": "001",
+      "name": "Medellín",
+      "parent_id": "CO-ANT",
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "place-bog-001",
+      "level": "polling_place",
+      "code": "001",
+      "name": "Puesto Centro Cívico (sintético)",
+      "parent_id": "CO-DC-BOG",
+      "authoritative_coordinates": null
+    },
+    {
+      "id": "place-mde-001",
+      "level": "polling_place",
+      "code": "001",
+      "name": "Puesto Biblioteca Norte (sintético)",
+      "parent_id": "CO-ANT-MDE",
+      "authoritative_coordinates": null
+    }
+  ],
+  "mesas": [
+    {
+      "id": "2026-R2-11-001-001-001",
+      "display_number": "001",
+      "polling_place_id": "place-bog-001",
+      "municipality_id": "CO-DC-BOG",
+      "department_id": "CO-DC"
+    },
+    {
+      "id": "2026-R2-11-001-001-002",
+      "display_number": "002",
+      "polling_place_id": "place-bog-001",
+      "municipality_id": "CO-DC-BOG",
+      "department_id": "CO-DC"
+    },
+    {
+      "id": "2026-R2-11-001-001-003",
+      "display_number": "003",
+      "polling_place_id": "place-bog-001",
+      "municipality_id": "CO-DC-BOG",
+      "department_id": "CO-DC"
+    },
+    {
+      "id": "2026-R2-05-001-001-001",
+      "display_number": "001",
+      "polling_place_id": "place-mde-001",
+      "municipality_id": "CO-ANT-MDE",
+      "department_id": "CO-ANT"
+    },
+    {
+      "id": "2026-R2-05-001-001-002",
+      "display_number": "002",
+      "polling_place_id": "place-mde-001",
+      "municipality_id": "CO-ANT-MDE",
+      "department_id": "CO-ANT"
+    },
+    {
+      "id": "2026-R2-05-001-001-003",
+      "display_number": "003",
+      "polling_place_id": "place-mde-001",
+      "municipality_id": "CO-ANT-MDE",
+      "department_id": "CO-ANT"
+    }
+  ],
+  "results": [
+    {
+      "id": "result-001",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-bog-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-11-001-001-001",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 190, "status": "observed" },
+      "blank_votes": { "value": 5, "status": "observed" },
+      "null_votes": { "value": 3, "status": "observed" },
+      "unmarked_votes": { "value": 2, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 105, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 85, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/001.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a111111111111111111111111111111111111111111111111111111111111111",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "result-002",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-bog-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-11-001-001-002",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 192, "status": "observed" },
+      "blank_votes": { "value": 4, "status": "observed" },
+      "null_votes": { "value": 2, "status": "observed" },
+      "unmarked_votes": { "value": 2, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 100, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 92, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/002.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a222222222222222222222222222222222222222222222222222222222222222",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "result-003",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-bog-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-11-001-001-003",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 190, "status": "observed" },
+      "blank_votes": { "value": 5, "status": "observed" },
+      "null_votes": { "value": 3, "status": "observed" },
+      "unmarked_votes": { "value": 2, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 108, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 82, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/003.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a333333333333333333333333333333333333333333333333333333333333333",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "result-004",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-mde-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-05-001-001-001",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 193, "status": "observed" },
+      "blank_votes": { "value": 4, "status": "observed" },
+      "null_votes": { "value": 2, "status": "observed" },
+      "unmarked_votes": { "value": 1, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 95, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 98, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/004.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a444444444444444444444444444444444444444444444444444444444444444",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "result-005",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-mde-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-05-001-001-002",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 191, "status": "observed" },
+      "blank_votes": { "value": 5, "status": "observed" },
+      "null_votes": { "value": 2, "status": "observed" },
+      "unmarked_votes": { "value": 2, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 97, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 94, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/005.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a555555555555555555555555555555555555555555555555555555555555555",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "result-006",
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "geography_id": "place-mde-001",
+      "geography_level": "mesa",
+      "mesa_id": "2026-R2-05-001-001-003",
+      "registered_electors": { "value": 250, "status": "observed" },
+      "voters": { "value": 200, "status": "observed" },
+      "valid_votes": { "value": 194, "status": "observed" },
+      "blank_votes": { "value": 5, "status": "observed" },
+      "null_votes": { "value": 1, "status": "observed" },
+      "unmarked_votes": { "value": 0, "status": "observed" },
+      "candidates": [
+        {
+          "candidate_id": "candidatura-horizonte",
+          "votes": { "value": 97, "status": "observed" }
+        },
+        {
+          "candidate_id": "candidatura-rio",
+          "votes": { "value": 97, "status": "observed" }
+        }
+      ],
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/006.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a666666666666666666666666666666666666666666666666666666666666666",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-normalizer@1.0.0",
+        "methodology_version": null
+      }
+    }
+  ],
+  "bulletins": [
+    {
+      "id": "bulletin-01",
+      "sequence": 1,
+      "published_at": "2026-06-21T21:00:00Z",
+      "completion_percent": 0.1666666667,
+      "reported_mesas": 1,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 105,
+        "candidatura-rio": 85
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/01.json",
+      "content_hash": "b111111111111111111111111111111111111111111111111111111111111111",
+      "data_version": "fixture-2026-round2-v1"
+    },
+    {
+      "id": "bulletin-02",
+      "sequence": 2,
+      "published_at": "2026-06-21T21:10:00Z",
+      "completion_percent": 0.3333333333,
+      "reported_mesas": 2,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 205,
+        "candidatura-rio": 177
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/02.json",
+      "content_hash": "b222222222222222222222222222222222222222222222222222222222222222",
+      "data_version": "fixture-2026-round2-v1"
+    },
+    {
+      "id": "bulletin-03",
+      "sequence": 3,
+      "published_at": "2026-06-21T21:20:00Z",
+      "completion_percent": 0.5,
+      "reported_mesas": 3,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 313,
+        "candidatura-rio": 259
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/03.json",
+      "content_hash": "b333333333333333333333333333333333333333333333333333333333333333",
+      "data_version": "fixture-2026-round2-v1"
+    },
+    {
+      "id": "bulletin-04",
+      "sequence": 4,
+      "published_at": "2026-06-21T21:30:00Z",
+      "completion_percent": 0.6666666667,
+      "reported_mesas": 4,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 408,
+        "candidatura-rio": 357
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/04.json",
+      "content_hash": "b444444444444444444444444444444444444444444444444444444444444444",
+      "data_version": "fixture-2026-round2-v1"
+    },
+    {
+      "id": "bulletin-05",
+      "sequence": 5,
+      "published_at": "2026-06-21T21:40:00Z",
+      "completion_percent": 0.8333333333,
+      "reported_mesas": 5,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 505,
+        "candidatura-rio": 451
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/05.json",
+      "content_hash": "b555555555555555555555555555555555555555555555555555555555555555",
+      "data_version": "fixture-2026-round2-v1"
+    },
+    {
+      "id": "bulletin-06",
+      "sequence": 6,
+      "published_at": "2026-06-21T21:50:00Z",
+      "completion_percent": 1.0,
+      "reported_mesas": 6,
+      "expected_mesas": 6,
+      "candidate_votes": {
+        "candidatura-horizonte": 602,
+        "candidatura-rio": 548
+      },
+      "source_url": "https://example.invalid/fixture/bulletins/06.json",
+      "content_hash": "b666666666666666666666666666666666666666666666666666666666666666",
+      "data_version": "fixture-2026-round2-v1"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "e14-001-delegate",
+      "mesa_id": "2026-R2-11-001-001-001",
+      "document_type": "e14_delegate",
+      "official_url": "https://example.invalid/fixture/e14/001.pdf",
+      "full_file_hash": null,
+      "retrieval_status": "indexed",
+      "extraction_status": "not_requested",
+      "cached_derivative_url": null,
+      "derivative_hash": null,
+      "pii_reviewed": false,
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "e14_delegate",
+        "legal_status": "documentary_evidence",
+        "source_url": "https://example.invalid/fixture/e14/001.pdf",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "c111111111111111111111111111111111111111111111111111111111111111",
+        "parser_version": "fixture-indexer@1.0.0",
+        "transform_version": "fixture-indexer@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "e14-003-delegate",
+      "mesa_id": "2026-R2-11-001-001-003",
+      "document_type": "e14_delegate",
+      "official_url": "https://example.invalid/fixture/e14/003.pdf",
+      "full_file_hash": "c333333333333333333333333333333333333333333333333333333333333333",
+      "retrieval_status": "fetched",
+      "extraction_status": "double_entry_verified",
+      "cached_derivative_url": "https://example.invalid/fixture/e14/003-redacted.webp",
+      "derivative_hash": "d333333333333333333333333333333333333333333333333333333333333333",
+      "pii_reviewed": true,
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "e14_delegate",
+        "legal_status": "documentary_evidence",
+        "source_url": "https://example.invalid/fixture/e14/003.pdf",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "c333333333333333333333333333333333333333333333333333333333333333",
+        "parser_version": "fixture-indexer@1.0.0",
+        "transform_version": "fixture-redactor@1.0.0",
+        "methodology_version": null
+      }
+    },
+    {
+      "id": "e14-005-delegate",
+      "mesa_id": "2026-R2-05-001-001-002",
+      "document_type": "e14_delegate",
+      "official_url": "https://example.invalid/fixture/e14/005.pdf",
+      "full_file_hash": null,
+      "retrieval_status": "unavailable",
+      "extraction_status": "not_requested",
+      "cached_derivative_url": null,
+      "derivative_hash": null,
+      "pii_reviewed": false,
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "e14_delegate",
+        "legal_status": "documentary_evidence",
+        "source_url": "https://example.invalid/fixture/e14/005.pdf",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "c555555555555555555555555555555555555555555555555555555555555555",
+        "parser_version": "fixture-indexer@1.0.0",
+        "transform_version": "fixture-indexer@1.0.0",
+        "methodology_version": null
+      }
+    }
+  ],
+  "evidence_handling": {
+    "e14-003-delegate": {
+      "pii_visual_review": {
+        "reviewer_id": "fixture-reviewer-001",
+        "reviewed": true,
+        "reviewed_at": "2026-07-15T11:49:00Z",
+        "attestation_hash": "e333333333333333333333333333333333333333333333333333333333333333"
+      }
+    }
+  },
+  "comparisons": {
+    "2026-R2-11-001-001-003": [
+      {
+        "field": "candidatura-horizonte",
+        "left_source_type": "pre_count",
+        "right_source_type": "e14_delegate",
+        "left_value": { "value": 108, "status": "observed" },
+        "right_value": { "value": 102, "status": "observed" },
+        "signed_difference": 6,
+        "affected_vote_estimate": 6,
+        "compatible_grain": true,
+        "notes": {
+          "es": "Diferencia documental sintética verificada por doble digitación.",
+          "en": "Synthetic documentary difference verified by double entry."
+        }
+      }
+    ]
+  },
+  "review_signals": [
+    {
+      "id": "signal-003",
+      "mesa_id": "2026-R2-11-001-001-003",
+      "score": 70,
+      "tier": "documentary_review_prioritized",
+      "affected_vote_estimate": 6,
+      "methodology_version": "audit-priority-v1.0.0",
+      "components": [
+        {
+          "component_type": "documentary_difference_major",
+          "points": 70,
+          "observed_value": 6,
+          "comparator": "Preconteo frente a E-14 de delegados, misma mesa y campo",
+          "calculation": "abs(108 - 102) = 6 votos",
+          "peer_definition": null,
+          "limitations": {
+            "es": "Ejemplo sintético; no describe una mesa real.",
+            "en": "Synthetic example; it does not describe a real mesa."
+          },
+          "source_links": [
+            "https://example.invalid/fixture/mesas/003.json",
+            "https://example.invalid/fixture/e14/003.pdf"
+          ],
+          "analyzer_output_hash": null,
+          "family_id": null,
+          "expected_family_count": null,
+          "expected_family_digest": null,
+          "cohort_hash": null,
+          "input_artifact_hash": null,
+          "code_hash": null,
+          "method_hash": null,
+          "p_value": null,
+          "q_value": null,
+          "family_rank": null,
+          "family_size": null,
+          "adjustment_method": null
+        }
+      ],
+      "disclosure": {
+        "es": "Este puntaje prioriza registros para revisión. No es una probabilidad ni un hallazgo de fraude. La ausencia de una señal no demuestra que una mesa estuviera libre de errores.",
+        "en": "This score prioritizes records for review. It is not a probability or finding of fraud. Absence of a signal does not prove that a mesa was error-free."
+      },
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "e14_delegate",
+        "legal_status": "documentary_evidence",
+        "source_url": "https://example.invalid/fixture/e14/003.pdf",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "c333333333333333333333333333333333333333333333333333333333333333",
+        "parser_version": "fixture-indexer@1.0.0",
+        "transform_version": "fixture-reconciliation@1.0.0",
+        "methodology_version": "audit-priority-v1.0.0"
+      }
+    },
+    {
+      "id": "signal-005",
+      "mesa_id": "2026-R2-05-001-001-002",
+      "score": 25,
+      "tier": "statistical_or_coverage_issue",
+      "affected_vote_estimate": null,
+      "methodology_version": "audit-priority-v1.0.0",
+      "components": [
+        {
+          "component_type": "document_missing_duplicated_ambiguous",
+          "points": 25,
+          "observed_value": null,
+          "comparator": "Índice esperado de documentos oficiales",
+          "calculation": "documento esperado - documento recuperado",
+          "peer_definition": null,
+          "limitations": {
+            "es": "La ausencia puede deberse a disponibilidad del servidor de origen.",
+            "en": "Absence may reflect source-server availability."
+          },
+          "source_links": ["https://example.invalid/fixture/e14/005.pdf"],
+          "analyzer_output_hash": null,
+          "family_id": null,
+          "expected_family_count": null,
+          "expected_family_digest": null,
+          "cohort_hash": null,
+          "input_artifact_hash": null,
+          "code_hash": null,
+          "method_hash": null,
+          "p_value": null,
+          "q_value": null,
+          "family_rank": null,
+          "family_size": null,
+          "adjustment_method": null
+        }
+      ],
+      "disclosure": {
+        "es": "Este puntaje prioriza registros para revisión. No es una probabilidad ni un hallazgo de fraude. La ausencia de una señal no demuestra que una mesa estuviera libre de errores.",
+        "en": "This score prioritizes records for review. It is not a probability or finding of fraud. Absence of a signal does not prove that a mesa was error-free."
+      },
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "e14_delegate",
+        "legal_status": "documentary_evidence",
+        "source_url": "https://example.invalid/fixture/e14/005.pdf",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "c555555555555555555555555555555555555555555555555555555555555555",
+        "parser_version": "fixture-indexer@1.0.0",
+        "transform_version": "fixture-reconciliation@1.0.0",
+        "methodology_version": "audit-priority-v1.0.0"
+      }
+    },
+    {
+      "id": "signal-001",
+      "mesa_id": "2026-R2-11-001-001-001",
+      "score": 10,
+      "tier": "no_review_signals",
+      "affected_vote_estimate": null,
+      "methodology_version": "audit-priority-v1.0.0",
+      "components": [
+        {
+          "component_type": "peer_distribution",
+          "points": 10,
+          "observed_value": 0.55,
+          "comparator": "Distribución predictiva sintética de pares elegibles",
+          "calculation": "cola posterior <= 0.001; q <= 0.05; residual estandarizado >= 3.5",
+          "peer_definition": "Mesas sintéticas del mismo puesto; la muestra de producción requeriría al menos 30 pares elegibles.",
+          "limitations": {
+            "es": "El fixture no satisface el tamaño mínimo de producción y solo prueba la interfaz.",
+            "en": "The fixture does not meet the production minimum sample and only exercises the interface."
+          },
+          "source_links": ["https://example.invalid/fixture/mesas/001.json"],
+          "analyzer_output_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+          "family_id": "fixture-2026-round2-v1|presidencia-2026-segunda-vuelta|pre_count|candidate_share|candidatura-horizonte",
+          "expected_family_count": 6,
+          "expected_family_digest": "b0dbbde97f7317458e20b7a3a334d9cd19e71bcf51a2d3d4e8b47e816836d527",
+          "cohort_hash": "7f2140ccbd5d3519e4c88abe54f4a748d0c1c24a8a5e58e11cad6b9afc955432",
+          "input_artifact_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+          "code_hash": "73481cf19a27a3bce1d19df1d9959e251357691c62ca69f0f66a820d870af673",
+          "method_hash": "208925e328f19cb5d73a10bb37bb34d600b07194b4a74491ba30644ca0fca2e7",
+          "p_value": 0.001,
+          "q_value": 0.01,
+          "family_rank": 1,
+          "family_size": 6,
+          "adjustment_method": "benjamini-yekutieli"
+        }
+      ],
+      "disclosure": {
+        "es": "Este puntaje prioriza registros para revisión. No es una probabilidad ni un hallazgo de fraude. La ausencia de una señal no demuestra que una mesa estuviera libre de errores.",
+        "en": "This score prioritizes records for review. It is not a probability or finding of fraud. Absence of a signal does not prove that a mesa was error-free."
+      },
+      "provenance": {
+        "data_version": "fixture-2026-round2-v1",
+        "source_type": "pre_count",
+        "legal_status": "preliminary",
+        "source_url": "https://example.invalid/fixture/mesas/001.json",
+        "retrieved_at": "2026-07-15T11:50:00Z",
+        "content_hash": "a111111111111111111111111111111111111111111111111111111111111111",
+        "parser_version": "fixture-parser@1.0.0",
+        "transform_version": "fixture-signals@1.0.0",
+        "methodology_version": "audit-priority-v1.0.0"
+      }
+    }
+  ],
+  "datasets": [
+    {
+      "id": "fixture-results-json",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "json",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.json",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 8192,
+      "content_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+      "filters": {}
+    },
+    {
+      "id": "fixture-results-csv",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "csv",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.csv",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 2048,
+      "content_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+      "filters": {}
+    },
+    {
+      "id": "fixture-results-parquet",
+      "title": {
+        "es": "Resultados sintéticos por mesa",
+        "en": "Synthetic mesa-level results"
+      },
+      "format": "parquet",
+      "url": "https://example.invalid/releases/fixture-2026-round2-v1/results.parquet",
+      "schema_url": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+      "record_count": 6,
+      "byte_size": 4096,
+      "content_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+      "filters": {}
+    }
+  ]
+}

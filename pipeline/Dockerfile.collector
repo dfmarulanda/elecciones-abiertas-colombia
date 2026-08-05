@@ -1,0 +1,14 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+COPY src/elecciones_pipeline /app/elecciones_pipeline
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN addgroup --system elecciones \
+    && adduser --system --ingroup elecciones --no-create-home elecciones
+
+USER elecciones
+
+CMD ["python", "-m", "elecciones_pipeline.ops.railway_relay"]

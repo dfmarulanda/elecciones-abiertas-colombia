@@ -1,0 +1,93 @@
+{
+  "$schema": "../../packages/contracts/schemas/source-catalog.schema.json",
+  "catalog_version": "2026-08-04.1",
+  "election_slug": "presidencia-2026-primera-vuelta",
+  "verified_at": "2026-08-03T20:25:00-05:00",
+  "publication_state": "ready_for_candidate_release",
+  "official_hub": "https://wapp.registraduria.gov.co/electoral/2026/presidente-de-la-republica/",
+  "collection_policy": {
+    "maximum_concurrency_per_host": 2,
+    "requests_per_second_minimum": 2,
+    "requests_per_second_maximum": 5,
+    "require_https": true,
+    "follow_retry_after": true,
+    "conditional_requests": true,
+    "raw_bytes_before_parse": true
+  },
+  "allowed_hosts": [
+    "wapp.registraduria.gov.co",
+    "resultadosprecpresidente2026-1v.registraduria.gov.co",
+    "escrutiniospresidente2026.registraduria.gov.co",
+    "divulgacione14presidente.registraduria.gov.co",
+    "divulgacione14presidentet.registraduria.gov.co",
+    "www.cne.gov.co",
+    "cnegovco-my.sharepoint.com",
+    "cnegovco.sharepoint.com"
+  ],
+  "sources": [
+    {
+      "id": "registraduria-precount-2026-round1",
+      "role": "preliminary_precount",
+      "legal_status": "informational_not_legally_binding",
+      "election_id": "1",
+      "election_sigla": "PR",
+      "entrypoints": {
+        "configuration": "https://resultadosprecpresidente2026-1v.registraduria.gov.co/json/web/config.json",
+        "nomenclator": "https://resultadosprecpresidente2026-1v.registraduria.gov.co/json/nomenclator.json",
+        "national_results": "https://resultadosprecpresidente2026-1v.registraduria.gov.co/json/ACT/PR/00.json",
+        "mesa_results_template": "https://resultadosprecpresidente2026-1v.registraduria.gov.co/json/ACT/PR/{mesa-id}.json"
+      },
+      "discovery": "configuration_then_nomenclator_then_verified_polling_place_manifests",
+      "notes": "Pre-count is preliminary and has no legal effect. Mesa identifiers must be discovered from official polling-place ACT mapagan records; the URL template is never used to invent identifiers."
+    },
+    {
+      "id": "registraduria-scrutiny-2026-round1",
+      "role": "legally_valid_scrutiny_by_published_grain",
+      "legal_status": "legally_binding_within_explicitly_published_scope",
+      "entrypoints": {
+        "manifest": "https://escrutiniospresidente2026.registraduria.gov.co/data/index.json"
+      },
+      "discovery": "manifest_only",
+      "notes": "The official scrutiny application publishes this exact manifest via its reviewed /data/ configuration. Only paths explicitly listed by this immutable manifest snapshot may be collected. Raw JSON indexes may describe mesas, commissions, aggregate progress, or documentary links; no aggregate is coerced into final mesa facts and no linked document URL is followed by the raw-only crawler."
+    },
+    {
+      "id": "registraduria-e14-delegates-2026-round1",
+      "role": "documentary_evidence_delegate_copy",
+      "legal_status": "documentary_evidence_non_authoritative_extraction",
+      "entrypoints": {
+        "index": "https://divulgacione14presidente.registraduria.gov.co/"
+      },
+      "collection": "index_metadata_only_no_document_fetch",
+      "status": "landing_host_transport_unreliable",
+      "notes": "The official hub links this host. A normal HTTP/2 request returned a protocol error during this audit, so it is not an enumeration root. E-14 references observed inside manifest-listed JSON remain external documentary links only: the pipeline stores canonical mesa/reference metadata and never requests, caches, proxies, OCRs, redacts, extracts, or transcribes the document."
+    },
+    {
+      "id": "registraduria-e14-transmission-2026-round1",
+      "role": "documentary_evidence_transmission_copy",
+      "legal_status": "documentary_evidence_non_authoritative_extraction",
+      "entrypoints": {
+        "index": "https://divulgacione14presidentet.registraduria.gov.co/"
+      },
+      "collection": "index_metadata_only_no_document_fetch",
+      "status": "landing_host_transport_unreliable",
+      "notes": "The official hub links this host. A normal HTTP/2 request returned a protocol error during this audit, so it is not an enumeration root. E-14 references remain external documentary links only; no document retrieval or numeric extraction is permitted."
+    },
+    {
+      "id": "cne-final-declaration-2026-round1",
+      "role": "controlling_final_declaration",
+      "legal_status": "controlling_final_national_declaration",
+      "entrypoints": {
+        "resolution_catalog": "https://www.cne.gov.co/resoluciones-cne-2026",
+        "presidential_results_page": "https://www.cne.gov.co/elecciones/elecciones-2026/resultados-elecciones-presidenciales-2026",
+        "e24_first_round": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQBWCNftg6zmSZr7G3daPcjaAVLGCgiDax340GngOp_7Fz8?e=hI73ge",
+        "e26_first_round": "https://cnegovco-my.sharepoint.com/:b:/g/personal/prensa_cne_gov_co/IQBKrloFeYHFTZL1I4Qa1yWiAUOSCo-txABzZTafZrbkqtE?e=ScVIxn",
+        "declaration_resolution": "https://www.cne.gov.co/resoluciones-cne-2026/cne-dgc-aceg-029375-2026-gen-r",
+        "declaration": "https://cnegovco.sharepoint.com/:b:/g/IQCj7SZf0vHOQrxU23kU5A6GAQBk_ZkoTisXOhdsieiqd5o?e=2AiUrt"
+      },
+      "collection": "catalog_metadata_only_no_document_fetch",
+      "status": "verified",
+      "notes": "Historical access observations and hashes are retained for provenance: E-24 SHA-256 ea58f0f560c873baff93fa3e105daf1c6cd47e9d9faef20a0832e68a5279348e, E-26 SHA-256 0f9f880d43e9842f6fcbac7b989116b2a5ac6190a88f81418d954088b7fd0e16, and the declaration resolution SHA-256 e5b5397609357a191e2bb35b4d8347856aa82ad8e9ad2ddd6dd4a1b34907c2da. Going forward these are external official references only: no PDF is fetched, cached, proxied, OCRed, redacted, extracted, or transcribed."
+    }
+  ],
+  "contextual_sources": []
+}

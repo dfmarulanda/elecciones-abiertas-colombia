@@ -1,0 +1,75 @@
+# Local collection state and immutable artifacts never belong in a web deploy.
+.pipeline/
+.state/
+.turbo/
+.venv/
+artifacts/
+data/manifests/
+data/raw/
+data/releases/
+data/transcriptions/
+
+# Keep only the frontend and its shared TypeScript contract workspace.
+apps/api/
+pipeline/
+packages/contracts/dist/
+packages/contracts/.turbo/
+packages/contracts/node_modules/
+
+# Keep the reviewed public source catalog, not other operational config.
+
+# Development, browser-proof, test, and generated output.
+output/
+.playwright-cli/
+.design-lagann/
+.github/
+docs/
+apps/web/.next/
+apps/web/.turbo/
+apps/web/.vercel/
+apps/web/.playwright-cli/
+apps/web/.design-lagann/
+apps/web/output/
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/e2e/
+apps/web/node_modules/
+apps/web/coverage/
+apps/web/*.tsbuildinfo
+apps/web/playwright*.config.ts
+apps/web/vitest.config.ts
+apps/web/**/*.test.ts
+apps/web/**/*.test.tsx
+
+# Local caches, databases, credentials, and unrelated Python sources.
+node_modules/
+coverage/
+dist/
+build/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.tsbuildinfo
+.env
+.env.*
+apps/web/.env
+apps/web/.env.*
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.uv-cache/
+*.py[cod]
+pyproject.toml
+uv.lock
+.python-version
+compose.yaml
+
+# Repository-only material is not needed by the frontend build.
+.git/
+.gitignore
+.editorconfig
+.prettierignore
+CONTRIBUTING.md
+SECURITY.md
+scripts/

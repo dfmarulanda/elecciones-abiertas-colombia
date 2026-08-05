@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eleccionesabiertas.co/schemas/result-fact.schema.json",
+  "title": "Election result fact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "election_slug",
+    "geography_id",
+    "geography_level",
+    "mesa_id",
+    "registered_electors",
+    "voters",
+    "valid_votes",
+    "blank_votes",
+    "null_votes",
+    "unmarked_votes",
+    "candidates",
+    "provenance"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "election_slug": { "type": "string", "minLength": 1 },
+    "geography_id": { "type": "string", "minLength": 1 },
+    "geography_level": {
+      "enum": [
+        "national",
+        "department",
+        "municipality",
+        "zone",
+        "polling_place",
+        "mesa"
+      ]
+    },
+    "mesa_id": { "type": ["string", "null"] },
+    "registered_electors": { "$ref": "#/$defs/metric" },
+    "voters": { "$ref": "#/$defs/metric" },
+    "valid_votes": { "$ref": "#/$defs/metric" },
+    "blank_votes": { "$ref": "#/$defs/metric" },
+    "null_votes": { "$ref": "#/$defs/metric" },
+    "unmarked_votes": { "$ref": "#/$defs/metric" },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate_id", "votes"],
+        "properties": {
+          "candidate_id": { "type": "string", "minLength": 1 },
+          "votes": { "$ref": "#/$defs/metric" }
+        }
+      }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "status"],
+      "properties": {
+        "value": { "type": ["integer", "null"], "minimum": 0 },
+        "status": {
+          "enum": ["observed", "unknown", "unavailable", "not_applicable"]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_version",
+        "source_type",
+        "legal_status",
+        "source_url",
+        "retrieved_at",
+        "content_hash",
+        "parser_version",
+        "transform_version",
+        "methodology_version"
+      ],
+      "properties": {
+        "data_version": { "type": "string", "minLength": 1 },
+        "source_type": {
+          "enum": [
+            "final_declaration",
+            "scrutiny",
+            "e14_delegate",
+            "e14_transmission",
+            "pre_count",
+            "contextual_baseline"
+          ]
+        },
+        "legal_status": {
+          "enum": [
+            "controlling_final",
+            "official_scrutiny",
+            "documentary_evidence",
+            "preliminary",
+            "context_only"
+          ]
+        },
+        "source_url": { "type": "string", "format": "uri" },
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "parser_version": { "type": "string", "minLength": 1 },
+        "transform_version": { "type": "string", "minLength": 1 },
+        "methodology_version": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
