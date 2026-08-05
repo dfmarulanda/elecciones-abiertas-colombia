@@ -796,11 +796,19 @@ class HistoricalDuckDBRepository:
         output: list[dict[str, object]] = []
         for release_id, manifest in self._releases.items():
             relation, relation_params = self._geography_relation(release_id)
+            # The shared read model holds every release's geography in one
+            # table, so the relation alone does not scope this to one release.
+            # Without the manifest's own declared slugs each release advertises
+            # every election, including other releases' -- a listing that both
+            # misstates provenance and yields URLs the data path rejects.
+            slugs = sorted(self._slugs(manifest))
+            placeholders = ",".join("?" for _ in slugs)
             with self._connect() as connection:
                 rows = connection.execute(
                     f"""SELECT DISTINCT election_slug,round,election_date
-                        FROM {relation} ORDER BY election_date""",
-                    relation_params,
+                        FROM {relation} WHERE election_slug IN ({placeholders})
+                        ORDER BY election_date""",
+                    [*relation_params, *slugs],
                 ).fetchall()
             sources = {source["id"].rsplit("-", 1)[-1]: source for source in manifest["sources"]}
             for slug, round_number, election_date in rows:

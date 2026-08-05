@@ -302,3 +302,43 @@ def test_malformed_context_summary_fails_closed(
         response = client.get(path)
     assert response.status_code == 503
     assert response.json()["title"] == "Read model unavailable"
+
+
+def test_public_elections_never_advertises_another_release_elections(tmp_path: Path) -> None:
+    """The shared read model holds every release's geography in one table, so
+    the listing must be scoped by the manifest's own declared slugs. Otherwise
+    each release advertises all four elections -- misstating provenance and
+    producing release/election URLs the data path correctly rejects with 404."""
+    packaged = tmp_path / "data"
+    (packaged / "manifests").mkdir(parents=True)
+    (packaged / "releases").mkdir()
+    for release_id in RELEASES:
+        os.symlink(
+            DATA / "manifests" / f"{release_id}.json",
+            packaged / "manifests" / f"{release_id}.json",
+        )
+        os.symlink(DATA / "releases" / release_id, packaged / "releases" / release_id)
+
+    repository = HistoricalDuckDBRepository(packaged, RELEASES, RELEASES[1])
+    index = packaged / "historical-geography.duckdb"
+    repository.build_geography_read_model(index)
+    repository.close()
+
+    indexed = HistoricalDuckDBRepository(packaged, RELEASES, RELEASES[1])
+    listed = indexed.public_elections()
+
+    # Exactly the two rounds each release actually carries.
+    assert len(listed) == 4, listed
+    by_release: dict[str, set[str]] = {}
+    for entry in listed:
+        by_release.setdefault(str(entry["release_id"]), set()).add(str(entry["election_slug"]))
+    assert by_release == {
+        RELEASES[0]: {"presidencia-2018-round-1", "presidencia-2018-round-2"},
+        RELEASES[1]: {"presidencia-2022-round-1", "presidencia-2022-round-2"},
+    }
+    # Every advertised pairing must actually resolve.
+    for entry in listed:
+        rows = indexed.normalized_results(
+            str(entry["release_id"]), str(entry["election_slug"]), {}, None, 1
+        )
+        assert rows
