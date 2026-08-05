@@ -183,20 +183,19 @@
     "eyebrow": "Comparison",
     "title": "Was 2026 a strange election?",
     "introA": "The only way to answer that is to measure 2018 and 2022 with the same code and look at all three together. You will never see the 2026 number alone here, because a number alone means nothing.",
-    "introB": "It is like a temperature: 37.2 is alarming until you learn the person next to you read 38.5 and was healthy. That is why 2026 always appears beside 2018 and 2022, measured with the same thermometer.",
-    "year": {
-      "2018": {
-        "tag": "Second round",
-        "note": "The oldest reference point, measured with the same procedure."
-      },
-      "2022": {
-        "tag": "Second round",
-        "note": "The middle point. Several tests deviate more here than in 2026."
-      },
-      "2026": {
-        "tag": "Second round · pre-count",
-        "note": "The election in question. Never shown alone: read beside the other two."
-      }
+    "thermometer": {
+      "lead": "These tests produce numbers that are alarming even in perfectly clean elections.",
+      "body": "It is like a temperature. 37.2 is alarming until you learn the person next to you read 38.5 and was healthy. That is why 2026 always appears beside 2018 and 2022, measured with the same thermometer."
+    },
+    "legend": {
+      "1": "Each test compares 2026 against the range of values already seen in 2018 and 2022.",
+      "2": "All three elections are measured with the same code, so none of them carries more weight than the others.",
+      "3": "If 2026 falls within what was already seen, it resembles the earlier elections. If it falls outside, it is flagged for human review — never as a conclusion."
+    },
+    "benford": {
+      "label": "What about Benford's law, which fails in all three?",
+      "box": "there is nothing to compare here",
+      "body": "This test is not built for counting votes: mesas vary too widely in size, and that breaks it. It fails in all three elections, even the ones nobody disputes. It is still published, because hiding it would look worse — but no band is drawn for it here, because comparing it would not mean anything."
     },
     "footnote": "The concrete figures for each test are published in the methodology, with their code, so anyone can recompute them. Here the comparison matters, not the isolated value."
   },
@@ -204,21 +203,23 @@
     "eyebrow": "Documentary evidence",
     "title": "Table 003",
     "intro": "Five of the six tables in this example agree across all three layers. This one records a six-vote difference between the election-night pre-count and the E-14 acta. A difference like this is something to review, not a conclusion.",
-    "layer": {
+    "figureAlt": "The 190 votes at table 003, with the six in dispute highlighted",
+    "figureCaption": "190 votes · table 2026-R2-11-001-001-003",
+    "comparison": {
       "precount": {
-        "label": "Pre-count",
-        "value": "96",
-        "note": "Election-night transmission, no legal value."
+        "label": "Pre-count · 21:50",
+        "value": "108",
+        "note": "What the table transmitted that night."
       },
       "e14": {
-        "label": "E-14 acta",
-        "value": "90",
-        "note": "The document the poll workers signed on site."
+        "label": "E-14 acta · paper",
+        "value": "102",
+        "note": "What the poll workers signed."
       },
-      "scrutiny": {
-        "label": "Scrutiny",
-        "value": "90",
-        "note": "The count with legal value, days later."
+      "difference": {
+        "label": "Difference",
+        "value": "6",
+        "note": "Verified by double keying."
       }
     },
     "footnote": "Illustration over synthetic data. The layers are kept separate on purpose: one never silently replaces another."
@@ -226,30 +227,49 @@
   "territories": {
     "eyebrow": "Territories",
     "title": "Where it was collected",
-    "intro": "Departments without collection are marked as empty, not as zero. No data does not mean no votes: it means nothing was collected here.",
+    "intro": "The remaining 31 departments appear empty because nothing was collected there, not because there are no votes.",
+    "unit": {
+      "mesas": "tables",
+      "votes": "votes"
+    },
+    "map": {
+      "title": "Territorial coverage map of Colombia",
+      "legendReporting": "Reports data in this version",
+      "legendNotCollected": "Not collected in this version",
+      "legendDepartments": "departments",
+      "note": "Geometry: Natural Earth (public domain). Department boundaries are not drawn because this version does not publish a reviewed geographic equivalence.",
+      "error": "The official geometry could not be loaded. The coverage table is still available.",
+      "tooltipOf": "of",
+      "tooltipPrecount": "preliminary pre-count",
+      "noscript": "The interactive map requires JavaScript. The coverage table below carries the same information and does not depend on JavaScript."
+    },
+    "table": {
+      "caption": "Coverage by territory: tables and votes reported in this version",
+      "territory": "Territory",
+      "mesas": "Tables",
+      "horizonte": "Horizonte",
+      "rio": "Río",
+      "total": "Total",
+      "status": "Status",
+      "statusReporting": "Reports data"
+    },
     "covered": {
-      "antioquia": {
-        "name": "Example A",
-        "votes": "—",
-        "meta": "illustrative coverage · synthetic data"
+      "bog": {
+        "name": "Bogotá, D. C.",
+        "place": "Centro Cívico polling place"
       },
-      "cundinamarca": {
-        "name": "Example B",
-        "votes": "—",
-        "meta": "illustrative coverage · synthetic data"
-      },
-      "valle": {
-        "name": "Example C",
-        "votes": "—",
-        "meta": "illustrative coverage · synthetic data"
+      "med": {
+        "name": "Antioquia · Medellín",
+        "place": "La Candelaria polling place"
       }
     },
     "uncovered": {
-      "name": "Not collected",
+      "name": "Departments not collected",
       "stateLabel": "State: not collected (distinct from zero)",
       "meta": "not evaluable",
       "note": "A hollow dashed mark: the value is unavailable. A zero would look different, because zero and unknown are not the same."
-    }
+    },
+    "uncoveredStat": "departments not collected in this version."
   },
   "process": {
     "eyebrow": "Process",
@@ -300,6 +320,10 @@
     "eyebrow": "Log",
     "title": "How it was built",
     "intro": "The order in which decisions were taken matters as much as the result. Several — separating the layers, not filling the gaps, excluding Benford — were taken before the 2026 data was seen, which is why they hold up afterward.",
+    "trackLabel": "Horizontal timeline of the log",
+    "trackHint": "Scroll horizontally with a mouse, trackpad, or the arrow keys.",
+    "milestone": "Milestone",
+    "of": "of",
     "entry": {
       "layers": {
         "when": "before the data",
@@ -333,6 +357,7 @@
     "title": "Where it all comes from",
     "intro": "Everything above comes from three files and an OpenAPI contract. Each version is immutable and travels with its hash, so anyone can recompute the result without asking permission.",
     "apiLabel": "Read contract",
+    "docsLabel": "View the documentation",
     "file": {
       "json": {
         "format": "JSON",

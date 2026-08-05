@@ -261,17 +261,12 @@ export function NationalSummary({
     <main
       id="main-content"
       tabIndex={-1}
-      className="mx-auto max-w-[1440px] px-[clamp(1rem,5.55vw,5rem)] py-4 sm:py-12"
+      className="mx-auto max-w-[1440px] px-gutter py-4 sm:py-12"
     >
-      {data.synthetic && (
-        <div
-          className="flex items-start gap-2 border border-b-0 border-ink bg-neon px-3 py-2 text-xs font-bold leading-4 text-ink sm:gap-3 sm:px-4 sm:py-2.5 sm:text-sm sm:leading-5"
-          role="status"
-        >
-          <span aria-hidden="true">!</span>
-          <p>{release.fixture_notice[locale]}</p>
-        </div>
-      )}
+      {/* The synthetic disclosure lives once in the site shell, above every
+          page. A second banner here put two identical bands above the fold —
+          anxious, not careful — so it was removed. The shell band is canonical
+          (id="synthetic-disclosure"). */}
       <section className="border border-ink" aria-labelledby="page-title">
         <div className="grid lg:grid-cols-12">
           <header className="px-4 py-3 sm:px-6 sm:py-7 lg:col-span-8 lg:px-8">

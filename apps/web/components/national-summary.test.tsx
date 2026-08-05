@@ -72,10 +72,9 @@ describe("national summary statistics-first reading", () => {
 
     expect(main).toHaveAttribute("id", "main-content");
     expect(main).toHaveAttribute("tabindex", "-1");
-    expect(text).toContain(fixture.fixture_notice.es);
-    expect(text.indexOf(fixture.fixture_notice.es)).toBeLessThan(
-      text.indexOf("Comparación de candidaturas"),
-    );
+    // The synthetic-fixture banner moved to the site shell (rendered once,
+    // above every page), so it is no longer part of this component's output.
+    // The publication-state label below still marks the fixture in place.
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Presidencia 2026 · segunda vuelta",
     );

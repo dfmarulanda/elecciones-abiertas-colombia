@@ -166,7 +166,12 @@ export function FieldSection({
       aria-label={label}
       className={`ec-field-dark ${className}`}
     >
-      <Gutter className="py-14 sm:py-16">{children}</Gutter>
+      {/* Design measure: dark sections run padding:60px 0 58px at 1440px
+          (mesa/proceso — conteo's own hero uses 60/54 and is handled where
+          that hero is built). Compact on mobile, exact from sm up. */}
+      <Gutter className="pt-12 pb-12 sm:pt-[60px] sm:pb-[58px]">
+        {children}
+      </Gutter>
     </section>
   );
 }
@@ -190,7 +195,7 @@ export function SectionHeader({
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
-    <div className="grid items-start gap-x-14 gap-y-5 border-t border-rule pt-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+    <div className="grid items-start gap-x-16 gap-y-5 border-t border-rule pt-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
       <div>
         <Eyebrow>{eyebrow}</Eyebrow>
         <Heading id={id} className="ec-head mt-4">

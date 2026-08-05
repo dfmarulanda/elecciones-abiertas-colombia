@@ -183,20 +183,19 @@
     "eyebrow": "Comparación",
     "title": "¿2026 fue una elección rara?",
     "introA": "La única forma de responder eso es medir 2018 y 2022 con el mismo código y mirar las tres juntas. Aquí nunca va a ver el número de 2026 solo, porque un número solo no significa nada.",
-    "introB": "Es como una temperatura: 37,2 asusta hasta que uno se entera de que el de al lado marcó 38,5 y estaba sano. Por eso 2026 siempre aparece al lado de 2018 y 2022, medidos con el mismo termómetro.",
-    "year": {
-      "2018": {
-        "tag": "Segunda vuelta",
-        "note": "El punto de referencia más antiguo, medido con el mismo procedimiento."
-      },
-      "2022": {
-        "tag": "Segunda vuelta",
-        "note": "El punto intermedio. Varias pruebas se desvían aquí más que en 2026."
-      },
-      "2026": {
-        "tag": "Segunda vuelta · preconteo",
-        "note": "La elección en cuestión. Nunca se muestra sola: se lee al lado de las otras dos."
-      }
+    "thermometer": {
+      "lead": "Estas pruebas producen números que asustan incluso en elecciones perfectamente limpias.",
+      "body": "Es como una temperatura. 37,2 asusta hasta que uno se entera de que el de al lado marcó 38,5 y estaba sano. Por eso 2026 siempre aparece al lado de 2018 y 2022, medidos con el mismo termómetro."
+    },
+    "legend": {
+      "1": "Cada prueba compara 2026 con el rango de valores que ya se había visto en 2018 y 2022.",
+      "2": "Las tres elecciones se miden con el mismo código, así que ninguna pesa más que las otras.",
+      "3": "Si 2026 cae dentro de lo ya visto, se parece a las anteriores. Si cae fuera, se marca para revisión humana — nunca como conclusión."
+    },
+    "benford": {
+      "label": "¿Y la prueba de Benford, que sale mal en las tres?",
+      "box": "aquí no hay nada que comparar",
+      "body": "Esta prueba no sirve para contar votos: las mesas tienen tamaños muy distintos y eso la rompe. Sale mal en las tres elecciones, incluso en las que nadie discute. Se publica igual, porque esconderla se vería peor — pero no se le dibuja una franja aquí, porque compararla no significaría nada."
     },
     "footnote": "Las cifras concretas de cada prueba se publican en la metodología, con su código, para que cualquiera las recalcule. Aquí importa la comparación, no el valor aislado."
   },
@@ -204,21 +203,23 @@
     "eyebrow": "Evidencia documental",
     "title": "Mesa 003",
     "intro": "Cinco de las seis mesas de este ejemplo dan lo mismo en las tres capas. Esta registra una diferencia de seis votos entre el preconteo de la noche y el acta E-14. Una diferencia así es un dato para revisar, no una conclusión.",
-    "layer": {
+    "figureAlt": "Los 190 votos de la mesa 003, con los seis en disputa resaltados",
+    "figureCaption": "190 votos · mesa 2026-R2-11-001-001-003",
+    "comparison": {
       "precount": {
-        "label": "Preconteo",
-        "value": "96",
-        "note": "Transmisión de la noche, sin valor jurídico."
+        "label": "Preconteo · 21:50",
+        "value": "108",
+        "note": "Lo que transmitió la mesa esa noche."
       },
       "e14": {
-        "label": "Acta E-14",
-        "value": "90",
-        "note": "El documento que firmaron los jurados en el puesto."
+        "label": "Acta E-14 · papel",
+        "value": "102",
+        "note": "Lo que firmaron los jurados."
       },
-      "scrutiny": {
-        "label": "Escrutinio",
-        "value": "90",
-        "note": "El conteo con valor legal, días después."
+      "difference": {
+        "label": "Diferencia",
+        "value": "6",
+        "note": "Verificada por doble digitación."
       }
     },
     "footnote": "Ilustración sobre datos sintéticos. Las capas se guardan separadas a propósito: una nunca reemplaza a otra en silencio."
@@ -226,30 +227,49 @@
   "territories": {
     "eyebrow": "Territorios",
     "title": "Dónde se recolectó",
-    "intro": "Los departamentos sin recolección aparecen marcados como vacíos, no como cero. Que no haya dato no significa que no haya votos: significa que aquí no se recogió.",
+    "intro": "Los 31 departamentos restantes aparecen vacíos porque no hay recolección, no porque no haya votos.",
+    "unit": {
+      "mesas": "mesas",
+      "votes": "votos"
+    },
+    "map": {
+      "title": "Mapa de cobertura territorial de Colombia",
+      "legendReporting": "Reporta datos en esta versión",
+      "legendNotCollected": "Sin recolección en esta versión",
+      "legendDepartments": "departamentos",
+      "note": "Geometría: Natural Earth (dominio público). Los límites departamentales no se dibujan porque esta versión no publica una equivalencia geográfica revisada.",
+      "error": "No se pudo cargar la geometría oficial. La tabla de cobertura sigue disponible.",
+      "tooltipOf": "de",
+      "tooltipPrecount": "preconteo preliminar",
+      "noscript": "El mapa interactivo requiere JavaScript. La tabla de cobertura, debajo, tiene la misma información y no depende de JavaScript."
+    },
+    "table": {
+      "caption": "Cobertura por territorio: mesas y votos reportados en esta versión",
+      "territory": "Territorio",
+      "mesas": "Mesas",
+      "horizonte": "Horizonte",
+      "rio": "Río",
+      "total": "Total",
+      "status": "Estado",
+      "statusReporting": "Reporta datos"
+    },
     "covered": {
-      "antioquia": {
-        "name": "Ejemplo A",
-        "votes": "—",
-        "meta": "cobertura ilustrativa · datos sintéticos"
+      "bog": {
+        "name": "Bogotá, D. C.",
+        "place": "Puesto Centro Cívico"
       },
-      "cundinamarca": {
-        "name": "Ejemplo B",
-        "votes": "—",
-        "meta": "cobertura ilustrativa · datos sintéticos"
-      },
-      "valle": {
-        "name": "Ejemplo C",
-        "votes": "—",
-        "meta": "cobertura ilustrativa · datos sintéticos"
+      "med": {
+        "name": "Antioquia · Medellín",
+        "place": "Puesto La Candelaria"
       }
     },
     "uncovered": {
-      "name": "Sin recolección",
+      "name": "Departamentos sin recolección",
       "stateLabel": "Estado: no recolectado (distinto de cero)",
       "meta": "no evaluable",
       "note": "Marca hueca y punteada: el dato no está disponible. Un cero se vería distinto, porque cero y desconocido no son lo mismo."
-    }
+    },
+    "uncoveredStat": "departamentos sin recolección en esta versión."
   },
   "process": {
     "eyebrow": "Proceso",
@@ -300,6 +320,10 @@
     "eyebrow": "Bitácora",
     "title": "Cómo se construyó",
     "intro": "El orden en que se tomaron las decisiones importa tanto como el resultado. Varias — separar las capas, no rellenar los vacíos, excluir Benford — se tomaron antes de mirar los datos de 2026, y por eso se pueden sostener después.",
+    "trackLabel": "Línea de tiempo horizontal de la bitácora",
+    "trackHint": "Desplácese en horizontal con el mouse, el trackpad o las flechas del teclado.",
+    "milestone": "Hito",
+    "of": "de",
     "entry": {
       "layers": {
         "when": "antes de los datos",
@@ -333,6 +357,7 @@
     "title": "De dónde sale todo",
     "intro": "Todo lo anterior sale de tres archivos y un contrato OpenAPI. Cada versión es inmutable y viaja con su huella, así que cualquiera puede recalcular el resultado sin pedir permiso.",
     "apiLabel": "Contrato de lectura",
+    "docsLabel": "Ver la documentación",
     "file": {
       "json": {
         "format": "JSON",
