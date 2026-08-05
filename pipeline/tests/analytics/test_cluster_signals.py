@@ -150,15 +150,20 @@ def test_no_emitted_field_carries_fraud_vocabulary() -> None:
         assert not any(word in blob for word in forbidden)
 
 
-def test_department_pooled_results_are_marked_uninterpretable_in_limitations() -> None:
+def test_non_municipality_pools_are_marked_uninterpretable_in_limitations() -> None:
     """On real Colombian geography most municipalities hold far fewer than 30
-    polling places, so the department fallback dominates and pools politically
-    incomparable municipalities. Measured on the real 2026 second-round
-    department 05: 448 of 638 places fell back to department pooling, and only
-    2 of 46 municipalities could supply a municipality-level reference."""
+    polling places. Measured on the real 2026 second round, only 2 of 46
+    municipalities in department 05 could supply a municipality-level
+    reference, so 448 of 638 places fall to a size band. Size banding removes
+    the administrative mismatch but not the political one: the median effect
+    against a size-band reference is still ~13pp in department 05 and ~8pp in
+    Bogota, so those results stay uninterpretable and must say so."""
     signals = cluster_signals(_family())
     disclosure = " ".join(signals[0].limitations).lower()
     assert "like-for-like" in disclosure
     assert "uninterpretable" in disclosure
     # pool_level is always published so a reader can tell which comparison ran.
-    assert all(item.pool_level in {"municipality", "department", None} for item in signals)
+    assert all(
+        item.pool_level in {"municipality", "department_size_band", "department", None}
+        for item in signals
+    )

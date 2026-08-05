@@ -89,10 +89,13 @@ class ClusterSignal:
         "A polling place is evaluable only when every one of its mesas carries a complete "
         "source-joined ballot vector; partial places are excluded, not imputed.",
         "Real Colombian geography rarely supplies 30 peer places inside one municipality, so "
-        "most places fall back to a department reference that pools politically incomparable "
-        "municipalities. A department-wide expected rate is not a like-for-like comparison, and "
-        "an effect measured against it is heterogeneity, not evidence. Treat any department-pooled "
-        "result as uninterpretable until a like-for-like peer definition is established.",
+        "most places are compared inside a department size band instead. Size banding removes "
+        "the worst administrative mismatch -- a one-mesa vereda is no longer measured against "
+        "Medellin -- but it does not make the comparison like-for-like. Measured on the real "
+        "2026 second round, the median effect against a size-band reference is still about 13 "
+        "percentage points in department 05 and 8 in Bogota, which is political geography rather "
+        "than evidence. Any result not pooled at municipality level remains uninterpretable "
+        "until a peer definition that controls for political composition is established.",
         "Nothing here is eligible for public audit-priority points.",
     )
     output_hash: str = field(default="")
@@ -145,6 +148,24 @@ def _aggregate(rows: tuple[MesaMetrics, ...], metric: Metric) -> tuple[_Cluster 
     )
 
 
+def _size_band(mesas: int) -> str:
+    """Coarse polling-place size band.
+
+    Bands are fixed rather than data-derived so a place's reference group does
+    not shift when neighbouring places change, which would make results
+    non-reproducible across releases.
+    """
+    if mesas <= 2:
+        return "1-2"
+    if mesas <= 5:
+        return "3-5"
+    if mesas <= 10:
+        return "6-10"
+    if mesas <= 20:
+        return "11-20"
+    return "21+"
+
+
 def _family_id(row: MesaMetrics) -> str:
     return "|".join(
         (
@@ -180,11 +201,22 @@ def cluster_signals(records: Iterable[MesaMetrics]) -> tuple[ClusterSignal, ...]
         else:
             clusters[place_id] = cluster
 
-    # Reference pools of whole places, narrowest first, exactly as the mesa
-    # screen does -- but the unit removed is the entire target cluster.
+    # Reference pools of whole places, narrowest first.  The unit removed is
+    # always the entire target cluster.
+    #
+    # A municipality is the natural like-for-like reference, but real Colombian
+    # geography rarely supplies 30 polling places inside one: measured on the
+    # real 2026 second round, only 2 of 46 municipalities in department 05
+    # could, so 448 of 638 places fell through to a department reference that
+    # pools Medellin with rural municipios.  The size band is an intermediate
+    # that controls for what most distinguishes those places -- a one-mesa
+    # veredal puesto and a forty-mesa urban one are not peers -- without
+    # inventing an urban/rural classification this repository does not hold.
     pools: dict[tuple[str, str], list[str]] = defaultdict(list)
     for place_id, cluster in clusters.items():
         pools[("municipality", cluster.municipality_id)].append(place_id)
+        pools[("department_size_band", f"{cluster.department_id}|{_size_band(cluster.mesas)}")
+              ].append(place_id)
         pools[("department", cluster.department_id)].append(place_id)
 
     provisional: list[ClusterSignal] = []
@@ -225,6 +257,7 @@ def cluster_signals(records: Iterable[MesaMetrics]) -> tuple[ClusterSignal, ...]
         pool_members: list[str] = []
         for candidate_level, key in (
             ("municipality", cluster.municipality_id),
+            ("department_size_band", f"{cluster.department_id}|{_size_band(cluster.mesas)}"),
             ("department", cluster.department_id),
         ):
             candidate = pools.get((candidate_level, key), [])
