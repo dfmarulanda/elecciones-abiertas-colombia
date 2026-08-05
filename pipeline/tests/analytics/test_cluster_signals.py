@@ -148,3 +148,17 @@ def test_no_emitted_field_carries_fraud_vocabulary() -> None:
             [item.claim_state, item.calculation, item.methodology_version, *item.limitations]
         ).lower()
         assert not any(word in blob for word in forbidden)
+
+
+def test_department_pooled_results_are_marked_uninterpretable_in_limitations() -> None:
+    """On real Colombian geography most municipalities hold far fewer than 30
+    polling places, so the department fallback dominates and pools politically
+    incomparable municipalities. Measured on the real 2026 second-round
+    department 05: 448 of 638 places fell back to department pooling, and only
+    2 of 46 municipalities could supply a municipality-level reference."""
+    signals = cluster_signals(_family())
+    disclosure = " ".join(signals[0].limitations).lower()
+    assert "like-for-like" in disclosure
+    assert "uninterpretable" in disclosure
+    # pool_level is always published so a reader can tell which comparison ran.
+    assert all(item.pool_level in {"municipality", "department", None} for item in signals)

@@ -88,6 +88,11 @@ class ClusterSignal:
         "has not been calibrated at cluster grain, so no strict endpoint is applied.",
         "A polling place is evaluable only when every one of its mesas carries a complete "
         "source-joined ballot vector; partial places are excluded, not imputed.",
+        "Real Colombian geography rarely supplies 30 peer places inside one municipality, so "
+        "most places fall back to a department reference that pools politically incomparable "
+        "municipalities. A department-wide expected rate is not a like-for-like comparison, and "
+        "an effect measured against it is heterogeneity, not evidence. Treat any department-pooled "
+        "result as uninterpretable until a like-for-like peer definition is established.",
         "Nothing here is eligible for public audit-priority points.",
     )
     output_hash: str = field(default="")
