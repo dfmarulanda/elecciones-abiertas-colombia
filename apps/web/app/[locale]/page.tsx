@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { NationalSummary } from "@/components/national-summary";
+import { ReleaseUnavailable } from "@/components/release-unavailable";
 import { SeoStructuredData } from "@/components/seo-structured-data";
 import {
   dataAdapter,
@@ -50,10 +51,25 @@ export default async function LocaleHome({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [release, t] = await Promise.all([
-    dataAdapter.getRelease({ include: "review" }),
-    getTranslations(),
-  ]);
+  const t = await getTranslations();
+  // The API refuses to serve a context-only historical release through the
+  // legacy release contract rather than invent completion metadata. That
+  // refusal is correct; rendering an explicit unavailable state is the honest
+  // response to it, and it keeps the pages that need no active release usable.
+  let release: Awaited<ReturnType<typeof dataAdapter.getRelease>>;
+  try {
+    release = await dataAdapter.getRelease({ include: "review" });
+  } catch {
+    return (
+      <ReleaseUnavailable
+        locale={locale}
+        title={t("releaseUnavailable.title")}
+        body={t("releaseUnavailable.body")}
+        methodology={t("releaseUnavailable.methodology")}
+        sources={t("releaseUnavailable.sources")}
+      />
+    );
+  }
   const outcomeSensitivity = await getPublicOutcomeSensitivity({
     release: release.release.release_id,
     election: release.election.slug,

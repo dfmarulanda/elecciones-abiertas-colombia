@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { dataAdapter } from "@/data/fixture-adapter";
 import { Page, Section } from "@/components/page-primitives";
 import { formatDate, formatNumber, formatPercent } from "@/lib/utils";
@@ -10,7 +11,11 @@ export default async function BulletinsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const release = await dataAdapter.getRelease({ include: "bulletins" });
+  const guard = await loadReleaseOrUnavailable(locale, () =>
+    dataAdapter.getRelease({ include: "bulletins" }),
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
   const es = locale === "es";
   return (
     <Page

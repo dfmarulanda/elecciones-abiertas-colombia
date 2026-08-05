@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 
 import { Page, Section } from "@/components/page-primitives";
 import { legalStatusLabel } from "@/lib/public-labels";
@@ -14,10 +15,12 @@ export default async function SourcesPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const [release, catalog] = await Promise.all([
+  const guard = await loadReleaseOrUnavailable(locale, () =>
     dataAdapter.getNationalSummary(),
-    loadSourceCatalog(),
-  ]);
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
+  const catalog = await loadSourceCatalog();
   const es = locale === "es";
   const awaitingFinal =
     catalog.publication_state === "awaiting_verified_final_declaration";

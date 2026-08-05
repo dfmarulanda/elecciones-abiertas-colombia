@@ -95,5 +95,11 @@
     "metricUnknown": "Desconocido",
     "metricUnavailable": "No disponible",
     "metricNotApplicable": "No aplica"
+  },
+  "releaseUnavailable": {
+    "title": "No hay una publicación activa disponible",
+    "body": "La API configurada no expone un release estándar consultable en este momento. Las páginas que no dependen de un release activo siguen disponibles.",
+    "methodology": "Ver metodología",
+    "sources": "Ver glosario"
   }
 }

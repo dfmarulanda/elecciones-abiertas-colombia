@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { setRequestLocale } from "next-intl/server";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 
 import { Page, Section } from "@/components/page-primitives";
 import { ReviewSignalDetails } from "@/components/investigation-details";
@@ -53,12 +54,16 @@ export default async function ReviewPage({
   const selectedTier = tiers.includes(query.tier as (typeof tiers)[number])
     ? (query.tier as (typeof tiers)[number])
     : undefined;
-  const release = await dataAdapter.getRelease({
-    include: "review",
-    reviewCursor: query.cursor,
-    reviewMinimumScore: minimum,
-    reviewTier: selectedTier,
-  });
+  const guard = await loadReleaseOrUnavailable(locale, () =>
+    dataAdapter.getRelease({
+      include: "review",
+      reviewCursor: query.cursor,
+      reviewMinimumScore: minimum,
+      reviewTier: selectedTier,
+    }),
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
   const signals = release.review_signals
     .filter(
       (signal) =>
