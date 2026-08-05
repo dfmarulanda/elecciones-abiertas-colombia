@@ -71,7 +71,11 @@ export default async function ResultsPage({
       explorer,
       release:
         explorer.kind === "fixture"
-          ? await dataAdapter.getRelease({ include: "results", filters, cursor })
+          ? await dataAdapter.getRelease({
+              include: "results",
+              filters,
+              cursor,
+            })
           : undefined,
     };
   });
