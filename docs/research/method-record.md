@@ -61,7 +61,7 @@ A review process that confirms everything it is shown is not a review process.
 
 | measurement | scale | tier |
 | --- | --- | --- |
-| 2026 pre-count collection | 244,040 / 244,040 mesas, both rounds, SHA-256 per object | A |
+| 2026 pre-count collection | 122,020 distinct mesas, observed in both rounds = 244,040 mesa-round records, SHA-256 per object | A |
 | Mesa→place reconciliation, ballot quantities | 14,438 / 14,438 places, both rounds | A |
 | Mesa→place reconciliation, candidate votes | 14,438 / 14,438 places | A |
 | Exterior stratum (dept 88 = CONSULADOS) | 3,670 mesas, 614,095 voters, margin 177,809 | A |
@@ -121,10 +121,18 @@ the document; an investigation that reports no self-corrections has not looked.
     municipal grain (pinned Registraduría census, 41,421,973).
 13. Wrote "Launching the deep research" and ended the turn without launching
     anything. Caught by the owner.
+14. Said "244,040 mesas" throughout. The R1 and R2 scope-code sets are
+    **identical** — symmetric difference 0. There are 122,020 distinct mesas,
+    each observed twice: 244,040 mesa-**round records**. The count was right and
+    the sentence doubled the universe. Found by the fact-check pass.
+15. Wrote an E-14 PDF to disk (`e14_sample.pdf`, 2,093,173 bytes) while testing
+    a parser, violating the handling rule stated in this same document. E-14
+    forms carry jurado signatures and cedula numbers. Removed; no PDF remains in
+    the workspace. Found by the fact-check pass, not by the investigator.
 
 **Corrections originating from agents, applied to the investigator's own claims:**
 items 10, 12, and the understatement of ballot-identity coverage (reported as
-4,000 sampled; actually verified across all 244,040).
+4,000 sampled; actually verified across all 244,040 mesa-round records).
 
 ---
 
