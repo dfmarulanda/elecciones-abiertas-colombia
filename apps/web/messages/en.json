@@ -178,5 +178,177 @@
       "claim": "“In 2022 the E-14s kept metadata and in 2026 they do not.”",
       "answer": "We cannot answer it. The 2022 documents were served behind an anti-automation control with no direct links, so they were never archived and are not reachable by any legitimate route from here."
     }
+  },
+  "comparison": {
+    "eyebrow": "Comparison",
+    "title": "Was 2026 a strange election?",
+    "introA": "The only way to answer that is to measure 2018 and 2022 with the same code and look at all three together. You will never see the 2026 number alone here, because a number alone means nothing.",
+    "introB": "It is like a temperature: 37.2 is alarming until you learn the person next to you read 38.5 and was healthy. That is why 2026 always appears beside 2018 and 2022, measured with the same thermometer.",
+    "year": {
+      "2018": {
+        "tag": "Second round",
+        "note": "The oldest reference point, measured with the same procedure."
+      },
+      "2022": {
+        "tag": "Second round",
+        "note": "The middle point. Several tests deviate more here than in 2026."
+      },
+      "2026": {
+        "tag": "Second round · pre-count",
+        "note": "The election in question. Never shown alone: read beside the other two."
+      }
+    },
+    "footnote": "The concrete figures for each test are published in the methodology, with their code, so anyone can recompute them. Here the comparison matters, not the isolated value."
+  },
+  "mesa": {
+    "eyebrow": "Documentary evidence",
+    "title": "Table 003",
+    "intro": "Five of the six tables in this example agree across all three layers. This one records a six-vote difference between the election-night pre-count and the E-14 acta. A difference like this is something to review, not a conclusion.",
+    "layer": {
+      "precount": {
+        "label": "Pre-count",
+        "value": "96",
+        "note": "Election-night transmission, no legal value."
+      },
+      "e14": {
+        "label": "E-14 acta",
+        "value": "90",
+        "note": "The document the poll workers signed on site."
+      },
+      "scrutiny": {
+        "label": "Scrutiny",
+        "value": "90",
+        "note": "The count with legal value, days later."
+      }
+    },
+    "footnote": "Illustration over synthetic data. The layers are kept separate on purpose: one never silently replaces another."
+  },
+  "territories": {
+    "eyebrow": "Territories",
+    "title": "Where it was collected",
+    "intro": "Departments without collection are marked as empty, not as zero. No data does not mean no votes: it means nothing was collected here.",
+    "covered": {
+      "antioquia": {
+        "name": "Example A",
+        "votes": "—",
+        "meta": "illustrative coverage · synthetic data"
+      },
+      "cundinamarca": {
+        "name": "Example B",
+        "votes": "—",
+        "meta": "illustrative coverage · synthetic data"
+      },
+      "valle": {
+        "name": "Example C",
+        "votes": "—",
+        "meta": "illustrative coverage · synthetic data"
+      }
+    },
+    "uncovered": {
+      "name": "Not collected",
+      "stateLabel": "State: not collected (distinct from zero)",
+      "meta": "not evaluable",
+      "note": "A hollow dashed mark: the value is unavailable. A zero would look different, because zero and unknown are not the same."
+    }
+  },
+  "process": {
+    "eyebrow": "Process",
+    "title": "How a vote reaches this page",
+    "intro": "Nine steps between the official document and what you see above. Three of them are gates: if they are not cleared, nothing is published, not even partially. The site prefers to say nothing over saying something it cannot support.",
+    "gateCount": "3 gates can stop a publication",
+    "gateTag": "gate",
+    "step": {
+      "01": {
+        "title": "Retrieval",
+        "body": "The official object is downloaded and stored with its hash and timestamp."
+      },
+      "02": {
+        "title": "Normalisation",
+        "body": "It is parsed to a fixed schema, keeping the source's raw value."
+      },
+      "03": {
+        "title": "Reconciliation",
+        "body": "Every aggregate must match its parts exactly, or it stops."
+      },
+      "04": {
+        "title": "Coverage",
+        "body": "What was and was not collected is recorded, without filling the gaps."
+      },
+      "05": {
+        "title": "Statistical validation",
+        "body": "Quality controls must pass before anything is exposed."
+      },
+      "06": {
+        "title": "Neutral wording",
+        "body": "A gate rejects any language that would imply a conclusion."
+      },
+      "07": {
+        "title": "Immutable versioning",
+        "body": "The release is frozen with its hash; a rollback is a pointer change."
+      },
+      "08": {
+        "title": "Independent audit",
+        "body": "An external review must accept the release before it is activated."
+      },
+      "09": {
+        "title": "Publication",
+        "body": "Only then does the public pointer change. Today it points to synthetic data."
+      }
+    }
+  },
+  "log": {
+    "eyebrow": "Log",
+    "title": "How it was built",
+    "intro": "The order in which decisions were taken matters as much as the result. Several — separating the layers, not filling the gaps, excluding Benford — were taken before the 2026 data was seen, which is why they hold up afterward.",
+    "entry": {
+      "layers": {
+        "when": "before the data",
+        "title": "Separate the layers",
+        "body": "Pre-count, documentary evidence and scrutiny are kept apart; none silently replaces another."
+      },
+      "sentinel": {
+        "when": "before the data",
+        "title": "Empty is not zero",
+        "body": "An unavailable value never becomes a zero. It is the rule that most often prevented an error, including our own."
+      },
+      "benford": {
+        "when": "before the data",
+        "title": "Do not use Benford",
+        "body": "Benford's law is invalid for vote counts with heterogeneous table sizes; it was excluded from the start."
+      },
+      "indexonly": {
+        "when": "before the data",
+        "title": "Index-only for the E-14s",
+        "body": "The actas are not downloaded, OCR'd or derived: the official reference is kept. The forms carry signatures and ID numbers."
+      },
+      "retraction": {
+        "when": "during review",
+        "title": "Retract a finding",
+        "body": "A result about the overseas vote was published and then withdrawn: measured across all 34 departments, it did not hold. The full retraction is on record."
+      }
+    }
+  },
+  "data": {
+    "eyebrow": "Data and API",
+    "title": "Where it all comes from",
+    "intro": "Everything above comes from three files and an OpenAPI contract. Each version is immutable and travels with its hash, so anyone can recompute the result without asking permission.",
+    "apiLabel": "Read contract",
+    "file": {
+      "json": {
+        "format": "JSON",
+        "size": "pre-count snapshot",
+        "hash": "sha256 per object"
+      },
+      "parquet": {
+        "format": "Parquet",
+        "size": "columnar, for analysis",
+        "hash": "sha256 per object"
+      },
+      "csv": {
+        "format": "Flat CSV",
+        "size": "simple download",
+        "hash": "sha256 per object"
+      }
+    }
   }
 }

@@ -178,5 +178,177 @@
       "claim": "«En 2022 los E-14 conservaban metadatos y en 2026 no.»",
       "answer": "No podemos responderlo. Los documentos de 2022 se servían tras un control anti-automatización sin enlaces directos, así que no quedaron archivados y no son alcanzables por ninguna vía legítima desde aquí."
     }
+  },
+  "comparison": {
+    "eyebrow": "Comparación",
+    "title": "¿2026 fue una elección rara?",
+    "introA": "La única forma de responder eso es medir 2018 y 2022 con el mismo código y mirar las tres juntas. Aquí nunca va a ver el número de 2026 solo, porque un número solo no significa nada.",
+    "introB": "Es como una temperatura: 37,2 asusta hasta que uno se entera de que el de al lado marcó 38,5 y estaba sano. Por eso 2026 siempre aparece al lado de 2018 y 2022, medidos con el mismo termómetro.",
+    "year": {
+      "2018": {
+        "tag": "Segunda vuelta",
+        "note": "El punto de referencia más antiguo, medido con el mismo procedimiento."
+      },
+      "2022": {
+        "tag": "Segunda vuelta",
+        "note": "El punto intermedio. Varias pruebas se desvían aquí más que en 2026."
+      },
+      "2026": {
+        "tag": "Segunda vuelta · preconteo",
+        "note": "La elección en cuestión. Nunca se muestra sola: se lee al lado de las otras dos."
+      }
+    },
+    "footnote": "Las cifras concretas de cada prueba se publican en la metodología, con su código, para que cualquiera las recalcule. Aquí importa la comparación, no el valor aislado."
+  },
+  "mesa": {
+    "eyebrow": "Evidencia documental",
+    "title": "Mesa 003",
+    "intro": "Cinco de las seis mesas de este ejemplo dan lo mismo en las tres capas. Esta registra una diferencia de seis votos entre el preconteo de la noche y el acta E-14. Una diferencia así es un dato para revisar, no una conclusión.",
+    "layer": {
+      "precount": {
+        "label": "Preconteo",
+        "value": "96",
+        "note": "Transmisión de la noche, sin valor jurídico."
+      },
+      "e14": {
+        "label": "Acta E-14",
+        "value": "90",
+        "note": "El documento que firmaron los jurados en el puesto."
+      },
+      "scrutiny": {
+        "label": "Escrutinio",
+        "value": "90",
+        "note": "El conteo con valor legal, días después."
+      }
+    },
+    "footnote": "Ilustración sobre datos sintéticos. Las capas se guardan separadas a propósito: una nunca reemplaza a otra en silencio."
+  },
+  "territories": {
+    "eyebrow": "Territorios",
+    "title": "Dónde se recolectó",
+    "intro": "Los departamentos sin recolección aparecen marcados como vacíos, no como cero. Que no haya dato no significa que no haya votos: significa que aquí no se recogió.",
+    "covered": {
+      "antioquia": {
+        "name": "Ejemplo A",
+        "votes": "—",
+        "meta": "cobertura ilustrativa · datos sintéticos"
+      },
+      "cundinamarca": {
+        "name": "Ejemplo B",
+        "votes": "—",
+        "meta": "cobertura ilustrativa · datos sintéticos"
+      },
+      "valle": {
+        "name": "Ejemplo C",
+        "votes": "—",
+        "meta": "cobertura ilustrativa · datos sintéticos"
+      }
+    },
+    "uncovered": {
+      "name": "Sin recolección",
+      "stateLabel": "Estado: no recolectado (distinto de cero)",
+      "meta": "no evaluable",
+      "note": "Marca hueca y punteada: el dato no está disponible. Un cero se vería distinto, porque cero y desconocido no son lo mismo."
+    }
+  },
+  "process": {
+    "eyebrow": "Proceso",
+    "title": "Cómo llega un voto a esta página",
+    "intro": "Nueve pasos entre el documento oficial y lo que usted ve arriba. Tres de ellos son puertas: si no se superan, no se publica nada, ni siquiera parcialmente. El sitio prefiere no decir nada antes que decir algo que no puede sostener.",
+    "gateCount": "3 puertas pueden detener una publicación",
+    "gateTag": "puerta",
+    "step": {
+      "01": {
+        "title": "Recuperación",
+        "body": "Se descarga el objeto oficial y se guarda con su huella y su hora."
+      },
+      "02": {
+        "title": "Normalización",
+        "body": "Se parsea a un esquema fijo, conservando el valor crudo de la fuente."
+      },
+      "03": {
+        "title": "Conciliación",
+        "body": "Cada agregado debe cuadrar exactamente con sus partes, o se detiene."
+      },
+      "04": {
+        "title": "Cobertura",
+        "body": "Se registra qué se recogió y qué no, sin rellenar los vacíos."
+      },
+      "05": {
+        "title": "Validación estadística",
+        "body": "Los controles de calidad deben pasar antes de exponer nada."
+      },
+      "06": {
+        "title": "Redacción neutral",
+        "body": "Una compuerta rechaza todo lenguaje que insinúe una conclusión."
+      },
+      "07": {
+        "title": "Versionado inmutable",
+        "body": "El release se congela con su hash; revertir es cambiar un puntero."
+      },
+      "08": {
+        "title": "Auditoría independiente",
+        "body": "Una revisión externa debe aceptar el release antes de activarlo."
+      },
+      "09": {
+        "title": "Publicación",
+        "body": "Solo entonces cambia el puntero público. Hoy apunta a datos sintéticos."
+      }
+    }
+  },
+  "log": {
+    "eyebrow": "Bitácora",
+    "title": "Cómo se construyó",
+    "intro": "El orden en que se tomaron las decisiones importa tanto como el resultado. Varias — separar las capas, no rellenar los vacíos, excluir Benford — se tomaron antes de mirar los datos de 2026, y por eso se pueden sostener después.",
+    "entry": {
+      "layers": {
+        "when": "antes de los datos",
+        "title": "Separar las capas",
+        "body": "Preconteo, evidencia documental y escrutinio se guardan aparte; ninguna reemplaza a otra en silencio."
+      },
+      "sentinel": {
+        "when": "antes de los datos",
+        "title": "Vacío no es cero",
+        "body": "Un valor no disponible nunca se convierte en cero. Es la regla que más veces evitó un error, incluso propio."
+      },
+      "benford": {
+        "when": "antes de los datos",
+        "title": "No usar Benford",
+        "body": "La ley de Benford no es válida para conteos de votos con mesas de tamaño heterogéneo; se excluyó desde el principio."
+      },
+      "indexonly": {
+        "when": "antes de los datos",
+        "title": "Solo índice para los E-14",
+        "body": "No se descargan, ni se OCRizan, ni se derivan las actas: se guarda la referencia oficial. Los formularios llevan firmas y cédulas."
+      },
+      "retraction": {
+        "when": "durante la revisión",
+        "title": "Retractar un hallazgo",
+        "body": "Un resultado sobre el voto del exterior se publicó y luego se retiró: al medir los 34 departamentos, no se sostenía. Se registra la retractación completa."
+      }
+    }
+  },
+  "data": {
+    "eyebrow": "Datos y API",
+    "title": "De dónde sale todo",
+    "intro": "Todo lo anterior sale de tres archivos y un contrato OpenAPI. Cada versión es inmutable y viaja con su huella, así que cualquiera puede recalcular el resultado sin pedir permiso.",
+    "apiLabel": "Contrato de lectura",
+    "file": {
+      "json": {
+        "format": "JSON",
+        "size": "instantánea del preconteo",
+        "hash": "sha256 por objeto"
+      },
+      "parquet": {
+        "format": "Parquet",
+        "size": "columnar, para análisis",
+        "hash": "sha256 por objeto"
+      },
+      "csv": {
+        "format": "CSV plano",
+        "size": "descarga simple",
+        "hash": "sha256 por objeto"
+      }
+    }
   }
 }

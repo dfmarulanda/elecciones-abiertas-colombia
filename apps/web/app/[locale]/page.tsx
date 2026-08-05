@@ -2,6 +2,14 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { NationalSummary } from "@/components/national-summary";
 import { ReleaseUnavailable } from "@/components/release-unavailable";
 import { ClaimsRegister } from "@/components/claims-register";
+import {
+  ComparisonSection,
+  MesaSection,
+  TerritoriesSection,
+  ProcessSection,
+  LogSection,
+  DataSection,
+} from "@/components/narrative-sections";
 import { SeoStructuredData } from "@/components/seo-structured-data";
 import {
   dataAdapter,
@@ -53,6 +61,19 @@ export default async function LocaleHome({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
+  // The static narrative reads no release, so it renders in both branches —
+  // it must survive the unavailable state, not disappear with the summary.
+  const narrative = (
+    <>
+      <ClaimsRegister locale={locale} t={t} />
+      <ComparisonSection locale={locale} t={t} />
+      <MesaSection locale={locale} t={t} />
+      <TerritoriesSection locale={locale} t={t} />
+      <ProcessSection locale={locale} t={t} />
+      <LogSection locale={locale} t={t} />
+      <DataSection locale={locale} t={t} />
+    </>
+  );
   // The API refuses to serve a context-only historical release through the
   // legacy release contract rather than invent completion metadata. That
   // refusal is correct; rendering an explicit unavailable state is the honest
@@ -72,7 +93,7 @@ export default async function LocaleHome({
           methodology={t("releaseUnavailable.methodology")}
           sources={t("releaseUnavailable.sources")}
         />
-        <ClaimsRegister locale={locale} t={t} />
+        {narrative}
       </>
     );
   }
@@ -95,7 +116,7 @@ export default async function LocaleHome({
         t={t}
         outcomeSensitivity={outcomeSensitivity}
       />
-      <ClaimsRegister locale={locale} t={t} />
+      {narrative}
     </>
   );
 }
