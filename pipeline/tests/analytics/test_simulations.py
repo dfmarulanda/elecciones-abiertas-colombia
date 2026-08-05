@@ -12,6 +12,14 @@ from elecciones_pipeline.analytics.peer_signals import (
     cohort_digest,
     family_digest,
 )
+from elecciones_pipeline.analytics.spatial import (
+    PEER_METHODOLOGY_VERSION,
+    SpatialMesa,
+    spatial_cohort_digest,
+    spatial_family_digest,
+    spatial_mesa_digest,
+    spatial_mesa_membership_digest,
+)
 
 
 def _peer_family(
@@ -391,3 +399,130 @@ def test_injections_are_nonzero_saturation_aware_and_denominator_bound(
     assert simulations._injection_capacity(saturated, direction) == 0  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="saturated"):
         simulations._inject(saturated, 0.1, direction=direction)  # type: ignore[arg-type]
+
+
+def _spatial_family(
+    count: int, *, data_version: str, peer_artifact_hash: str
+) -> tuple[SpatialMesa, ...]:
+    """Build a spatial family, then apply its immutable complete-family declaration."""
+    raw = [
+        SpatialMesa(
+            mesa_id=f"mesa-{index:03d}",
+            municipality_id="municipality-1",
+            latitude=4.0 + index * 0.001,
+            longitude=-74.0,
+            residual=0.0,
+            peer_residual_artifact_hash=peer_artifact_hash,
+            election_slug="presidencia-2026-r2",
+            data_version=data_version,
+            source_layer="pre_count",
+            source_type="pre_count",
+            legal_status="preliminary",
+            metric="candidate_share",
+            candidate_id="candidate-a",
+            peer_methodology_version=PEER_METHODOLOGY_VERSION,
+            coordinate_source_url="https://official.example/coordinates.geojson",
+            coordinate_source_hash="b" * 64,
+            coordinate_accuracy_m=10.0,
+            coordinate_grain="mesa",
+            expected_family_count=count,
+            expected_family_digest="d" * 64,
+            expected_mesa_count=count,
+            expected_mesa_digest="e" * 64,
+            expected_mesa_membership_digest="c" * 64,
+            cohort_hash="f" * 64,
+            source_links=("https://official.example/source.json",),
+        )
+        for index in range(count)
+    ]
+    units = [row.mesa_id for row in raw]
+    family_digest_value = spatial_family_digest(set(units))
+    mesa_digest = spatial_mesa_digest(row.mesa_id for row in raw)
+    membership = spatial_mesa_membership_digest(raw)
+    first = raw[0]
+    cohort = spatial_cohort_digest(
+        peer_residual_artifact_hash=first.peer_residual_artifact_hash,
+        election_slug=first.election_slug,
+        data_version=first.data_version,
+        source_layer=first.source_layer,
+        source_type=first.source_type,
+        legal_status=first.legal_status,
+        metric=first.metric,
+        candidate_id=first.candidate_id,
+        peer_methodology_version=first.peer_methodology_version,
+        coordinate_source_url=first.coordinate_source_url,
+        coordinate_source_hash=first.coordinate_source_hash,
+        coordinate_accuracy_m=first.coordinate_accuracy_m,
+        coordinate_grain=first.coordinate_grain,
+        expected_family_count=len(set(units)),
+        expected_family_digest=family_digest_value,
+        expected_mesa_count=len(raw),
+        expected_mesa_digest=mesa_digest,
+        expected_mesa_membership_digest=membership,
+    )
+    return tuple(
+        replace(
+            row,
+            expected_family_count=len(set(units)),
+            expected_family_digest=family_digest_value,
+            expected_mesa_count=len(raw),
+            expected_mesa_digest=mesa_digest,
+            expected_mesa_membership_digest=membership,
+            cohort_hash=cohort,
+        )
+        for row in raw
+    )
+
+
+def test_family_without_injected_alternatives_reports_unmeasured_power(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A detector family can be reached by a false positive alone, leaving it
+    with zero injected alternatives.  Injections only ever mint peer keys, so
+    the spatial family is exactly that case.  Dividing by that zero used to
+    raise out of the release verifier instead of failing closed, and unmeasured
+    power is not the same fact as zero power."""
+    peers = _peer_family(count=40, data_version="r1")
+    spatial = _spatial_family(40, data_version="r1", peer_artifact_hash="a" * 64)
+
+    def always_flag_first(rows: object, **_kwargs: object) -> tuple[SimpleNamespace, ...]:
+        family = tuple(rows)  # type: ignore[arg-type]
+        first = family[0]
+        return (
+            SimpleNamespace(
+                family_id="spatial-family",
+                mesa_id=first.mesa_id,
+                signal=False,
+                research_signal=True,
+                cohort_hash=first.cohort_hash,
+                input_artifact_hash=first.peer_residual_artifact_hash,
+                permutations=999,
+            ),
+        )
+
+    monkeypatch.setattr(simulations, "spatial_residual_signals", always_flag_first)
+
+    summary = simulations.run_end_to_end_validation(
+        release_id="r1",
+        peer_records=peers,
+        spatial_records=spatial,
+        simulations=100,
+        injected_discrepancies=1,
+        injection_size=0.9,
+    )
+
+    unmeasured = {
+        family_id: item
+        for family_id, item in summary.power_by_family.items()
+        if item["injected"] == 0
+    }
+    # The guard is only meaningful if this scenario is actually reached.
+    assert unmeasured, summary.power_by_family
+    for family_id, item in unmeasured.items():
+        assert "spatial" in family_id
+        assert item["power"] is None
+        assert item["status"] == "no_injected_alternatives"
+    for item in summary.power_by_family.values():
+        if item["injected"]:
+            assert isinstance(item["power"], float)
+            assert item["status"] == "measured"

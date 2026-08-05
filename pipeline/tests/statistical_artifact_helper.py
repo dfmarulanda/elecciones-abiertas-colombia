@@ -91,7 +91,6 @@ def _summary() -> dict[str, object]:
             release_id="r1",
             peer_records=inputs.peer_records,
             simulations=100,
-            seed=29,
             injected_discrepancies=1,
             injection_size=0.9,
         )

@@ -335,7 +335,7 @@ class SimulationSummary:
     alternative_runs: tuple[SimulationRunEvidence, ...]
     confusion_totals: dict[str, int]
     confusion_by_signal_key: dict[str, dict[str, int]]
-    power_by_family: dict[str, dict[str, int | float]]
+    power_by_family: dict[str, dict[str, int | float | str | None]]
     power_by_stratum: dict[str, dict[str, int | float]]
     null_error_by_metric: dict[str, dict[str, int | float]]
     family_error_upper_confidence: float
@@ -377,11 +377,21 @@ def _upper_binomial_bound(events: int, trials: int) -> float:
     return float(beta_distribution.ppf(0.95, events + 1, trials - events))
 
 
-def _lower_binomial_bound(events: int, trials: int) -> float:
-    """Exact two-sided 95% Clopper--Pearson lower confidence limit."""
+def lower_binomial_bound(events: int, trials: int) -> float:
+    """Exact two-sided 95% Clopper--Pearson lower confidence limit.
+
+    This is the single implementation.  The release verifier recomputes power
+    bounds independently but must import this function rather than restate the
+    formula: an independently written copy differed by one ULP in the quantile
+    argument and disagreed on roughly a third of all (events, trials) pairs,
+    which an exact artifact comparison reports as a forged artifact.
+    """
     if trials <= 0 or events <= 0:
         return 0.0
     return float(beta_distribution.ppf((1 - _POWER_CONFIDENCE) / 2, events, trials - events + 1))
+
+
+_lower_binomial_bound = lower_binomial_bound
 
 
 def _rows_hash(rows: Iterable[MesaMetrics | SpatialMesa]) -> str:
@@ -1175,13 +1185,18 @@ def run_end_to_end_validation(
         family_counts[detector_family]["injected"] += (
             counts["true_positive"] + counts["false_negative"]
         )
-    power_by_family: dict[str, dict[str, int | float]] = {}
+    power_by_family: dict[str, dict[str, int | float | str | None]] = {}
     for family_id in sorted(family_counts):
         counts = family_counts[family_id]
+        # A detector family can appear here through a false positive alone, so
+        # it may carry zero injected alternatives.  Power is then unmeasured,
+        # which is not the same fact as zero power.
+        measured = counts["injected"] > 0
         power_by_family[family_id] = {
             **counts,
-            "power": counts["detected"] / counts["injected"],
+            "power": counts["detected"] / counts["injected"] if measured else None,
             "lower_confidence_bound": _lower_binomial_bound(counts["detected"], counts["injected"]),
+            "status": "measured" if measured else "no_injected_alternatives",
         }
 
     stratum_counts: dict[str, dict[str, int]] = defaultdict(lambda: {"detected": 0, "injected": 0})

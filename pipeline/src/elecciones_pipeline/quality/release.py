@@ -34,6 +34,9 @@ from elecciones_pipeline.analytics.simulations import (
     run_end_to_end_validation,
     simulation_methodology_hash,
 )
+from elecciones_pipeline.analytics.simulations import (
+    lower_binomial_bound as _lower_binomial_bound,
+)
 from elecciones_pipeline.analytics.spatial import (
     input_artifact_hash as spatial_input_artifact_hash,
 )
@@ -46,13 +49,6 @@ class QualityError(ValueError):
 
 PERMANENT_DISCLOSURE_ES = DISCLOSURE_ES
 PERMANENT_DISCLOSURE_EN = DISCLOSURE_EN
-
-
-def _lower_binomial_bound(events: int, trials: int) -> float:
-    """Exact 95% Clopper--Pearson lower limit for a detection probability."""
-    if trials <= 0 or events <= 0:
-        return 0.0
-    return float(beta_distribution.ppf(0.025, events, trials - events + 1))
 
 
 @dataclass(frozen=True, order=True)
@@ -1452,14 +1448,18 @@ def _statistical_errors(
         family_power_counts[detector_family]["injected"] += (
             counts["true_positive"] + counts["false_negative"]
         )
-    expected_power = {
-        family_id: {
+    # Mirrors simulations.run_end_to_end_validation exactly, including the
+    # unmeasured-power case: a family reached only by a false positive has no
+    # injected alternatives, and null power is not zero power.
+    expected_power: dict[str, dict[str, object]] = {}
+    for family_id, counts in sorted(family_power_counts.items()):
+        measured = counts["injected"] > 0
+        expected_power[family_id] = {
             **counts,
-            "power": counts["detected"] / counts["injected"],
+            "power": counts["detected"] / counts["injected"] if measured else None,
             "lower_confidence_bound": _lower_binomial_bound(counts["detected"], counts["injected"]),
+            "status": "measured" if measured else "no_injected_alternatives",
         }
-        for family_id, counts in sorted(family_power_counts.items())
-    }
     if summary.get("power_by_family") != expected_power:
         errors.append(_finding("statistics", "validation artifact keyed power is invalid"))
 
@@ -1486,22 +1486,56 @@ def _statistical_errors(
         errors.append(_finding("statistics", "validation artifact false-discovery target changed"))
         target = 0.05
     false_discovery_gate = upper_bound <= target and empirical_fdr <= target
-    expected_detector_validation: dict[str, dict[str, object]] = {
-        "peer": {"status": "validated", "power_target": 0.80, "confidence": 0.95}
-    }
+    # The artifact must also be byte-identical to a trusted replay of the
+    # analyzer (below), so this cannot be literal equality against a
+    # hand-written dict: the two conditions contradict each other and no
+    # artifact, valid or forged, can satisfy both.  Assert instead the
+    # production-eligibility contract the analyzer actually emits.  This still
+    # fails closed today, because the analyzer hardcodes production_eligible
+    # to False pending an independent full artifact.
+    detector_validation = summary.get("detector_validation")
+    peer_validation = (
+        detector_validation.get("peer") if isinstance(detector_validation, Mapping) else None
+    )
+    if not isinstance(peer_validation, Mapping):
+        errors.append(_finding("statistics", "detector validation is missing the peer detector"))
+    else:
+        if peer_validation.get("power_target") != 0.80 or peer_validation.get("confidence") != 0.95:
+            errors.append(
+                _finding("statistics", "detector validation power target or confidence changed")
+            )
+        if not (
+            peer_validation.get("production_eligible") is True
+            and peer_validation.get("trusted_input_registry_verified") is True
+            and peer_validation.get("external_family_ledger_verified") is True
+            and peer_validation.get("public_signal_forced_false") is False
+        ):
+            errors.append(
+                _finding(
+                    "statistics",
+                    "peer detector is not production eligible: "
+                    f"{peer_validation.get('status')}",
+                )
+            )
     if include_spatial:
-        expected_detector_validation["spatial"] = {
+        spatial_validation = (
+            detector_validation.get("spatial") if isinstance(detector_validation, Mapping) else None
+        )
+        if spatial_validation != {
             "status": "unvalidated_ineligible",
             "reason": "no predeclared spatial alternative calibration design",
-        }
-    if summary.get("detector_validation") != expected_detector_validation:
-        errors.append(_finding("statistics", "detector validation eligibility is invalid"))
+        }:
+            errors.append(
+                _finding("statistics", "spatial detector validation eligibility is invalid")
+            )
     for family, item in expected_power.items():
         power_by_family = summary.get("power_by_family")
         observed = power_by_family.get(family) if isinstance(power_by_family, Mapping) else None
         if not isinstance(observed, Mapping):
             continue
-        lower = _lower_binomial_bound(int(item["detected"]), int(item["injected"]))
+        lower = _lower_binomial_bound(
+            int(cast(int, item["detected"])), int(cast(int, item["injected"]))
+        )
         if (
             isinstance(observed.get("lower_confidence_bound"), bool)
             or not isinstance(observed.get("lower_confidence_bound"), (int, float))
@@ -1510,10 +1544,40 @@ def _statistical_errors(
             errors.append(
                 _finding("statistics", "validation artifact power confidence bound is invalid")
             )
-    power_gate = bool(expected_power) and all(
-        _lower_binomial_bound(int(item["detected"]), int(item["injected"])) >= 0.80
-        for item in expected_power.values()
-    )
+    # The analyzer derives this gate from per-stratum power.  Recomputing it
+    # from per-family counts compares a different quantity and reports a valid
+    # artifact as spoofed.  The bounds are still recomputed here rather than
+    # trusted; the counts they are computed from are authenticated by the
+    # trusted-analyzer replay below.
+    stratum_power = summary.get("power_by_stratum")
+    if not isinstance(stratum_power, Mapping) or not stratum_power:
+        errors.append(_finding("statistics", "validation artifact has no per-stratum power"))
+        power_gate = False
+    else:
+        power_gate = True
+        for item in stratum_power.values():
+            if not isinstance(item, Mapping):
+                errors.append(
+                    _finding("statistics", "validation artifact stratum power is invalid")
+                )
+                power_gate = False
+                continue
+            bound = _lower_binomial_bound(
+                int(cast(int, item.get("detected", 0))), int(cast(int, item.get("injected", 0)))
+            )
+            observed_bound = item.get("lower_confidence_bound")
+            if (
+                isinstance(observed_bound, bool)
+                or not isinstance(observed_bound, (int, float))
+                or abs(float(observed_bound) - bound) > 1e-12
+            ):
+                errors.append(
+                    _finding("statistics", "validation artifact stratum power bound is invalid")
+                )
+                power_gate = False
+                continue
+            if bound < 0.80:
+                power_gate = False
     if (
         summary.get("false_discovery_gate_passed") is not false_discovery_gate
         or summary.get("injected_discrepancy_gate_passed") is not power_gate
