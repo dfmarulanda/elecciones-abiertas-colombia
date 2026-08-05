@@ -154,3 +154,110 @@ Registraduría hosts remaining reachable. Test suite: **391 tests**, `ruff` and
 Third-party network access is recorded, including a route through the project's
 own Railway relay used to reach hosts unreachable from the workstation. No access
 control was bypassed at any point.
+
+---
+
+## 7. The codebase under review
+
+Everything measured above ran on infrastructure this investigation did not
+write. The repository — pipeline, API, web application, contracts and test
+suite — was produced by an AI agent (Codex, GPT-5) acting as orchestrator over
+roughly two days, before any of the work recorded in sections 1–6 began.
+
+| | |
+| --- | ---: |
+| Codex sessions touching this repository | 112 |
+| of which subagent sessions | 108 |
+| distinct agent roles | 107 |
+| production source (Python + TypeScript) | 57,405 lines |
+| test source | 11,863 lines |
+
+Roles were named per task — `wave1_collector`, `stats_ultra_review`,
+`evidence_integrity`, `spatial_simulation_validation`, `adversarial_final_audit`
+and a hundred more — each a separate context with its own brief.
+
+**The material fact for anyone weighing these findings: none of it had been
+reviewed by a human, and the first release-gate execution happened during this
+investigation, not during construction.**
+
+### 7.1 What holds up
+
+Independently verified during this work, and better than the norm for
+production election analytics:
+
+- **Beta-binomial rather than binomial** peer modelling, so overdispersion is
+  modelled rather than assumed away; exact discrete tails via `betabinom`
+  instead of Wald approximations.
+- **Benjamini–Yekutieli rather than Benjamini–Hochberg** — the correct choice
+  under arbitrary dependence in clustered data. Replayed against
+  `statsmodels.multipletests(method='fdr_by')` on 2,000 p-values: **maximum
+  absolute difference 0.0**.
+- **Non-circular calibration.** The null arm is generated from a model
+  deliberately misspecified relative to the detector's own — hierarchical random
+  effects, Student-t tails, a 10% out-of-model mixture. This is the correct way
+  to gate type-I error, and it means FDR control was already tested under
+  clustered, non-exchangeable data.
+- **Honest abstention.** `hierarchical_reference` returns
+  `inference_status="not_evaluable_hyperparameter_uncertainty"` and withholds z
+  and p rather than emitting numbers it cannot stand behind.
+- **No Benford test anywhere in the repository** — correct, and unusual.
+  Benford is invalid for vote counts with heterogeneous precinct sizes and is
+  the most misused instrument in election forensics.
+- **Structural refusals that survived adversarial review:** exact integer sums
+  with no float in reconciliation; `outcome_sensitivity` making a national
+  "the election could flip" figure impossible to emit by construction;
+  index-only E-14 handling refusing retrieval, OCR and derivatives at the type
+  level; a wording gate blocking fraud-probability language on reader-facing
+  pages; and the unknown / unavailable / zero distinction enforced through the
+  contract.
+
+Two adversarial review rounds attacked this work. Round two **refuted 11 of 12**
+findings against it. The design is substantially sound.
+
+### 7.2 What was wrong
+
+Defects found and fixed during this investigation. Several were latent — real,
+but not yet reachable by a production caller.
+
+| defect | consequence |
+| --- | --- |
+| Unguarded division by zero in `power_by_family` | The release verifier raised instead of failing closed. ~63% probability across a 1,000-run alternative arm. |
+| Release gate mathematically unsatisfiable | A hand-written literal required one shape while a byte-exact replay of the analyzer required another. **No artifact could ever pass**, so ~120 lines of verification had never executed. |
+| Clopper–Pearson bound duplicated in two modules | `0.025` vs `(1-0.95)/2` differ by one ULP and disagree on **27,931 of ~80,000** (events, trials) pairs. An exact artifact comparison reads that as a forged artifact. Masked by the dead gate above. |
+| Power gate computed from the wrong quantity | Per-family counts compared against a per-stratum figure. |
+| Permutation seed accepted from the caller, unrecorded | Every reported p-value moved with it while code, method and cohort hashes stayed identical — seed-shopping would have been untraceable. |
+| API listing returned a cross product | The 2018 release advertised 2022 elections and vice versa; eight entries where four were correct. |
+| Website returned HTTP 500 on five routes | Every deployed build. The pages crashed when no standard release was readable instead of representing that state. |
+| Railway service config path never valid | Every deployment failed during initialization, before any build, producing no logs. |
+| `data-quality-status.md` stale by ~21 hours | Reported the crawl at a sixth of its actual completion. |
+| Test suite red at HEAD | Six failures, from a helper overriding a frozen simulation seed. |
+
+### 7.3 What was not wrong, but was unmeasured
+
+The most consequential result is not a defect. The mesa-level peer screen has
+**0.000 power against a shifted whole polling place** — 5,010 injections, zero
+detections. It would miss an entire manipulated puesto every time.
+
+That was not a coding error. It is a property of leave-one-mesa-out comparison
+that had simply never been measured, because the gate that would have reported
+it could not execute. The construction phase built the instrument and the
+harness to measure it, and stopped one step short of reading the result.
+
+A replacement cluster-level detector was built during this investigation. On
+synthetic tests it is decisively better (0.920 vs 0.620 at 25pp). On real
+Antioquia data it fails differently: 70% of polling places have no comparable
+peers, so it measures political geography rather than anomalies. Both outcomes
+are recorded in the module's own limitations.
+
+### 7.4 Assessment
+
+The construction phase produced a system whose statistical choices are careful
+and whose refusals are principled — several of which actively prevented this
+investigation from overclaiming. It also produced a governance gate that could
+never run, and shipped a detector with zero power against the manipulation class
+that matters, without measuring it.
+
+Both facts are the same fact: **the work was rigorous about what it built and
+never checked what it had.** That is the specific failure mode of unreviewed
+autonomous construction, and it is why the first execution of a release gate
+belongs at the start of a review, not the end of a build.
