@@ -1,0 +1,21 @@
+# Config-as-code for the `collector` service (the official-source relay).
+#
+# Railway resolves a service's config file from an absolute repository path and
+# does NOT apply the service Root Directory to it. Both services in this
+# project were pointed at `/railway.toml`, but they need different Dockerfiles,
+# and one root file cannot serve both: the root config names the API image, so
+# redeploying the collector against it would build the API instead of the relay.
+#
+# Point the collector service's config file at `/pipeline/railway.collector.toml`
+# so each service owns its own build definition.
+#
+# Note the build context: Dockerfile.collector copies `src/elecciones_pipeline`,
+# a path relative to `pipeline/`, so this service builds with `pipeline` as its
+# Root Directory -- unlike the API, which builds from the repository root.
+
+[build]
+dockerfilePath = "Dockerfile.collector"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
