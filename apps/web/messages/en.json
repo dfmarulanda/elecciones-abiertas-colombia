@@ -14,7 +14,18 @@
     "methodology": "Methodology",
     "sources": "Sources",
     "menu": "Open navigation",
-    "language": "Language"
+    "index": "Index",
+    "indexClose": "Close",
+    "indexPanel": "Section index",
+    "language": "Language",
+    "resultsDesc": "Table by table, with its record and its source",
+    "analyticsDesc": "Signals that prioritise review, not conclusions",
+    "bulletinsDesc": "Every official publication with its fingerprint",
+    "reviewDesc": "What was checked by hand, and against what criteria",
+    "downloadsDesc": "Full files, fingerprints and the API contract",
+    "methodologyDesc": "How each figure is computed, and what is not computed",
+    "sourcesDesc": "Where each datum comes from and when it was retrieved",
+    "apiDesc": "A public contract to read the same data without asking"
   },
   "home": {
     "eyebrow": "Public viewer · preliminary reading",
@@ -67,8 +78,27 @@
     "apiBoundary": "This view uses the development data adapter; the API contract is ready to replace it without changing the interface.",
     "publicReleaseBoundary": "This view reads one immutable public API version and keeps every source layer separate."
   },
+  "disclosure": {
+    "syntheticMark": "Synthetic fixture",
+    "synthetic": "Synthetic development data. These are not real election results.",
+    "syntheticChip": "synthetic fixture",
+    "releaseLabel": "Data release"
+  },
+  "states": {
+    "legend": "How absent values are read",
+    "zero": "Zero",
+    "zeroNote": "A measured value that came out zero.",
+    "unknown": "Unknown",
+    "unknownNote": "The datum exists, but this reading does not know it.",
+    "unavailable": "Unavailable",
+    "unavailableNote": "The source does not publish it. This is not the same as zero.",
+    "notApplicable": "Not applicable",
+    "notApplicableNote": "The question does not apply to this record."
+  },
   "footer": {
     "rights": "Public election data viewer",
+    "mission": "Open infrastructure so that anyone can verify Colombia's election results for themselves, rather than trusting a summary published by a third party. This is not an official source.",
+    "madeBy": "Made by",
     "privacy": "Privacy",
     "accessibility": "Accessibility",
     "glossary": "Glossary",

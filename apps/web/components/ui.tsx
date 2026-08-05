@@ -4,13 +4,18 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex min-h-7 items-center gap-1.5 border px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.08em] uppercase",
+  "ec-mono inline-flex min-h-7 items-center gap-1.5 border px-2.5 py-1 text-mark font-semibold tracking-[0.08em] uppercase",
   {
     variants: {
       tone: {
         neutral: "border-ink bg-paper text-ink",
         fixture: "border-ink bg-neon text-ink",
-        success: "border-muted-green bg-paper text-ink",
+        success: "border-verdict-ok bg-paper text-ink",
+        /* The absence tones differ by border treatment as well as colour, so
+           they stay distinguishable without it. */
+        unknown: "border-rule-soft bg-paper text-ink-3",
+        unavailable: "border-dashed border-ink bg-paper text-ink",
+        notApplicable: "border-dashed border-rule-soft bg-paper text-ink-3",
       },
     },
     defaultVariants: { tone: "neutral" },

@@ -3,6 +3,7 @@ import { ResultsExplorer } from "@/components/results-explorer";
 import { SeoStructuredData } from "@/components/seo-structured-data";
 import { dataAdapter, getPublicExplorer } from "@/data/fixture-adapter";
 import { publicResultLabels } from "@/lib/public-labels";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { readResultFilters } from "@/lib/result-filters";
 import { datasetJsonLd, isIndexablePage, releaseMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -61,11 +62,21 @@ export default async function ResultsPage({
   const query = await searchParams;
   const filters = readResultFilters(query);
   const cursor = typeof query.cursor === "string" ? query.cursor : undefined;
-  const explorer = await getPublicExplorer({ ...filters, cursor });
-  const release =
-    explorer.kind === "fixture"
-      ? await dataAdapter.getRelease({ include: "results", filters, cursor })
-      : undefined;
+  // Every other data route treats "no readable release" as a representable
+  // state instead of crashing. This one used to let the adapter's refusal
+  // escape, which is why it answered 500 whenever no standard release existed.
+  const guard = await loadReleaseOrUnavailable(locale, async () => {
+    const explorer = await getPublicExplorer({ ...filters, cursor });
+    return {
+      explorer,
+      release:
+        explorer.kind === "fixture"
+          ? await dataAdapter.getRelease({ include: "results", filters, cursor })
+          : undefined,
+    };
+  });
+  if (guard.fallback) return guard.fallback;
+  const { explorer, release } = guard.release;
   const summary =
     release ?? (await dataAdapter.getNationalSummary().catch(() => undefined));
   const indexable = isIndexablePage(summary, "results");

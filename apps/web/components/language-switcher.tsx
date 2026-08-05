@@ -26,11 +26,14 @@ export function LanguageSwitcher({
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        className="inline-flex min-h-11 items-center gap-2 border border-ink bg-paper px-3 text-sm font-semibold text-ink hover:bg-neon"
+        className="inline-flex min-h-11 items-center gap-2 border border-ink bg-paper px-3 text-meta-lg text-ink hover:bg-neon"
         aria-label={label}
       >
         <Languages className="size-4" aria-hidden="true" />
-        <span>{locales.find((item) => item.code === locale)?.label}</span>
+        <span className="hidden sm:inline">
+          {locales.find((item) => item.code === locale)?.label}
+        </span>
+        <span className="ec-mono sm:hidden">{locale.toUpperCase()}</span>
         <ChevronDown className="size-4" aria-hidden="true" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -41,7 +44,7 @@ export function LanguageSwitcher({
           {locales.map((item) => (
             <DropdownMenu.Item
               key={item.code}
-              className="flex min-h-11 cursor-pointer items-center px-3 text-sm font-semibold outline-none hover:bg-neon focus:bg-neon"
+              className="flex min-h-11 cursor-pointer items-center px-3 text-meta-lg outline-none hover:bg-neon focus:bg-neon"
               onSelect={() => {
                 window.location.assign(switchTo(item.code));
               }}
@@ -54,7 +57,12 @@ export function LanguageSwitcher({
               />
               {item.label}
               {item.code === locale ? (
-                <span className="ml-auto text-xs text-muted">✓</span>
+                <span
+                  aria-hidden="true"
+                  className="ml-auto text-meta text-ink-4"
+                >
+                  ✓
+                </span>
               ) : null}
             </DropdownMenu.Item>
           ))}

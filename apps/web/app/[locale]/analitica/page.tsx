@@ -13,6 +13,7 @@ import {
   type PublicAnalysisFilters,
 } from "@/data/analysis-adapter";
 import { dataAdapter } from "@/data/fixture-adapter";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { releaseMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -103,11 +104,17 @@ export default async function AnalyticsPage({
   }
 
   if (analysis.status === "fixture") {
-    const release = await dataAdapter.getRelease({ include: "analytics" });
+    // The adapter refuses rather than inventing analytics when no release is
+    // readable. Render that refusal as the explicit unavailable state instead
+    // of throwing it into the error boundary.
+    const guard = await loadReleaseOrUnavailable(locale, () =>
+      dataAdapter.getRelease({ include: "analytics" }),
+    );
+    if (guard.fallback) return guard.fallback;
     return (
       <AnalyticsPortal
         locale={locale}
-        release={release}
+        release={guard.release}
         outcomeSensitivity={null}
       />
     );

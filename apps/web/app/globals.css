@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
+/* ---------------------------------------------------------------------------
+   Fonts. All self-hosted from /public/fonts. The deployment ships a
+   `default-src 'self'` CSP, so a runtime request to a font CDN would be
+   blocked -- never add an @import or <link> to fonts.googleapis.com here.
+   --------------------------------------------------------------------------- */
+
 @font-face {
   font-family: "Monument Extended";
   src: url("/fonts/monument-extended-regular.otf") format("opentype");
@@ -8,6 +14,9 @@
   font-display: swap;
 }
 
+/* Ships as a .ttc collection, which browsers outside Safari refuse. The chain
+   in --font-body therefore falls through to Inter Tight on most machines, and
+   the heading tracking below is tuned against Inter Tight, not this face. */
 @font-face {
   font-family: "Tamil Sangam MN";
   src:
@@ -17,44 +26,246 @@
   font-display: swap;
 }
 
-:root {
-  --black: #0a0a0a;
-  --white: #fff;
-  --gray: #9b9b9b;
-  --neon: #c4ff00;
-  --muted-green: #5a8a3a;
-
-  /* Legacy aliases keep un-migrated public surfaces coherent during the waves. */
-  --paper: var(--white);
-  --paper-deep: var(--white);
-  --ink: var(--black);
-  --muted: #6e6e6e;
-  --line: var(--black);
-  --saffron: var(--neon);
-  --civic-blue: var(--black);
-  --civic-red: var(--black);
-  --civic-teal-deep: var(--black);
+@font-face {
+  font-family: "Inter Tight";
+  src: url("/fonts/inter-tight-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
+@font-face {
+  font-family: "Inter Tight";
+  src: url("/fonts/inter-tight-latin-ext.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-ext.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------------------
+   Token layer -- "Elecciones Abiertas · Rediseño v2".
+   Print-forward: hairline rules, zero radius, no elevation, one easing.
+   Contrast ratios in the comments are measured, not estimated.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* --- Surfaces --- */
+  --paper: #f4f1ea; /* light page field */
+  --paper-deep: #ebe7de; /* recessed panel on paper */
+  --field: #151312; /* full-bleed dark section field */
+  --field-soft: #211e1e; /* dark panel sitting on paper */
+
+  /* --- Ink on paper --- */
+  --ink: #211e1e; /* 14.67:1 on paper -- headings, hairlines */
+  --ink-2: #3e3831; /* 10.26:1 -- body copy */
+  --ink-3: #5a5148; /* 6.88:1 -- secondary / disclosure copy */
+  --ink-4: #6b6259; /* 5.29:1 -- mono meta, eyebrows */
+
+  /* --- Ink on the dark field --- */
+  --on-dark: #f4f1ea; /* 16.42:1 on field */
+  --on-dark-2: #cfc8bc; /* 11.15:1 -- secondary */
+  --on-dark-3: #928979; /* 5.36:1 -- mono meta; do not set below 12px */
+  --on-dark-4: #b3a99b; /* 8.00:1 -- footer copy */
+
+  /* --- Signal --- */
+  --neon: #c4ff00; /* 15.57:1 on the dark field. Only 1.05:1 on paper --
+                      never use it as text or as a lone focus ring on a
+                      light surface; on paper it is a fill behind --ink. */
+  --neon-hollow: rgba(196, 255, 0, 0.55); /* outline-only state stroke */
+  --rio: #8c8e00; /* candidate-2 fill. 3.11:1 on paper -- fill only,
+                      never body text there; 5.28:1 on the dark field. */
+  --rio-text: #b5b72e; /* 8.62:1 -- candidate-2 text on the dark field */
+  --verdict-ok: #5f6300; /* 5.69:1 on paper */
+  --verdict-warn: #8a4b1e; /* 5.99:1 on paper */
+
+  /* --- Hairlines. There is no elevation anywhere in this system. --- */
+  --rule: #211e1e;
+  --rule-soft: rgba(33, 30, 30, 0.3);
+  --rule-faint: rgba(33, 30, 30, 0.16);
+  --rule-hair: rgba(33, 30, 30, 0.12);
+  --rule-dark: rgba(244, 241, 234, 0.4);
+  --rule-dark-soft: rgba(244, 241, 234, 0.24);
+  --rule-dark-faint: rgba(244, 241, 234, 0.14);
+  --grid-dark: rgba(244, 241, 234, 0.045);
+
+  /* --- Legacy aliases. Kept so un-migrated public surfaces stay coherent
+         while the redesign lands section by section. Not for new code. --- */
+  --black: #211e1e;
+  --white: #f4f1ea;
+  --gray: #928979;
+  --muted: var(--ink-4);
+  --line: var(--rule);
+  --muted-green: var(--rio);
+  --saffron: var(--neon);
+  --civic-blue: var(--ink);
+  --civic-red: var(--ink);
+  --civic-teal-deep: var(--ink);
+
+  /* --- Focus. Neon alone is invisible on paper (1.05:1), so the ring is an
+         ink outline plus a neon halo on light, and inverted on the dark
+         field. .ec-field-dark flips both. --- */
+  --focus-outline: var(--ink);
+  --focus-halo: var(--neon);
+
+  /* --- Type scale. Named after the role it plays, not its pixel size. The
+         design is drawn at a fixed 1440px, so every step carrying a large
+         figure is clamped to survive below it. Nothing is smaller than 12px:
+         the design's 10-11px meta carries meaning at ~5.3:1 and is floored
+         here rather than transcribed.
+         Declared here rather than only in @theme because Tailwind drops theme
+         variables nothing references, which would leave var(--text-fig-xl)
+         resolving to nothing in hand-written CSS. @theme maps these to the
+         --text-* utility namespace below. --- */
+  --fs-mark: 0.75rem; /* 12 -- eyebrows, wordmark */
+  --fs-meta: 0.8125rem; /* 13 -- mono meta */
+  --fs-meta-lg: 0.875rem; /* 14 */
+  --fs-body: 1.0625rem; /* 17 -- base */
+  --fs-lead: 1.1875rem; /* 19 -- section intros */
+  --fs-claim-sm: 1.5rem; /* 24 -- mid claims */
+  --fs-claim: clamp(1.375rem, 2.4vw, 2rem); /* 22 -> 32 */
+  --fs-head-sm: clamp(1.5rem, 2.6vw, 2.125rem); /* 24 -> 34 */
+  --fs-head: clamp(1.75rem, 3.2vw, 2.625rem); /* 28 -> 42 */
+  --fs-fig-sm: 1.625rem; /* 26 */
+  --fs-fig: clamp(1.75rem, 2.6vw, 2.375rem); /* 28 -> 38 */
+  --fs-fig-md: clamp(2.25rem, 3.6vw, 3.25rem); /* 36 -> 52 */
+  --fs-fig-lg: clamp(2.5rem, 4vw, 3.5rem); /* 40 -> 56 */
+  --fs-fig-xl: clamp(4rem, 8vw, 7.375rem); /* 64 -> 118 */
+
+  /* --- Geometry. Every surface in this system is square; the only radius in
+         the whole design is the comparison dot. --- */
+  --dot-radius: 999px;
+
+  /* --- Layout --- */
+  --container: 1440px;
+  --gutter: clamp(1rem, 5.55vw, 46px);
+  --header-h: 64px;
+  --header-progress-h: 2px;
+  --sticky-top: calc(var(--header-h) + var(--header-progress-h));
+
+  /* --- Motion. One easing across the whole system. --- */
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --dur-1: 140ms;
+  --dur-2: 240ms;
+  --dur-3: 420ms;
+  --dur-4: 560ms;
+  --dur-5: 700ms;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-deep: var(--paper-deep);
+  --color-field: var(--field);
+  --color-field-soft: var(--field-soft);
+
   --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-2: var(--on-dark-2);
+  --color-on-dark-3: var(--on-dark-3);
+  --color-on-dark-4: var(--on-dark-4);
+
+  --color-neon: var(--neon);
+  --color-neon-hollow: var(--neon-hollow);
+  --color-rio: var(--rio);
+  --color-rio-text: var(--rio-text);
+  --color-verdict-ok: var(--verdict-ok);
+  --color-verdict-warn: var(--verdict-warn);
+
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+  --color-rule-faint: var(--rule-faint);
+  --color-rule-hair: var(--rule-hair);
+  --color-rule-dark: var(--rule-dark);
+  --color-rule-dark-soft: var(--rule-dark-soft);
+  --color-rule-dark-faint: var(--rule-dark-faint);
+  --color-grid-dark: var(--grid-dark);
+
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-muted-green: var(--muted-green);
   --color-saffron: var(--saffron);
   --color-civic-blue: var(--civic-blue);
   --color-civic-red: var(--civic-red);
   --color-civic-teal-deep: var(--civic-teal-deep);
-  --color-neon: var(--neon);
-  --color-muted-green: var(--muted-green);
+
+  /* Monument Extended is no longer the heading face. In v2 it carries the
+     small uppercase eyebrow only (--font-mark); headings use --font-head.
+     --font-display stays pointed at it so un-migrated pages are unchanged. */
   --font-display: "Monument Extended", Impact, sans-serif;
+  --font-mark: "Monument Extended", Impact, sans-serif;
   --font-body:
-    "Tamil Sangam MN", Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+    "Tamil Sangam MN", "Inter Tight", Inter, ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-head:
+    "Tamil Sangam MN", "Inter Tight", Inter, ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-fig: "Inter Tight", Inter, ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
     Monaco, Consolas, monospace;
+
+  /* Utility namespaces for the scale declared in :root above. */
+  --text-mark: var(--fs-mark);
+  --text-meta: var(--fs-meta);
+  --text-meta-lg: var(--fs-meta-lg);
+  --text-body: var(--fs-body);
+  --text-lead: var(--fs-lead);
+  --text-claim-sm: var(--fs-claim-sm);
+  --text-claim: var(--fs-claim);
+  --text-head-sm: var(--fs-head-sm);
+  --text-head: var(--fs-head);
+  --text-fig-sm: var(--fs-fig-sm);
+  --text-fig: var(--fs-fig);
+  --text-fig-md: var(--fs-fig-md);
+  --text-fig-lg: var(--fs-fig-lg);
+  --text-fig-xl: var(--fs-fig-xl);
+
+  --radius-none: 0px;
+  --radius-dot: var(--dot-radius);
+
+  --ease-out: var(--ease);
+
+  --container-max: var(--container);
+  --spacing-gutter: var(--gutter);
+  --spacing-header: var(--header-h);
+  --spacing-sticky-top: var(--sticky-top);
 }
+
 * {
   box-sizing: border-box;
 }
@@ -67,9 +278,18 @@ body {
   min-width: 320px;
   margin: 0;
   background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: var(--fs-body);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+p,
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: pretty;
 }
 ::selection {
   background: var(--neon);
@@ -80,9 +300,9 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 :focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--focus-outline);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--neon);
+  box-shadow: 0 0 0 4px var(--focus-halo);
 }
 a {
   text-underline-offset: 0.18em;
@@ -111,15 +331,80 @@ summary::-webkit-details-marker {
   input,
   textarea {
     transition:
-      color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
-      background-color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
-      border-color 120ms cubic-bezier(0.2, 0.7, 0.1, 1),
-      transform 120ms cubic-bezier(0.2, 0.7, 0.1, 1);
+      color var(--dur-1) var(--ease),
+      background-color var(--dur-1) var(--ease),
+      border-color var(--dur-1) var(--ease),
+      transform var(--dur-1) var(--ease);
   }
   button:active,
   [role="button"]:active {
     transform: translateY(1px);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Type roles. Each bundles family, weight, case and tracking -- which no
+   single Tailwind utility expresses. Size stays a utility so a caller can
+   pick a different step from the scale above.
+   --------------------------------------------------------------------------- */
+
+.ec-mark {
+  font-family: var(--font-mark);
+  font-weight: 400;
+  font-size: var(--fs-mark);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.ec-head {
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: var(--fs-head);
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+  text-transform: none;
+}
+.ec-claim {
+  font-family: var(--font-head);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-transform: none;
+}
+.ec-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+.ec-fig {
+  font-family: var(--font-fig);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark field. Applied to a full-bleed section it flips the surface, the ink
+   ramp, the hairline ramp AND the focus ring in one move -- an ink focus
+   outline is invisible on #151312, and a neon one is invisible on paper.
+   --------------------------------------------------------------------------- */
+
+.ec-field-dark {
+  background: var(--field);
+  color: var(--on-dark);
+  --rule: var(--rule-dark);
+  --rule-soft: var(--rule-dark-soft);
+  --rule-faint: var(--rule-dark-faint);
+  --rule-hair: var(--rule-dark-faint);
+  --line: var(--rule-dark);
+  --muted: var(--on-dark-3);
+  --focus-outline: var(--neon);
+  --focus-halo: rgba(21, 19, 18, 0.9);
+}
+.ec-field-dark ::selection {
+  background: var(--neon);
+  color: var(--field);
 }
 
 .ec-page-content {

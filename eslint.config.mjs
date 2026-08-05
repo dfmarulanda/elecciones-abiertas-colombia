@@ -7,6 +7,9 @@ export default tseslint.config(
     ignores: [
       "**/.next/**",
       "**/.turbo/**",
+      // `vercel build` output. Gitignored like .next, but was missing here, so
+      // any tree that had run it linted ~5.5k errors out of minified bundles.
+      "**/.vercel/**",
       "**/coverage/**",
       "**/dist/**",
       "**/node_modules/**",

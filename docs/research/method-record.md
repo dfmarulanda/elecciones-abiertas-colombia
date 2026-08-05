@@ -129,6 +129,21 @@ the document; an investigation that reports no self-corrections has not looked.
     a parser, violating the handling rule stated in this same document. E-14
     forms carry jurado signatures and cedula numbers. Removed; no PDF remains in
     the workspace. Found by the fact-check pass, not by the investigator.
+16. **RETRACTED — the exterior-margin finding.** Reported that the consular
+    department (88) carrying 70.9% of the national second-round margin on 2.33%
+    of ballots was the investigation's most important result. The comparison set
+    was never computed. Measured across all 34 departments, the exterior ranks
+    **10th of 34** on share of the national margin and **10th of 34** on
+    internal margin rate; department 01 alone accounts for 419.5% of the margin,
+    and four of the nine departments exceeding the exterior internally have
+    comparable or larger ballot counts. In a race decided by 0.95% of ballots
+    every department is arithmetically decisive, so the figure is selection on
+    the outcome and does not survive.
+    A historical control (exterior across 2018/2022/2026) *was* run and produced
+    false confidence: the control required was other strata **within** 2026, not
+    the same stratum across time. Running the wrong control is worse than
+    running none. Found by the publication council, which computed the
+    distribution the investigation had not.
 
 **Corrections originating from agents, applied to the investigator's own claims:**
 items 10, 12, and the understatement of ballot-identity coverage (reported as

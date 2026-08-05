@@ -14,7 +14,18 @@
     "methodology": "Metodología",
     "sources": "Fuentes",
     "menu": "Abrir navegación",
-    "language": "Idioma"
+    "index": "Índice",
+    "indexClose": "Cerrar",
+    "indexPanel": "Índice de secciones",
+    "language": "Idioma",
+    "resultsDesc": "Mesa por mesa, con su acta y su fuente",
+    "analyticsDesc": "Señales que priorizan revisión, no conclusiones",
+    "bulletinsDesc": "Cada publicación oficial con su huella",
+    "reviewDesc": "Qué se revisó a mano y con qué criterio",
+    "downloadsDesc": "Archivos completos, huellas y contrato de API",
+    "methodologyDesc": "Cómo se calcula cada cifra y qué no se calcula",
+    "sourcesDesc": "De dónde viene cada dato y cuándo se recuperó",
+    "apiDesc": "Contrato público para leer lo mismo sin pedir permiso"
   },
   "home": {
     "eyebrow": "Visor público · lectura preliminar",
@@ -67,8 +78,27 @@
     "apiBoundary": "Esta vista usa el adaptador de datos de desarrollo; el contrato de API está preparado para sustituirlo sin alterar la interfaz.",
     "publicReleaseBoundary": "Esta vista lee una única versión inmutable del API público y conserva cada capa de fuente por separado."
   },
+  "disclosure": {
+    "syntheticMark": "Fijación sintética",
+    "synthetic": "Datos sintéticos para desarrollo. No representan resultados electorales reales.",
+    "syntheticChip": "fijación sintética",
+    "releaseLabel": "Versión de datos"
+  },
+  "states": {
+    "legend": "Cómo se leen los valores ausentes",
+    "zero": "Cero",
+    "zeroNote": "Un valor medido que resultó cero.",
+    "unknown": "Desconocido",
+    "unknownNote": "Existe el dato, pero esta lectura no lo conoce.",
+    "unavailable": "No disponible",
+    "unavailableNote": "La fuente no lo publica. No es lo mismo que cero.",
+    "notApplicable": "No aplica",
+    "notApplicableNote": "La pregunta no tiene sentido para este registro."
+  },
   "footer": {
     "rights": "Visor público de datos electorales",
+    "mission": "Infraestructura abierta para que cualquier persona verifique por sí misma los resultados electorales de Colombia, en lugar de confiar en un resumen publicado por un tercero. No es una fuente oficial.",
+    "madeBy": "Hecho por",
     "privacy": "Privacidad",
     "accessibility": "Accesibilidad",
     "glossary": "Glosario",

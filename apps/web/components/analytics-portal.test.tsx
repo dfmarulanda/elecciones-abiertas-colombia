@@ -89,7 +89,10 @@ describe("analytics portal", () => {
     render(<AnalyticsPortal locale="es" release={candidateRelease} />);
 
     expect(
-      screen.getByText("RELEASE CANDIDATO · LECTURA PRELIMINAR."),
+      // Sentence case in the DOM, uppercased by `.ec-mark`. Screen readers
+      // spell shouty literals out letter by letter; CSS-cased text they read
+      // as a word, so the casing lives in the stylesheet.
+      screen.getByText("Release candidato · lectura preliminar."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

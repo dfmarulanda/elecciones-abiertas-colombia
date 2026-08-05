@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CircleSlash } from "lucide-react";
 
 /**
  * Shown when no standard release can be read.
@@ -24,29 +23,44 @@ export function ReleaseUnavailable({
   sources: string;
 }) {
   return (
-    <main
-      id="main-content"
-      className="mx-auto max-w-[1440px] px-[clamp(1rem,5.55vw,5rem)] py-16"
-    >
-      <div className="max-w-4xl border-y border-ink py-7 sm:py-10">
-        <CircleSlash className="size-10 text-muted" aria-hidden="true" />
-        <h1 className="mt-6 font-display text-3xl font-bold tracking-[-0.045em] uppercase sm:text-5xl">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-xl leading-7 text-muted">{body}</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href={`/${locale}/metodologia`}
-            className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-sm font-bold hover:bg-neon"
-          >
-            {methodology}
-          </Link>
-          <Link
-            href={`/${locale}/glosario`}
-            className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-sm font-bold hover:bg-neon"
-          >
-            {sources}
-          </Link>
+    <main id="main-content" className="mx-auto max-w-[1440px] px-gutter py-16">
+      <div className="grid max-w-5xl items-start gap-x-14 gap-y-8 border-y border-ink py-10 lg:grid-cols-[auto_minmax(0,1fr)]">
+        {/* Dashed hollow hexagon: the same mark the data layer uses for
+            "unavailable", so an absent release reads as absent and never as
+            an empty or zeroed one. */}
+        <svg
+          viewBox="0 0 52 46"
+          className="h-14 w-16"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M13 1 H39 L51 23 L39 45 H13 L1 23 Z"
+            fill="none"
+            stroke="var(--ink-4)"
+            strokeWidth="1.5"
+            strokeDasharray="5 4"
+          />
+        </svg>
+        <div>
+          <h1 className="ec-head">{title}</h1>
+          <p className="mt-5 max-w-[46rem] text-body leading-relaxed text-ink-2">
+            {body}
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href={`/${locale}/metodologia`}
+              className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-meta-lg font-semibold hover:bg-neon"
+            >
+              {methodology}
+            </Link>
+            <Link
+              href={`/${locale}/glosario`}
+              className="inline-flex min-h-11 items-center gap-2 border border-ink px-4 text-meta-lg font-semibold hover:bg-neon"
+            >
+              {sources}
+            </Link>
+          </div>
         </div>
       </div>
     </main>
