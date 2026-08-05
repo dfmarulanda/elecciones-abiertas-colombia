@@ -1,0 +1,22 @@
+# Railway reads a service's config-as-code from an absolute repository path
+# that does NOT follow the service Root Directory setting. The historical-api
+# service is configured to read `/railway.toml`, so this file must exist at the
+# repository root or every deployment fails during initialization with
+# "service config at '/railway.toml' not found" -- before any build starts,
+# which is why no build logs are produced.
+#
+# The build context is the repository root: apps/api/Dockerfile copies
+# apps/api, data/ and packages/contracts/openapi.json relative to it.
+#
+# apps/api/railway.toml carries the same settings for the alternative
+# configuration, where the service's config path is set to
+# `/apps/api/railway.toml` instead. Keep the two in step, or point the service
+# at one of them and delete the other.
+
+[build]
+dockerfilePath = "apps/api/Dockerfile"
+
+[deploy]
+healthcheckPath = "/healthz"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
