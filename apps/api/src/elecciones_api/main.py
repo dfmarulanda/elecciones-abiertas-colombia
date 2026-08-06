@@ -39,6 +39,7 @@ from .cursor import (
     encode_keyset_cursor,
     scope_for,
 )
+from .federated_repository import FederatedRepository
 from .historical_repository import HistoricalDuckDBRepository
 from .repository import (
     FixtureRepository,
@@ -548,17 +549,34 @@ def _normalized_summary_payload(
     }
 
 
-type AppRepository = ReadRepository | HistoricalDuckDBRepository
+type AppRepository = ReadRepository | HistoricalDuckDBRepository | FederatedRepository
 
 
 def select_repository(settings: Settings) -> AppRepository:
     """Use the fixture only when no production PostgreSQL URL is configured."""
     if settings.database_url:
-        return PostgresReadRepository(
+        postgres = PostgresReadRepository(
             settings.database_url,
             settings.selected_release_id(),
             settings.allowed_artifact_hosts,
         )
+        # Configuring Postgres must not silently drop the historical releases.
+        # Without this branch the catalogue would lose 2018 and 2022 with no
+        # error, which is the failure mode most likely to go unnoticed.
+        if settings.historical_releases:
+            return FederatedRepository(
+                postgres,
+                HistoricalDuckDBRepository(
+                    settings.historical_data_path,
+                    [
+                        item.strip()
+                        for item in settings.historical_releases.split(",")
+                        if item.strip()
+                    ],
+                    settings.selected_release_id(),
+                ),
+            )
+        return postgres
     if settings.historical_releases:
         return HistoricalDuckDBRepository(
             settings.historical_data_path,
@@ -658,7 +676,24 @@ def create_app(
         return cast(AppRepository, request.app.state.repository)
 
     def require_legacy_contract(request: Request) -> None:
-        if isinstance(repo(request), HistoricalDuckDBRepository):
+        # Federated: only refuse when the SELECTED release is DuckDB-backed. A
+        # Postgres-backed release served alongside historical ones must keep
+        # its legacy contract, so this cannot key off the repository class.
+        repository = repo(request)
+        if isinstance(repository, FederatedRepository):
+            if repository.holds_historical(settings.selected_release_id() or ""):
+                raise APIProblem(
+                    404,
+                    "Legacy contract unavailable",
+                    (
+                        "Historical context releases are served only by the release-scoped "
+                        "/api/v1/releases/{release_id}/elections/{election_slug}/ routes. "
+                        "The legacy contract cannot represent unknown completion or truthful "
+                        "historical dataset metadata without inventing values."
+                    ),
+                )
+            return
+        if isinstance(repository, HistoricalDuckDBRepository):
             raise APIProblem(
                 404,
                 "Legacy contract unavailable",
