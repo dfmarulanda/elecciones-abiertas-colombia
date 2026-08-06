@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import {
   dataAdapter,
+  getPublicChildrenResults,
   getPublicGeography,
   getPublicMesa,
   PublicApiError,
@@ -181,6 +182,14 @@ export default async function GeographicResultsPage({
           />
         );
       }
+      // Vote totals for the same children, in one extra request rather than a
+      // per-child fetch. A failure here must not take the page down: the
+      // breadcrumb and child list are the navigation, the fields are an
+      // enrichment, so this degrades to the list alone.
+      const childResults = await getPublicChildrenResults(mesaId, {
+        ...filters,
+        cursor,
+      }).catch(() => null);
       return (
         <>
           <SeoStructuredData
@@ -196,6 +205,7 @@ export default async function GeographicResultsPage({
             view={view}
             locale={locale}
             filters={filters}
+            results={childResults}
           />
         </>
       );

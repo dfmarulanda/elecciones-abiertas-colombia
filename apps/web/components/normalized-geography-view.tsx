@@ -3,10 +3,12 @@ import React from "react";
 
 import { Page, Section } from "@/components/page-primitives";
 import type {
+  ChildrenResultsPage,
   PublicGeographyView,
   PublicMesaView,
 } from "@/data/fixture-adapter";
 import { geographyRoute, mesaRoute } from "@/lib/explorer-routing";
+import { VoteField, fieldFromChild } from "@/components/vote-field";
 import { formatMetricValue } from "@/lib/metric-value";
 import {
   directChildrenLabel,
@@ -40,12 +42,17 @@ export function NormalizedGeographyView({
   view,
   locale,
   filters,
+  results,
 }: {
   view: PublicGeographyView;
   locale: Locale;
   filters: ResultFilters;
+  /** Vote totals for the same children. Optional: the child list is the
+   * navigation and must render without them. */
+  results?: ChildrenResultsPage | null;
 }) {
   const selected = view.selected;
+  const byId = new Map((results?.items ?? []).map((row) => [row.i, row]));
   const scoped = routeFilters(view, filters);
   const current = view.path.at(-1);
   const nextBase = geographyRoute(locale, view.geographyId, {
@@ -196,6 +203,39 @@ export function NormalizedGeographyView({
                       >
                         <th className="px-4 py-4" scope="row">
                           {child.name}
+                          {(() => {
+                            const row = byId.get(child.id);
+                            if (!row) return null;
+                            const { a, b, blank } = fieldFromChild(row);
+                            if (a + b + blank === 0) return null;
+                            return (
+                              <div className="mt-2 max-w-[15rem]">
+                                <VoteField
+                                  locale={locale}
+                                  a={a}
+                                  b={b}
+                                  blank={blank}
+                                  step={7}
+                                  cols={24}
+                                  labelA={copy(locale, "Primero", "First")}
+                                  labelB={copy(locale, "Segundo", "Second")}
+                                  labelBlank={copy(locale, "Blanco", "Blank")}
+                                  scaleLabel={(perHex) =>
+                                    copy(
+                                      locale,
+                                      `cada hexágono ≈ ${perHex} votos`,
+                                      `each hexagon ≈ ${perHex} votes`,
+                                    )
+                                  }
+                                  alt={copy(
+                                    locale,
+                                    `Votos de ${child.name}`,
+                                    `Votes in ${child.name}`,
+                                  )}
+                                />
+                              </div>
+                            );
+                          })()}
                         </th>
                         <td className="px-4 py-4">
                           <Link
