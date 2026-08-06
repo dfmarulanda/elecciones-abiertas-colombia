@@ -222,6 +222,57 @@
       "detail": "Una fuente oficial nueva con su propia condición jurídica, granularidad y huella. Los estados unknown, unavailable y not_applicable son distintos entre sí y ninguno se rellena con cero.",
       "figureAlt": "Un hexágono vacío: el censo electoral no está disponible",
       "figureNote": "Ningún hexágono: no hay un solo registro de censo electoral en este catálogo."
+    },
+    "crossChecked": {
+      "eyebrow": "Verificación independiente",
+      "title": "Lo que revisó otro medio, por su cuenta",
+      "intro": "Los reclamos de arriba también fueron revisados por el Detector de Mentiras de La Silla Vacía, un medio periodístico independiente de este proyecto. No compartimos datos, código ni redacción con ellos: llegaron a sus conclusiones por su camino y este sitio a las suyas por el suyo. Se enlaza aquí porque coincidir por separado es más informativo que coincidir de acuerdo. Ninguna calificación de esta lista es un hallazgo de este sitio; cada una es el veredicto que ellos publicaron y firmaron.",
+      "sourceLabel": "La Silla Vacía · Detector de Mentiras",
+      "linkNote": "Los enlaces salen a lasillavacia.com y se abren en una pestaña nueva.",
+      "verdictPrefix": "Su veredicto",
+      "verdict": "Reclamo · revisado también por fuera",
+      "runs": {
+        "claim": "«Las rachas de mesas consecutivas dentro de un puesto prueban que el resultado estaba predeterminado.»",
+        "answer": "Este repositorio calcula esa misma prueba. El módulo de replicación aplica un contraste de rachas de Wald–Wolfowitz sobre mesas consecutivas dentro de cada puesto, y su propio código marca cada resultado como una asociación de investigación neutral: nunca como evidencia de fraude ni de inyección de votos, y nunca elegible para sumar puntos en la prioridad de revisión pública. La Silla Vacía revisó el mismo reclamo con su propio método y publicó una conclusión equivalente, con la calificación «Falso».",
+        "method": "La replicación está preregistrada: permutación por bloques dentro del puesto, max-T sincronizado por año, vuelta y municipio, y una semilla derivada de los datos —no elegida por quien corre la prueba— para que nadie pueda repetir el sorteo hasta encontrar el resultado que prefiere. Las mesas de un puesto se numeran por rangos de cédula, así que su orden ya está correlacionado con la edad de quienes votan; por eso una racha mide asociación con ese orden y no una causa. La comparación con 2018 o 2022 se guarda como contexto y no se acepta como señal de integridad.",
+        "linkTitle": "«Rachas en puestos no prueban fraude como dijo Petro y sucedieron en 2022»",
+        "verdictTag": "Falso"
+      },
+      "forms": {
+        "claim": "«Los formularios E-14 con tachones prueban que se alteraron votos en la segunda vuelta.»",
+        "answer": "Un tachón en un acta es una corrección anotada a mano, y una corrección anotada es lo contrario de una huella borrada. Este sitio no decide cuál cifra es la buena: guarda las capas separadas —el preconteo informativo y el escrutinio, que es el que certifica— y conserva versión, fuente y condición jurídica de cada una, de modo que la diferencia queda a la vista. La Silla Vacía rastreó las actas que circulaban hasta sus originales y calificó el reclamo «Falso».",
+        "method": "Las capas nunca se colapsan en un solo número. Cuando dos capas difieren, se publican las dos con su versión y su huella, y la discrepancia se reporta como tal en vez de resolverse escogiendo la cifra más cómoda.",
+        "linkTitle": "«Formularios E-14 no prueban fraude a favor de De la Espriella en segunda vuelta»",
+        "verdictTag": "Falso"
+      },
+      "viralChart": {
+        "claim": "«Una gráfica muestra quién ganó de verdad, al restar del total los votos irregulares.»",
+        "answer": "Restarle a un total nacional cuatro cifras tomadas de cuatro denuncias distintas no produce un recuento: produce una resta. Ninguna de esas cifras sale del mismo conteo por mesa que el total al que se le restan, así que el resultado depende enteramente de qué se decida restar. Aquí un total solo existe sumando mesas, cada una con su fuente y su versión. La Silla Vacía siguió las cuatro cifras de la gráfica hasta su origen y la calificó «Falso».",
+        "method": "Todo agregado nacional se reconstruye desde las mesas que lo componen y se puede rehacer desde el mismo artefacto. No se admiten ajustes aplicados directamente sobre un total sin una fuente por mesa que los respalde.",
+        "linkTitle": "«Gráfica viral impulsa narrativa de fraude con datos falsos a favor de Cepeda»",
+        "verdictTag": "Falso"
+      },
+      "lawsuit": {
+        "claim": "«La demanda de nulidad y la página de pruebas que la acompaña muestran lo que pasó.»",
+        "answer": "Este sitio no analiza demandas: no tiene expedientes en su catálogo y no le corresponde decir qué prueba un documento judicial. Lo que sí puede decir es que las preguntas de trazabilidad digital que ese debate plantea son exactamente las que un artefacto con versión, fuente y huella permite responder sin depender de la interpretación de nadie. La Silla Vacía sí revisó ambos textos y publicó su lectura de lo que muestran y de lo que los propios textos admiten que no muestran.",
+        "method": "Cada cifra publicada aquí arrastra su versión, su fuente, su condición jurídica y su huella, y cada boletín queda con la suya. Una pregunta sobre trazabilidad se responde recomputando el artefacto, no discutiendo la captura de pantalla.",
+        "linkTitle": "«Ni la demanda de Petro ni su página de \"pruebas\" muestran fraude contra Cepeda»",
+        "verdictTag": "Verificación"
+      },
+      "timestamps": {
+        "claim": "«El sello de tiempo y el candado hash de los E-14 revelan que las actas se manipularon.»",
+        "answer": "Un sello de tiempo y un hash sirven para comprobar que un archivo no cambió después de quedar publicado. Es una garantía real y también una garantía limitada: por sí sola no describe nada de lo que ocurrió antes de sellarlo. Por eso aquí los seis boletines de la noche quedan con su hora y su huella, para que cualquiera repita la comprobación en vez de confiar en que la hicimos. La Silla Vacía revisó una por una las denuncias posteriores a la segunda vuelta y no encontró sustento para ellas.",
+        "method": "El orden de reporte, los cambios tardíos y el momento de una revisión son descriptivos y puntúan cero: no alimentan la prioridad de revisión. Lo que sí queda fijo es la huella de cada boletín, que permite reconstruir la secuencia publicada.",
+        "linkTitle": "«Petro lanza nuevas denuncias de fraude sin sustento tras segunda vuelta»",
+        "verdictTag": "Verificación"
+      },
+      "attribution": {
+        "claim": "«Un periodista reconocido concluyó que las pruebas presentadas comprueban el fraude.»",
+        "answer": "Este reclamo no es sobre los datos sino sobre quién dijo qué, y este sitio no tiene forma de responderlo: su catálogo contiene actas y agregados, no declaraciones públicas. Una cita atribuida se verifica contra la grabación original, y ese es trabajo de reportería, no de estadística. La Silla Vacía buscó el registro y calificó la atribución «Falso».",
+        "method": "Ninguna: el campo no existe en este catálogo. Se dice así en vez de estirar una fuente hasta que parezca responder algo para lo que no fue publicada.",
+        "linkTitle": "«Coronell no ha concluido que las pruebas de Petro comprueban el fraude electoral»",
+        "verdictTag": "Falso"
+      }
     }
   },
   "comparison": {

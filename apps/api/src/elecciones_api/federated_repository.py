@@ -17,7 +17,11 @@ from collections.abc import Iterable, Iterator
 from typing import Any
 
 from .historical_repository import HistoricalDuckDBRepository
-from .repository import PostgresReadRepository, ReleaseNotFoundError
+from .repository import (
+    PostgresReadRepository,
+    ReleaseNotFoundError,
+    RepositoryUnavailableError,
+)
 
 
 class FederatedRepository:
@@ -42,15 +46,25 @@ class FederatedRepository:
 
     # ── whole-repository surface ─────────────────────────────────────────────
 
+    # ``is_fixture`` and ``data_version`` are properties on every backend and on
+    # the ``ReadRepository`` protocol, and the HTTP layer reads them as plain
+    # attributes. Defining them as methods here handed the routes a bound method
+    # instead: truthy for ``is_fixture`` (so production dataset downloads took
+    # the synthetic-fixture branch) and unserialisable for ``data_version``.
+    @property
     def is_fixture(self) -> bool:
         return False
 
+    @property
     def data_version(self) -> str:
         """The active release. Postgres owns it unless DuckDB declares it."""
         try:
-            return self._postgres.data_version()
-        except (ReleaseNotFoundError, Exception):  # noqa: BLE001 - fall through by design
-            return self._historical.data_version()
+            return self._postgres.data_version
+        except (ReleaseNotFoundError, RepositoryUnavailableError):
+            # Both mean "Postgres cannot name the active release yet" — the
+            # release is not loaded, or the read model is unreachable. Anything
+            # else is a defect and must not be answered with a stale version.
+            return self._historical.data_version
 
     def public_elections(self) -> list[dict[str, object]]:
         """One catalogue over both backends, ordered as each already orders."""

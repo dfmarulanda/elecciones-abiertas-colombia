@@ -222,6 +222,57 @@
       "detail": "A new official source with its own legal status, grain and fingerprint. The states unknown, unavailable and not_applicable are distinct from one another and none is filled in with zero.",
       "figureAlt": "An empty hexagon: the electoral roll is unavailable",
       "figureNote": "Not a single hexagon: there is not one electoral-roll record in this catalogue."
+    },
+    "crossChecked": {
+      "eyebrow": "Independent cross-check",
+      "title": "What a newsroom checked, on its own",
+      "intro": "The claims above were also examined by Detector de Mentiras, the fact-checking desk of La Silla Vacía — a newsroom independent of this project. We share no data, no code and no drafts with them: they reached their conclusions by their route and this site reached its own by another. They are linked here because agreeing separately is worth more than agreeing together. None of the ratings below is a finding of this site; each is the verdict they published under their own name.",
+      "sourceLabel": "La Silla Vacía · Detector de Mentiras",
+      "linkNote": "Links open lasillavacia.com in a new tab. The articles are in Spanish.",
+      "verdictPrefix": "Their verdict",
+      "verdict": "Claim · also checked elsewhere",
+      "runs": {
+        "claim": "“Streaks of consecutive tables within a polling place prove the result was predetermined.”",
+        "answer": "This repository computes that same test. Its replication module runs a Wald–Wolfowitz runs test over consecutive tables within each polling place, and its own code marks every result as a neutral research association: never as evidence of fraud or vote injection, and never eligible for public audit-priority points. La Silla Vacía examined the same claim by its own method and published an equivalent conclusion, rated “Falso” (false).",
+        "method": "The replication is preregistered: within-place block permutation, max-T synchronised across year, round and municipality, and a seed derived from the data rather than chosen by whoever runs it — so nobody can re-draw until a preferred p-value appears. Tables inside a polling place are numbered by ID-number ranges, so their order is already correlated with voter age; a streak therefore measures association with that ordering, not a cause. Comparison against 2018 or 2022 is kept as context and is not accepted as an integrity signal.",
+        "linkTitle": "“Rachas en puestos no prueban fraude como dijo Petro y sucedieron en 2022”",
+        "verdictTag": "Falso (false)"
+      },
+      "forms": {
+        "claim": "“E-14 forms with crossings-out prove votes were altered in the runoff.”",
+        "answer": "A crossing-out on a tally sheet is a correction written by hand, and a written correction is the opposite of an erased trace. This site does not pick which figure is the real one: it keeps the layers apart — the informational pre-count and the scrutiny, which is what certifies — and keeps each one's version, source and legal status, so the difference stays visible. La Silla Vacía traced the circulating sheets back to their originals and rated the claim “Falso” (false).",
+        "method": "The layers are never collapsed into one number. When two layers differ, both are published with their version and their fingerprint, and the discrepancy is reported as a discrepancy rather than settled by choosing the more convenient figure.",
+        "linkTitle": "“Formularios E-14 no prueban fraude a favor de De la Espriella en segunda vuelta”",
+        "verdictTag": "Falso (false)"
+      },
+      "viralChart": {
+        "claim": "“A graphic shows who really won, once the irregular votes are subtracted from the total.”",
+        "answer": "Subtracting four figures drawn from four separate allegations from a national total does not produce a recount; it produces a subtraction. None of those figures comes from the same table-level count as the total they are taken from, so the answer depends entirely on what one decides to subtract. Here a total only exists by summing tables, each with its source and version. La Silla Vacía followed the graphic's four figures back to their origins and rated it “Falso” (false).",
+        "method": "Every national aggregate is rebuilt from the tables that compose it and can be recomputed from the same artefact. Adjustments applied straight to a total, with no per-table source behind them, are not accepted.",
+        "linkTitle": "“Gráfica viral impulsa narrativa de fraude con datos falsos a favor de Cepeda”",
+        "verdictTag": "Falso (false)"
+      },
+      "lawsuit": {
+        "claim": "“The annulment lawsuit and the evidence page that accompanies it show what happened.”",
+        "answer": "This site does not analyse lawsuits: court filings are not in its catalogue, and it is not this site's place to say what a legal document proves. What it can say is that the digital-traceability questions that debate raises are exactly the questions an artefact carrying its version, source and fingerprint lets anyone answer without relying on somebody's reading. La Silla Vacía did review both texts and published its account of what they show and of what the texts themselves concede they do not.",
+        "method": "Every figure published here carries its version, source, legal status and fingerprint, and every bulletin keeps its own. A traceability question is answered by recomputing the artefact, not by arguing about a screenshot.",
+        "linkTitle": "“Ni la demanda de Petro ni su página de \"pruebas\" muestran fraude contra Cepeda”",
+        "verdictTag": "Check (no rating shown)"
+      },
+      "timestamps": {
+        "claim": "“The timestamp and the hash lock on the E-14s reveal that the tally sheets were tampered with.”",
+        "answer": "A timestamp and a hash establish that a file has not changed since it was published. That is a real guarantee and a narrow one: on its own it describes nothing about what happened before the seal. That is why the night's six bulletins each keep their time and their fingerprint here — so anyone can repeat the check instead of trusting that we ran it. La Silla Vacía went through the post-runoff allegations one at a time and found no support for them.",
+        "method": "Reporting order, late changes and the timing of a revision are descriptive and score zero: they do not feed the review-priority score. What is fixed is each bulletin's fingerprint, which lets the published sequence be reconstructed.",
+        "linkTitle": "“Petro lanza nuevas denuncias de fraude sin sustento tras segunda vuelta”",
+        "verdictTag": "Check (no rating shown)"
+      },
+      "attribution": {
+        "claim": "“A well-known journalist concluded that the evidence presented proves the fraud.”",
+        "answer": "This claim is not about the data but about who said what, and this site has no way to answer it: its catalogue holds tally sheets and aggregates, not public statements. An attributed quote is checked against the original recording — that is reporting work, not statistics. La Silla Vacía looked for the record and rated the attribution “Falso” (false).",
+        "method": "None: the field does not exist in this catalogue. Saying so is better than stretching a source until it appears to answer something it was never published to answer.",
+        "linkTitle": "“Coronell no ha concluido que las pruebas de Petro comprueban el fraude electoral”",
+        "verdictTag": "Falso (false)"
+      }
     }
   },
   "comparison": {

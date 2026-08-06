@@ -1,3 +1,4 @@
+import React from "react";
 import { grid, hexes } from "@/lib/hexes";
 
 type Locale = "es" | "en";
@@ -17,6 +18,11 @@ type Text = (key: string) => string;
  * and `hexes(..., 27)` match the source's `six = grid(6,30,6)` /
  * `sixD: hexes(six, 27)` exactly.
  *
+ * The independent cross-check block at the foot of the section is the one
+ * addition to the design source's markup: it is built from the same card
+ * primitives so it reads as part of #reclamos rather than as a bolt-on. See
+ * `CROSS_CHECKED` below for why it exists and what it may and may not claim.
+ *
  * All static content: this section reads no release and therefore never
  * degrades. Every string comes from the message bundle so both legs of the
  * wording gate (ES and EN) are checked. Per-claim colour (`fg`) is fixture
@@ -33,6 +39,64 @@ const MID_CLAIMS = [
   { key: "benford", fg: "#8A4B1E" },
   { key: "reportOrder", fg: "#5F6300" },
   { key: "moreVotesThanRegistered", fg: "#8A4B1E" },
+] as const;
+
+/**
+ * Claims that a newsroom outside this project checked on its own.
+ *
+ * These are cross-references, not findings. La Silla Vacía's Detector de
+ * Mentiras shares no data, code or drafts with this repository; each entry
+ * below links out to their piece and carries THEIR verdict label, never one
+ * of ours. The copy is written so that this site's own voice only ever
+ * describes what it checked and what it holds — the rating belongs to them
+ * and is attributed to them, in both message bundles.
+ *
+ * The `runs` entry is the reason this block exists. `pipeline/src/
+ * elecciones_pipeline/analytics/runs_replication.py` already computes the
+ * Wald--Wolfowitz runs claim the journalists checked, with within-place block
+ * permutation and a family-synchronized max-T, and every signal it emits
+ * carries `claim_state = "neutral_research_association"` with
+ * `public_point_eligible = False`. Its own limitations tuple says a runs
+ * result is "never a fraud or injection claim" and "never eligible for public
+ * audit-priority points". Two independent routes, the same place: worth
+ * saying out loud, and worth saying as convergence rather than as proof.
+ *
+ * URLs live here rather than in the message bundle for the same reason `fg`
+ * does: they are identical in both locales and are not copy to be translated.
+ * The articles themselves are Spanish-only, which the EN bundle says plainly
+ * and `hrefLang` states machine-readably.
+ */
+const CROSS_CHECKED = [
+  {
+    key: "runs",
+    fg: "#5F6300",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/falso/rachas-en-puestos-no-prueban-fraude-como-dijo-petro-y-sucedieron-en-2022/",
+  },
+  {
+    key: "forms",
+    fg: "#5F6300",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/falso/formularios-e-14-no-prueban-fraude-a-favor-de-de-la-espriella-en-segunda-vuelta/",
+  },
+  {
+    key: "viralChart",
+    fg: "#5F6300",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/falso/grafica-viral-impulsa-narrativa-de-fraude-con-datos-falsos-a-favor-de-cepeda/",
+  },
+  {
+    key: "lawsuit",
+    fg: "#8A4B1E",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/ni-la-demanda-de-petro-ni-su-pagina-de-pruebas-muestran-fraude-contra-cepeda/",
+  },
+  {
+    key: "timestamps",
+    fg: "#8A4B1E",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/petro-lanza-nuevas-denuncias-de-fraude-sin-sustento-tras-segunda-vuelta/",
+  },
+  {
+    key: "attribution",
+    fg: "#8A4B1E",
+    href: "https://www.lasillavacia.com/detector-de-mentiras/falso/coronell-no-ha-concluido-que-las-pruebas-de-petro-comprueban-el-fraude-electoral/",
+  },
 ] as const;
 
 export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
@@ -204,6 +268,85 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
           </details>
         </div>
       </article>
+
+      {/* Independent cross-check — their verdicts, linked out, never ours. */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
+          gap: 64,
+          alignItems: "baseline",
+          marginTop: 72,
+          paddingTop: 34,
+          borderTop: "1px solid #211E1E",
+        }}
+      >
+        <div>
+          <p className="mark" style={{ margin: 0, color: "#6B6259" }}>
+            {t("claims.crossChecked.eyebrow")}
+          </p>
+          <h3 className="head" style={{ margin: "16px 0 0", fontSize: 32 }}>
+            {t("claims.crossChecked.title")}
+          </h3>
+        </div>
+        <div>
+          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: "#3E3831" }}>
+            {t("claims.crossChecked.intro")}
+          </p>
+          <p style={{ margin: "14px 0 0", maxWidth: "42rem", fontSize: 14, lineHeight: 1.6, color: "#6B6259" }}>
+            {t("claims.crossChecked.linkNote")}
+          </p>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+          gap: "0 72px",
+          marginTop: 18,
+        }}
+      >
+        {CROSS_CHECKED.map((c) => (
+          <article key={c.key} style={{ padding: "30px 0 32px", borderTop: "1px solid rgba(33,30,30,.16)" }}>
+            <p className="mono" style={{ margin: 0, fontSize: 12, color: c.fg }}>
+              {t("claims.crossChecked.verdict")}
+            </p>
+            <h4 className="claim" style={{ margin: "14px 0 0", fontSize: 24 }}>
+              {t(`claims.crossChecked.${c.key}.claim`)}
+            </h4>
+            <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: "#3E3831" }}>
+              {t(`claims.crossChecked.${c.key}.answer`)}
+            </p>
+            <details style={{ marginTop: 14 }}>
+              <summary style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}>
+                <span className="ul">{t("claims.methodLabel")}</span>
+              </summary>
+              <p style={{ margin: "13px 0 0", fontSize: 14, lineHeight: 1.65, color: "#5A5148" }}>
+                {t(`claims.crossChecked.${c.key}.method`)}
+              </p>
+            </details>
+            <p className="mono" style={{ margin: "20px 0 0", fontSize: 12, color: "#6B6259" }}>
+              {t("claims.crossChecked.sourceLabel")}
+            </p>
+            <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
+              <a
+                href={c.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                hrefLang="es"
+                className="ul"
+                style={{ color: "#211E1E" }}
+              >
+                {t(`claims.crossChecked.${c.key}.linkTitle`)}
+              </a>
+            </p>
+            <p className="mono" style={{ margin: "10px 0 0", fontSize: 12, color: c.fg }}>
+              {`${t("claims.crossChecked.verdictPrefix")} · ${t(`claims.crossChecked.${c.key}.verdictTag`)}`}
+            </p>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

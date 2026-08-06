@@ -12,7 +12,8 @@ from elecciones_api.historical_repository import (
     HistoricalDuckDBRepository,
     HistoricalReleaseError,
 )
-from elecciones_api.main import create_app
+from elecciones_api.federated_repository import FederatedRepository
+from elecciones_api.main import create_app, select_repository
 from fastapi.testclient import TestClient
 
 DATA = Path(__file__).parents[3] / "data"
@@ -20,6 +21,20 @@ RELEASES = (
     "historical-2018-mmv-context-v2-c456aeb032917d5c",
     "historical-2022-mmv-context-v2-288e9b41c14730e9",
 )
+
+
+def _packaged(tmp_path: Path) -> Path:
+    """The image's /app/data layout, symlinked to the real checked-in releases."""
+    packaged = tmp_path / "data"
+    (packaged / "manifests").mkdir(parents=True)
+    (packaged / "releases").mkdir()
+    for release_id in RELEASES:
+        os.symlink(
+            DATA / "manifests" / f"{release_id}.json",
+            packaged / "manifests" / f"{release_id}.json",
+        )
+        os.symlink(DATA / "releases" / release_id, packaged / "releases" / release_id)
+    return packaged
 
 
 def test_build_time_geography_index_is_read_only_and_serves_all_scopes(
@@ -342,3 +357,61 @@ def test_public_elections_never_advertises_another_release_elections(tmp_path: P
             str(entry["release_id"]), str(entry["election_slug"]), {}, None, 1
         )
         assert rows
+
+
+def test_duckdb_only_mode_still_refuses_an_unpackaged_active_release(tmp_path: Path) -> None:
+    """The invariant that makes the federated case below non-obvious: with no
+    Postgres backend, ACTIVE_RELEASE must name a release this repository holds."""
+    packaged = _packaged(tmp_path)
+    with pytest.raises(HistoricalReleaseError, match="ACTIVE_RELEASE"):
+        HistoricalDuckDBRepository(packaged, RELEASES, "candidate-2026-r2-dacb28aa766eec87")
+
+
+def test_federated_startup_survives_a_postgres_owned_active_release(tmp_path: Path) -> None:
+    """The production configuration: ACTIVE_RELEASE is the 2026 release Postgres
+    holds, while the packaged DuckDB releases keep serving 2018 and 2022.
+
+    Passing that id straight through to the DuckDB half aborted startup with
+    "ACTIVE_RELEASE is not one of the verified packaged releases", so importing
+    the app raised and the container never bound a port.
+    """
+    packaged = _packaged(tmp_path)
+    settings = Settings(
+        database_url="postgresql://reader@db.example.test/elections",
+        cursor_secret="a" * 64,
+        historical_releases=",".join(RELEASES),
+        historical_data_path=packaged,
+        active_release_id="candidate-2026-r2-dacb28aa766eec87",
+    )
+    selected = select_repository(settings)
+    assert isinstance(selected, FederatedRepository)
+    # Both halves are reachable, and the 2026 id routes to Postgres.
+    assert selected.holds_historical(RELEASES[0])
+    assert selected.holds_historical(RELEASES[1])
+    assert not selected.holds_historical("candidate-2026-r2-dacb28aa766eec87")
+    assert {str(row["release_id"]) for row in selected._historical.public_elections()} == set(
+        RELEASES
+    )
+    # Postgres keeps the true active release; the DuckDB half defaults to the
+    # newest release it actually verified.
+    assert selected._postgres.active_release_id == "candidate-2026-r2-dacb28aa766eec87"
+    assert selected._historical.active_release_id == RELEASES[1]
+    selected.close()
+
+
+def test_federated_rollback_to_a_historical_active_release_keeps_it(tmp_path: Path) -> None:
+    """Rolling ACTIVE_RELEASE back to a packaged release must not silently
+    retarget the DuckDB half at a different election."""
+    packaged = _packaged(tmp_path)
+    selected = select_repository(
+        Settings(
+            database_url="postgresql://reader@db.example.test/elections",
+            cursor_secret="a" * 64,
+            historical_releases=",".join(RELEASES),
+            historical_data_path=packaged,
+            active_release_id=RELEASES[0],
+        )
+    )
+    assert isinstance(selected, FederatedRepository)
+    assert selected._historical.active_release_id == RELEASES[0]
+    selected.close()

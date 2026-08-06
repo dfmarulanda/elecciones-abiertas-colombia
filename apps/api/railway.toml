@@ -1,7 +1,20 @@
+# The alternative location for the historical-api service configuration, used
+# when the service's config path is set to `/apps/api/railway.toml`. The service
+# currently reads `/railway.toml`, so that file is the authoritative one and
+# this must be kept identical to it -- otherwise repointing the service silently
+# changes the deployment (most importantly, it would drop preDeployCommand and
+# start serving code against an older schema).
+
 [build]
 dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
+# Run migrations before traffic shifts, so the schema can never be older than
+# the code reading it. Railway aborts the deploy if this fails, which is the
+# behaviour we want: a half-migrated database serving election results is worse
+# than a deploy that does not land. Alembic is a no-op when already at head, so
+# this is safe on every redeploy, including ones that change no schema.
+preDeployCommand = "alembic -c /app/apps/api/alembic.ini upgrade head"
 healthcheckPath = "/healthz"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

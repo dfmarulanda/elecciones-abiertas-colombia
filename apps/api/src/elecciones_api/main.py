@@ -553,6 +553,26 @@ def _normalized_summary_payload(
 type AppRepository = ReadRepository | HistoricalDuckDBRepository | FederatedRepository
 
 
+def _historical_default_release(active_release_id: str, historical_ids: list[str]) -> str:
+    """The release the DuckDB half answers for when no release id is supplied.
+
+    ``HistoricalDuckDBRepository`` refuses to start unless its active release is
+    one of the releases it verified, which is the right invariant when DuckDB is
+    the only backend. Under federation Postgres owns ``ACTIVE_RELEASE`` — a 2026
+    id the DuckDB half has never heard of — so passing it through would abort
+    startup for the exact configuration federation exists to serve. Every
+    release-scoped read reaches this backend with an explicit release id, so its
+    default only has to be a release it actually holds; the newest packaged one
+    matches what the image builds its read model against. When ``ACTIVE_RELEASE``
+    is a rollback to a historical release, that release stays the default.
+    """
+    if active_release_id in historical_ids:
+        return active_release_id
+    if not historical_ids:
+        raise ValueError("HISTORICAL_RELEASES must list at least one packaged release.")
+    return historical_ids[-1]
+
+
 def select_repository(settings: Settings) -> AppRepository:
     """Use the fixture only when no production PostgreSQL URL is configured."""
     if settings.database_url:
@@ -565,16 +585,15 @@ def select_repository(settings: Settings) -> AppRepository:
         # Without this branch the catalogue would lose 2018 and 2022 with no
         # error, which is the failure mode most likely to go unnoticed.
         if settings.historical_releases:
+            historical_ids = [
+                item.strip() for item in settings.historical_releases.split(",") if item.strip()
+            ]
             return FederatedRepository(
                 postgres,
                 HistoricalDuckDBRepository(
                     settings.historical_data_path,
-                    [
-                        item.strip()
-                        for item in settings.historical_releases.split(",")
-                        if item.strip()
-                    ],
-                    settings.selected_release_id(),
+                    historical_ids,
+                    _historical_default_release(settings.selected_release_id(), historical_ids),
                 ),
             )
         return postgres
