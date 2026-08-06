@@ -36,10 +36,18 @@ La base determinista usa el máximo aplicable, no la suma entre filas. Las seña
 | Diferencia documental de al menos 5 votos **o** al menos 2 puntos porcentuales |     70 |
 | Diferencia documental de 1–4 votos **y** menos de 2 puntos porcentuales        |     45 |
 | Documento oficial esperado faltante, duplicado o ambiguo                       |     25 |
-| Señal de pares que supera todas sus puertas                                    |    +10 |
-| Señal espacial que supera todas sus puertas                                    |    +10 |
+| Señal de pares que supera todas sus puertas                                    |  **0** |
+| Señal espacial que supera todas sus puertas                                    |  **0** |
 
-Las cuatro etiquetas públicas y sus rangos exhaustivos son: `documentary_review_prioritized` para 70–100, `documentary_comparison_recommended` para 45–69, `statistical_or_coverage_issue` para 15–44 y `no_review_signals` para 0–14. Se deben leer junto con los componentes, la cobertura y la versión metodológica. Un componente de 10 puntos puede figurar en el detalle aunque el puntaje total siga por debajo del nivel de revisión. No hay otros tiers públicos.
+> **Los componentes estadísticos aportan cero puntos públicos hoy.** El puntaje que se
+> publica es únicamente el componente determinista más alto. Las señales de pares y
+> espaciales se calculan y se registran como evidencia de investigación, pero se emiten
+> con `points = 0` y `signal = false`, porque un artefacto que se auto-certifica no es un
+> límite de confianza: falta un registro externo de artefactos y un verificador
+> independiente de repetición. Mientras eso no exista, ninguna señal estadística puede
+> subir el puntaje de una mesa.
+
+Las cuatro etiquetas públicas y sus rangos exhaustivos son: `documentary_review_prioritized` para 70–100, `documentary_comparison_recommended` para 45–69, `statistical_or_coverage_issue` para 15–44 y `no_review_signals` para 0–14. Se deben leer junto con los componentes, la cobertura y la versión metodológica. No hay otros tiers públicos.
 
 **Divulgación permanente:** Este puntaje prioriza registros para revisión documental; no mide ni determina fraude. La ausencia de una señal no demuestra que una mesa estuviera libre de errores.
 
@@ -93,8 +101,15 @@ The deterministic base takes the maximum applicable row, rather than adding rows
 | Documentary difference of at least 5 votes **or** at least 2 percentage points |     70 |
 | Documentary difference of 1–4 votes **and** under 2 percentage points          |     45 |
 | Expected official document missing, duplicated, or ambiguous                   |     25 |
-| Peer signal passing every gate                                                 |    +10 |
-| Spatial signal passing every gate                                              |    +10 |
+| Peer signal passing every gate                                                 |  **0** |
+| Spatial signal passing every gate                                              |  **0** |
+
+> **Statistical components contribute zero public points today.** The published score is
+> the highest deterministic component alone. Peer and spatial signals are computed and
+> recorded as research evidence, but they are emitted with `points = 0` and
+> `signal = false`, because a self-certifying artifact is not a trust boundary: an
+> external artifact registry and an independent replay verifier do not yet exist. Until
+> they do, no statistical signal can raise a mesa's score.
 
 The four exhaustive public tier ranges are `documentary_review_prioritized` for 70–100, `documentary_comparison_recommended` for 45–69, `statistical_or_coverage_issue` for 15–44, and `no_review_signals` for 0–14. Read them with the components, coverage, and methodology version. A 10-point component may appear in detail even when the total remains below the review tier. There are no other public tiers.
 

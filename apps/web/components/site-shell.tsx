@@ -2,8 +2,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ScrollProgress } from "@/components/scroll-progress";
-import { SyntheticDisclosure } from "@/components/page-primitives";
-import { isSyntheticFixture } from "@/lib/synthetic";
+import {
+  PreliminaryDisclosure,
+  SyntheticDisclosure,
+} from "@/components/page-primitives";
+import { releaseFraming, type ReleaseFraming } from "@/lib/release-framing";
 
 type Text = (key: string) => string;
 type Locale = "es" | "en";
@@ -15,14 +18,16 @@ export function SiteShell({
   children,
   locale,
   t,
-  synthetic = isSyntheticFixture(),
+  framing = releaseFraming(),
 }: {
   children: ReactNode;
   locale: Locale;
   t: Text;
-  synthetic?: boolean;
+  framing?: ReleaseFraming;
 }) {
   const href = (path = "") => `/${locale}${path}`;
+  const synthetic = framing === "synthetic";
+  const preliminary = framing === "preliminary";
 
   const primary = [
     ["/resultados", t("nav.results"), t("nav.resultsDesc")],
@@ -155,6 +160,7 @@ export function SiteShell({
       </header>
 
       {synthetic ? <SyntheticDisclosure locale={locale} t={t} /> : null}
+      {preliminary ? <PreliminaryDisclosure locale={locale} t={t} /> : null}
 
       {children}
 
@@ -165,6 +171,7 @@ export function SiteShell({
             <p className="mt-4 max-w-[42rem] text-meta-lg leading-relaxed text-on-dark-4">
               {t("footer.mission")}{" "}
               {synthetic ? t("disclosure.synthetic") : null}
+              {preliminary ? t("disclosure.preliminary") : null}
             </p>
             <p className="mt-4 text-meta-lg text-on-dark-4">
               {t("footer.madeBy")}{" "}

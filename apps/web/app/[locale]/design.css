@@ -1,0 +1,205 @@
+/**
+ * Rediseño v2 — Elecciones Abiertas Colombia
+ *
+ * Ported VERBATIM from the design source's own stylesheet (`design.css`,
+ * extracted from the authoring tool's <style> block). Selectors, values and
+ * class names — `.rise`, `.fade`, `.fig`, `.mono`, `.mark`, `.blk`, `.head`,
+ * `.claim`, `.ul`, `.skip`, `.field path`, the `rise`/`fade` keyframes — are
+ * unchanged from the source. This file is NOT a translation onto the app's
+ * ec-* Tailwind token system; it is the design's own CSS, imported only by
+ * the home page.
+ *
+ * The one structural change: every rule is nested under `.eac-design`. The
+ * source's stylesheet is written to own the whole document (`html`, `body`,
+ * bare `a`, bare `p`, `:focus-visible`, …); this app also serves
+ * /resultados, /actas, /metodologia, etc., which still run on the older
+ * ec-* token system. An unscoped `a{color:#211E1E}` or `:focus-visible{...}`
+ * would silently repaint those unrelated routes. Nesting under `.eac-design`
+ * — the class the redesigned home page's content tree renders inside —
+ * keeps this stylesheet's reach exactly where the design lane is porting
+ * verbatim markup, without touching anything selector-for-selector inside
+ * that scope.
+ *
+ * Font-substitution note (see apps/web/public/fonts and globals.css):
+ *   - Monument Extended, Inter Tight and JetBrains Mono are self-hosted and
+ *     load as authored.
+ *   - Tamil Sangam MN ships only as a .ttc (TrueType Collection); browsers
+ *     outside Safari refuse to load it via @font-face, so it never actually
+ *     paints outside Safari.
+ *   - The one deviation from the source's literal bytes is in the fallback
+ *     chain for body copy and headings: the source lists the bare family
+ *     "Inter" as the fallback after Tamil Sangam MN
+ *     (`'Tamil Sangam MN',Inter,system-ui,sans-serif`), but only "Inter
+ *     Tight" is bundled — plain "Inter" is not, so on non-Safari machines
+ *     that chain would skip straight to system-ui. That fallback is changed
+ *     to "Inter Tight" here so body text and headings actually render in a
+ *     bundled face outside Safari, matching what --font-body already does
+ *     in globals.css. `.fig` already listed "Inter Tight" first in the
+ *     source and is untouched.
+ */
+
+.eac-design {
+  background: #f4f1ea;
+  font-family:
+    "Tamil Sangam MN",
+    "Inter Tight",
+    Inter,
+    system-ui,
+    sans-serif;
+  color: #211e1e;
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.eac-design * {
+  box-sizing: border-box;
+}
+.eac-design h1,
+.eac-design h2,
+.eac-design h3,
+.eac-design h4 {
+  margin: 0;
+  text-wrap: pretty;
+}
+.eac-design .mark {
+  font-family: "Monument Extended", Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+.eac-design .head {
+  font-family:
+    "Tamil Sangam MN",
+    "Inter Tight",
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 400;
+  font-size: 42px;
+  letter-spacing: -0.022em;
+  line-height: 1.1;
+  text-transform: none;
+}
+.eac-design .claim {
+  font-family:
+    "Tamil Sangam MN",
+    "Inter Tight",
+    Inter,
+    system-ui,
+    sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-transform: none;
+}
+.eac-design .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+.eac-design .fig {
+  font-family: "Inter Tight", Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+.eac-design p {
+  text-wrap: pretty;
+}
+.eac-design a {
+  color: #211e1e;
+  text-decoration: none;
+}
+.eac-design a:hover {
+  color: #5a5148;
+}
+.eac-design :focus-visible {
+  outline: 2px solid #c4ff00;
+  outline-offset: 3px;
+}
+.eac-design .skip {
+  position: absolute;
+  left: -9999px;
+}
+.eac-design .skip:focus {
+  left: 12px;
+  top: 12px;
+  z-index: 99;
+  background: #151312;
+  color: #f4f1ea;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.eac-design .field path {
+  transition:
+    fill 520ms cubic-bezier(0.2, 0.7, 0.1, 1),
+    stroke 520ms cubic-bezier(0.2, 0.7, 0.1, 1),
+    opacity 520ms cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+.eac-design .blk {
+  transition: opacity 240ms cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.eac-design .rise {
+  animation: rise 560ms cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.eac-design .fade {
+  animation: fade 700ms cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.eac-design details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.eac-design details > summary::-webkit-details-marker {
+  display: none;
+}
+.eac-design details > summary::marker {
+  content: "";
+}
+.eac-design .ul {
+  border-bottom: 2px solid #c4ff00;
+  transition: border-color 140ms;
+}
+.eac-design .ul:hover {
+  border-bottom-color: #211e1e;
+}
+/* The source's index-nav links use a bare style-hover="color:#F4F1EA" (dark
+   panel, hover to on-dark) — the one hover state in the design that inline
+   styles cannot express, so it gets a single verbatim-value class instead of
+   a Tailwind utility. */
+.eac-design .eac-index-link:hover,
+.eac-design .eac-index-link:focus-visible {
+  color: #f4f1ea;
+}
+.eac-design .eac-index-link {
+  transition: color 140ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eac-design .rise,
+  .eac-design .fade {
+    animation: none;
+  }
+  .eac-design .field path,
+  .eac-design .blk {
+    transition: none;
+  }
+}

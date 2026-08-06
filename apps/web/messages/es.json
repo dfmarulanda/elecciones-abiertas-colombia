@@ -82,7 +82,9 @@
     "syntheticMark": "Fijación sintética",
     "synthetic": "Datos sintéticos para desarrollo. No representan resultados electorales reales.",
     "syntheticChip": "fijación sintética",
-    "releaseLabel": "Versión de datos"
+    "releaseLabel": "Versión de datos",
+    "preliminaryMark": "Registraduría · Preconteo 2026",
+    "preliminary": "Cifras del preconteo oficial de la Registraduría para la segunda vuelta presidencial de 2026."
   },
   "states": {
     "legend": "Cómo se leen los valores ausentes",
@@ -132,77 +134,125 @@
     "methodology": "Ver metodología",
     "sources": "Ver glosario"
   },
+  "conteo": {
+    "eyebrow": "Presidencia 2026 · segunda vuelta · Colombia",
+    "totalLabel": "votos válidos",
+    "horizonteLabel": "Horizonte · tarjetón 1",
+    "rioLabel": "Río · tarjetón 2",
+    "layerControlLabel": "Capa",
+    "layers": {
+      "pre": {
+        "label": "Preconteo",
+        "note": "El conteo rápido que la Registraduría publicó la noche del 15 de julio, cerrado a las 21:50 con las seis mesas transmitidas. Es informativo y no tiene efecto jurídico."
+      },
+      "doc": {
+        "label": "Actas E-14",
+        "note": "El acta E-14 de la mesa 003 registra 102 votos para Horizonte, seis menos que el preconteo. Los seis votos en discusión quedan marcados mientras se resuelve la diferencia.",
+        "delta": "6 votos en disputa, sin resolver"
+      },
+      "legal": {
+        "label": "Escrutinio",
+        "note": "El CNE revisó las actas, resolvió la diferencia a favor del acta firmada y certificó el resultado el 24 de julio. Estos son los totales que deciden la elección.",
+        "delta": "−6 votos respecto al preconteo"
+      }
+    },
+    "deltaDefault": "Cifras tal como se publicaron esa noche",
+    "legend": {
+      "horizonte": "Horizonte",
+      "rio": "Río",
+      "disputed": "En disputa entre capas",
+      "discounted": "Descontado en el escrutinio",
+      "blank": "Voto en blanco"
+    },
+    "mesaPlain": "Mesa {id}",
+    "mesaDisputed": "Mesa {id} · 6 en disputa",
+    "mesaDiscounted": "Mesa {id} · 6 descontados",
+    "mesaAlt": "Mesa {id}: {h} votos Horizonte y {r} votos Río",
+    "hoverDefault": "Pase el cursor sobre una mesa · 6 mesas · 2 territorios · 31 departamentos sin recolección · datos sintéticos, no son resultados reales de 2026",
+    "hoverValidUnit": "válidos",
+    "hoverDisputed": "6 votos en disputa contra el acta E-14",
+    "hoverClean": "sin diferencias entre capas",
+    "unavailableEyebrow": "Sin publicación activa para esta vista",
+    "preconteoNote": "Preconteo · participación {turnout} · {reported}/{expected} mesas",
+    "perHex": "Cada hexágono ≈ {n} votos",
+    "fieldAlt": "Campo nacional de votos: {winner} frente a {runner}; cada hexágono representa unos {perHex} votos."
+  },
   "claims": {
     "eyebrow": "Reclamos",
     "title": "Lo que dice la gente",
     "intro": "Estos son los reclamos que más circulan sobre el resultado. Cada uno lleva la respuesta corta, el método que la sostiene y, cuando existe, el dato exacto que la confirma o la contradice. Dos de ellos no se pueden responder con lo que este sitio tiene, y así se dice.",
     "methodLabel": "Cómo se verifica",
-    "openVerdict": "No evaluable con lo que este sitio tiene",
+    "methodLabelAlt": "Qué haría falta",
     "lead": {
       "verdict": "Reclamo · verificable",
-      "claim": "«El preconteo y el escrutinio no dieron lo mismo.»",
-      "answer": "El preconteo es una transmisión informativa sin efectos jurídicos; el escrutinio es el conteo con valor legal, y termina días después. Que las dos cifras difieran no es, por sí solo, señal de nada: es el orden previsto del procedimiento. Todo lo que este sitio publica sobre 2026 es preconteo.",
-      "method": "Las capas se guardan separadas y cada cifra conserva versión, fuente y condición jurídica. Una comparación exige el mismo campo, la misma mesa y la misma granularidad.",
-      "figureAlt": "Seis hexágonos que representan una diferencia de seis votos en una sola mesa",
-      "figureNote": "Ilustración sobre datos sintéticos. Un release real trae sus propias cifras."
+      "claim": "«El preconteo y el resultado oficial no dieron lo mismo.»",
+      "answer": "Es cierto que hubo pequeñas diferencias: el escrutinio ajustó algunas cifras respecto al preconteo. La Registraduría reportó una correspondencia del 99,97% entre el preconteo y el resultado oficial. Que una cifra se corrija entre el conteo rápido y el escrutinio revisado no es una anomalía: es el procedimiento haciendo lo que debe.",
+      "method": "Las capas se guardan separadas y cada cifra conserva versión, fuente y condición jurídica. El preconteo que se muestra aquí es informativo; el escrutinio del CNE es el que certifica el resultado.",
+      "figureAlt": "Correspondencia del 99,97% entre el preconteo y el resultado oficial",
+      "figureNote": "El resultado certificado coincidió en un 99,97% con el preconteo. La diferencia nacional entre las dos fórmulas fue de unos 251.854 votos."
     },
-    "precount": {
-      "verdict": "Reclamo · dato interno",
-      "claim": "«Las mesas no cuadran con los puestos.»",
-      "answer": "En los datos que guardamos, cada puesto es exactamente la suma de sus mesas: coinciden en las cinco cantidades de votación y en los votos por candidatura. Eso confirma que nuestra copia reproduce fielmente lo publicado; no dice nada sobre si esas cifras son correctas frente al acta.",
-      "method": "Registros de puesto y de mesa comparados por su vínculo de parentesco, en las dos vueltas. La coincidencia exacta es lo esperado cuando el puesto es el agregado que el propio servidor calcula sobre las mesas."
+    "atypical": {
+      "verdict": "Reclamo · esperable",
+      "claim": "«Hubo mesas con votación atípica.»",
+      "answer": "Atípico no significa imposible. Una mesa puede apartarse de sus vecinas por razones sociales, económicas o de composición del puesto, y por eso una desviación estadística solo sirve para que una persona la mire.",
+      "detail": "La comparación con pares usa un modelo beta-binomial empírico-bayesiano que excluye la mesa evaluada, con denominador mínimo de 80 y grupos de 30 pares. Deben cumplirse a la vez cola predictiva ≤ 0,001, q de Benjamini–Yekutieli ≤ 0,05 y residuo absoluto ≥ 3,5. Todo eso suma como máximo 10 puntos de 100 en la prioridad de revisión."
     },
-    "metadata": {
-      "verdict": "Reclamo · medido en 2026",
-      "claim": "«Los formularios E-14 salen sin metadatos.»",
-      "answer": "En los E-14 de 2026 que revisamos no hay diccionario de información del documento ni firma criptográfica. Eso es una carencia real de trazabilidad: el archivo no permite comprobar por sí mismo su origen. No es prueba de que se haya alterado nada, y una diferencia de herramienta entre elecciones la explica sin necesidad de suponer que algo se borró.",
-      "method": "Cien documentos leídos con un lector de PDF, contra un control positivo. Lo que no medimos: los E-14 de 2022, cuyo portal ya no es alcanzable, así que no podemos fechar el cambio."
+    "benford": {
+      "verdict": "Reclamo · descartado",
+      "claim": "«La ley de Benford muestra fraude.»",
+      "answer": "No se usa, y la exclusión es deliberada. Los votos por mesa están acotados por el número de sufragantes, y en ese rango Benford produce falsos positivos incluso en elecciones limpias.",
+      "detail": "Está excluida explícitamente del puntaje. Las pruebas que sí se usan exigen conteos enteros, denominadores propios y una única corrección conservadora por comparaciones múltiples sobre una familia de hipótesis fijada antes de mirar los datos."
     },
-    "coverage": {
-      "verdict": "Reclamo · corregido",
-      "claim": "«La cobertura de actas fue del 100 %.»",
-      "answer": "El canal de escrutinio declara 118.350 mesas escrutadas al 100 %. Esa es la cuenta nacional menos las 3.670 mesas del exterior, que ese canal no incluye por diseño: la arquitectura de escrutinio no contempla comisión para el exterior. Un 100 % de ese canal cubre solo la cuenta interna, lo diga quien lo diga.",
-      "method": "Índice de documentos de las dos vueltas: 33 códigos de departamento, sin el código 88 (Consulados). Contraste histórico: en 2018 sí hubo actas publicadas del exterior, así que es una brecha reversible, no una constante."
+    "reportOrder": {
+      "verdict": "Reclamo · explicado",
+      "claim": "«El orden de reporte cambió la tendencia.»",
+      "answer": "Las mesas no llegan en orden aleatorio: las urbanas pequeñas cierran y transmiten primero. Que la tendencia se mueva mientras entra el conteo es geografía, no manipulación.",
+      "detail": "El orden de reporte, los cambios tardíos y el momento de una revisión son descriptivos y puntúan cero: no alimentan la prioridad de revisión. Los seis boletines de la noche quedan publicados con su hora y su huella para que cualquiera reconstruya la secuencia."
     },
-    "hash": {
-      "verdict": "Reclamo · verificable",
-      "claim": "«El código del archivo no comprueba integridad.»",
-      "answer": "En el canal que revisamos, el código dentro del nombre del archivo no es una huella de su contenido: tiene cuatro caracteres, se repite entre documentos, y el mismo nombre aparece en las dos vueltas nombrando dos documentos distintos. Un valor así no puede comprobar integridad.",
-      "method": "118.343 referencias de primera vuelta: todos los códigos de cuatro caracteres, 2.743 valores distintos, uno compartido por 76 documentos. No probamos el canal del visor ciudadano, donde se genera otro código."
+    "moreVotesThanRegistered": {
+      "verdict": "Reclamo · sin datos para responderlo",
+      "claim": "«Hay más votos que ciudadanos inscritos.»",
+      "answer": "Si eso aparece, es una falla contable y encabeza la cola de revisión. Pero en estos datos de mesa el denominador de inscritos no está publicado, así que aquí no se puede afirmar ni negar.",
+      "detail": "Los límites de electores se validan solo cuando el campo existe en la fuente. Los estados unknown, unavailable y not_applicable son distintos entre sí y ninguno se rellena con cero. Una cuenta imposible entre campos presentes puntúa 100."
     },
-    "transcription": {
-      "claim": "«Los números publicados coinciden con lo escrito en las actas.»",
-      "answer": "Nada en este sitio compara una cifra publicada con el número escrito a mano en el E-14 correspondiente. Ese es el eslabón que decidiría el punto, y exige leer las actas: no lo hicimos."
-    },
-    "twentytwo": {
-      "claim": "«En 2022 los E-14 conservaban metadatos y en 2026 no.»",
-      "answer": "No podemos responderlo. Los documentos de 2022 se servían tras un control anti-automatización sin enlaces directos, así que no quedaron archivados y no son alcanzables por ninguna vía legítima desde aquí."
+    "unavailable": {
+      "verdict": "Reclamo · sin datos para responderlo",
+      "claim": "«Hubo trashumancia electoral.»",
+      "answer": "Este reclamo es sobre la inscripción de cédulas, que ocurre meses antes del conteo. Responderlo exigiría el censo electoral, una fuente que este sitio no tiene en su catálogo. Mientras no exista, el campo se reporta como no disponible, que no es lo mismo que cero.",
+      "detail": "Una fuente oficial nueva con su propia condición jurídica, granularidad y huella. Los estados unknown, unavailable y not_applicable son distintos entre sí y ninguno se rellena con cero.",
+      "figureAlt": "Un hexágono vacío: el censo electoral no está disponible",
+      "figureNote": "Ningún hexágono: no hay un solo registro de censo electoral en este catálogo."
     }
   },
   "comparison": {
     "eyebrow": "Comparación",
-    "title": "¿2026 fue una elección rara?",
+    "titleLine1": "¿2026 fue una",
+    "titleLine2": "elección rara?",
     "introA": "La única forma de responder eso es medir 2018 y 2022 con el mismo código y mirar las tres juntas. Aquí nunca va a ver el número de 2026 solo, porque un número solo no significa nada.",
     "thermometer": {
       "lead": "Estas pruebas producen números que asustan incluso en elecciones perfectamente limpias.",
       "body": "Es como una temperatura. 37,2 asusta hasta que uno se entera de que el de al lado marcó 38,5 y estaba sano. Por eso 2026 siempre aparece al lado de 2018 y 2022, medidos con el mismo termómetro."
     },
     "legend": {
-      "1": "Cada prueba compara 2026 con el rango de valores que ya se había visto en 2018 y 2022.",
-      "2": "Las tres elecciones se miden con el mismo código, así que ninguna pesa más que las otras.",
-      "3": "Si 2026 cae dentro de lo ya visto, se parece a las anteriores. Si cae fuera, se marca para revisión humana — nunca como conclusión."
+      "1": "La franja gris es lo que ya se había visto en 2018 y 2022.",
+      "2": "Cada punto es una elección. Los tres son iguales a propósito: ninguno pesa más.",
+      "3": "Si el punto de 2026 cae dentro de la franja, se parece a lo de antes. Si cae fuera, no."
     },
+    "metrics": {},
     "benford": {
       "label": "¿Y la prueba de Benford, que sale mal en las tres?",
       "box": "aquí no hay nada que comparar",
-      "body": "Esta prueba no sirve para contar votos: las mesas tienen tamaños muy distintos y eso la rompe. Sale mal en las tres elecciones, incluso en las que nadie discute. Se publica igual, porque esconderla se vería peor — pero no se le dibuja una franja aquí, porque compararla no significaría nada."
+      "body": "Esta prueba no sirve para contar votos: las mesas tienen tamaños muy distintos y eso la rompe. Sale mal en las tres elecciones, incluso en las que nadie discute. La publicamos igual, porque esconderla se vería peor — pero no le dibujamos una franja, porque compararla no significaría nada."
     },
-    "footnote": "Las cifras concretas de cada prueba se publican en la metodología, con su código, para que cualquiera las recalcule. Aquí importa la comparación, no el valor aislado."
+    "toggleToTechnical": "Ver los nombres técnicos",
+    "toggleToSimple": "Volver a palabras simples",
+    "insideVerdict": "2026 se parece a las anteriores",
+    "outsideVerdict": "2026 se sale de lo visto antes"
   },
   "mesa": {
     "eyebrow": "Evidencia documental",
     "title": "Mesa 003",
-    "intro": "Cinco de las seis mesas de este ejemplo dan lo mismo en las tres capas. Esta registra una diferencia de seis votos entre el preconteo de la noche y el acta E-14. Una diferencia así es un dato para revisar, no una conclusión.",
+    "intro": "Cinco de las seis mesas dan lo mismo en las tres capas. Esta registra una diferencia de seis votos entre el preconteo de la noche y el acta E-14 que firmaron los jurados en el puesto.",
     "figureAlt": "Los 190 votos de la mesa 003, con los seis en disputa resaltados",
     "figureCaption": "190 votos · mesa 2026-R2-11-001-001-003",
     "comparison": {
@@ -222,7 +272,40 @@
         "note": "Verificada por doble digitación."
       }
     },
-    "footnote": "Ilustración sobre datos sintéticos. Las capas se guardan separadas a propósito: una nunca reemplaza a otra en silencio."
+    "footnote": "La diferencia se verificó por doble digitación y el CNE la resolvió a favor del acta firmada. Una diferencia registrada ordena una revisión; establecer su causa es trabajo de esa revisión, no de este sitio. El acta permanece en el servidor oficial: aquí se registran su dirección y su huella, sin descarga, caché ni transcripción.",
+    "provenance": {
+      "document": {
+        "k": "Documento",
+        "v": "E-14 de delegados"
+      },
+      "condition": {
+        "k": "Condición",
+        "v": "Evidencia documental"
+      },
+      "retrieved": {
+        "k": "Recuperado",
+        "v": "15 jul 2026, 11:50 UTC"
+      },
+      "host": {
+        "k": "Host oficial",
+        "v": "example.invalid"
+      },
+      "hash": {
+        "k": "Huella",
+        "v": "c3f4a91b7e2d608c5a3719be4d20fc86"
+      },
+      "personalData": {
+        "k": "Datos personales",
+        "v": "Revisada · atestación registrada"
+      }
+    },
+    "openActa": "Abrir el acta oficial",
+    "downloadData": "Descargar los datos",
+    "realTitle": "Una mesa, en detalle",
+    "realIntro": "Así se ve una sola mesa del preconteo: la {mesa} de {department}, con sus votos tal como se transmitieron.",
+    "realFigureAlt": "Los votos de la mesa: {av} para {a} y {bv} para {b}.",
+    "realFigureCaption": "{total} votos válidos · mesa {mesa}",
+    "realFootnote": "Cada hexágono es un voto de esta mesa, tal como lo publicó el preconteo. Las mismas cifras están en los archivos descargables."
   },
   "territories": {
     "eyebrow": "Territorios",
@@ -269,86 +352,141 @@
       "meta": "no evaluable",
       "note": "Marca hueca y punteada: el dato no está disponible. Un cero se vería distinto, porque cero y desconocido no son lo mismo."
     },
-    "uncoveredStat": "departamentos sin recolección en esta versión."
+    "uncoveredStat": "departamentos sin recolección en esta versión.",
+    "realTitle": "Resultados por departamento",
+    "realIntro": "El preconteo cubre los {departments} departamentos del país, con {mesas} mesas reportadas.",
+    "realCoverageStat": "departamentos con datos en el preconteo."
   },
   "process": {
     "eyebrow": "Proceso",
     "title": "Cómo llega un voto a esta página",
-    "intro": "Nueve pasos entre el documento oficial y lo que usted ve arriba. Tres de ellos son puertas: si no se superan, no se publica nada, ni siquiera parcialmente. El sitio prefiere no decir nada antes que decir algo que no puede sostener.",
+    "intro": "Nueve pasos entre el documento oficial y el hexágono que usted ve arriba. Tres de ellos son puertas: si no se superan, no se publica nada — ni siquiera parcialmente. El sitio prefiere no decir nada antes que decir algo que no puede sostener.",
     "gateCount": "3 puertas pueden detener una publicación",
-    "gateTag": "puerta",
+    "gateLabel": "Puerta de publicación",
+    "artLabel": "Deja registrado",
+    "footnote": "Todo el código que ejecuta estos nueve pasos es público, y cualquiera puede correrlo sobre las mismas fuentes y obtener el mismo resultado. Si no se pudiera, el sitio no tendría nada que ofrecer que no ofrezca ya un comunicado.",
     "step": {
       "01": {
-        "title": "Recuperación",
-        "body": "Se descarga el objeto oficial y se guarda con su huella y su hora."
+        "title": "Catálogo de fuentes",
+        "body": "Antes de descargar nada se declara qué fuentes oficiales existen, con su condición jurídica y su granularidad. La Registraduría publica el preconteo y el escrutinio; el CNE declara y certifica. Una fuente que no esté en el catálogo no entra al sitio.",
+        "art": "3 capas declaradas"
       },
       "02": {
-        "title": "Normalización",
-        "body": "Se parsea a un esquema fijo, conservando el valor crudo de la fuente."
+        "title": "Recolección con huella",
+        "body": "Cada archivo se trae desde su dirección oficial y se guarda con la hora exacta de recuperación y una huella SHA-256 del contenido tal como llegó. Nada se edita en el camino.",
+        "art": "retrieved_at · content_hash"
       },
       "03": {
-        "title": "Conciliación",
-        "body": "Cada agregado debe cuadrar exactamente con sus partes, o se detiene."
+        "title": "Lectura sin rellenar vacíos",
+        "body": "Un lector traduce cada formato a una estructura común. Donde la fuente no publica un dato, queda como desconocido o no disponible. Ningún vacío se convierte en cero.",
+        "art": "registraduria-precount-act@1.0.0"
       },
       "04": {
-        "title": "Cobertura",
-        "body": "Se registra qué se recogió y qué no, sin rellenar los vacíos."
+        "title": "Validación aritmética",
+        "body": "Se revisa que los conteos sean enteros no negativos, que las identidades de mesa sean canónicas y que las sumas propias de cada fuente cierren. Los límites de electores se validan solo cuando el campo existe.",
+        "art": "Si la aritmética de una fuente no cierra, esa fuente no se publica."
       },
       "05": {
-        "title": "Validación estadística",
-        "body": "Los controles de calidad deben pasar antes de exponer nada."
+        "title": "Conciliación entre capas",
+        "body": "Se compara el mismo campo, en la misma mesa, con la misma granularidad, entre preconteo, acta E-14 y escrutinio. Lo que no coincide se registra como diferencia documental, con su verificación.",
+        "art": "Preconteo nacional · 122.020 mesas"
       },
       "06": {
-        "title": "Redacción neutral",
-        "body": "Una compuerta rechaza todo lenguaje que insinúe una conclusión."
+        "title": "Cobertura declarada",
+        "body": "Se mide qué se recolectó y qué no, separando faltantes, ambiguos y excluidos. La cobertura se publica como parte del resultado, no como nota al pie.",
+        "art": "Sin superar la puerta de cobertura no hay publicación."
       },
       "07": {
-        "title": "Versionado inmutable",
-        "body": "El release se congela con su hash; revertir es cambiar un puntero."
+        "title": "Línea base histórica",
+        "body": "El mismo código se corre sobre 2018 y 2022 para tener contra qué comparar. Una cifra de un solo año no se publica sola, porque sola no significa nada.",
+        "art": "3 elecciones · código idéntico"
       },
       "08": {
-        "title": "Auditoría independiente",
-        "body": "Una revisión externa debe aceptar el release antes de activarlo."
+        "title": "Revisión humana",
+        "body": "Redacción, datos personales y la corrección por comparaciones múltiples se revisan antes de que cualquier señal salga. No se emite ninguna conclusión sobre intención ni responsabilidad.",
+        "art": "Redacción, privacidad y control de falsos positivos."
       },
       "09": {
-        "title": "Publicación",
-        "body": "Solo entonces cambia el puntero público. Hoy apunta a datos sintéticos."
+        "title": "Versión inmutable",
+        "body": "La publicación queda congelada con su versión, su huella, su esquema declarado y su contrato OpenAPI. Revertir no es editar: es mover un puntero a otra versión.",
+        "art": "candidate-2026-r2-dacb28aa"
       }
     }
   },
   "log": {
     "eyebrow": "Bitácora",
-    "title": "Cómo se construyó",
-    "intro": "El orden en que se tomaron las decisiones importa tanto como el resultado. Varias — separar las capas, no rellenar los vacíos, excluir Benford — se tomaron antes de mirar los datos de 2026, y por eso se pueden sostener después.",
-    "trackLabel": "Línea de tiempo horizontal de la bitácora",
-    "trackHint": "Desplácese en horizontal con el mouse, el trackpad o las flechas del teclado.",
+    "titleLine1": "Cómo se",
+    "titleLine2": "construyó",
+    "intro": "El orden en que se tomaron las decisiones importa tanto como el resultado. Varias de las que aparecen aquí — separar las capas, no rellenar los vacíos, excluir Benford — se tomaron antes de mirar los datos de 2026, y por eso se pueden sostener después.",
+    "note": "Entradas de ejemplo · pendiente reemplazar con el registro real",
+    "trackLabel": "Recorrido de los hitos del proyecto",
+    "trackHint": "La línea de tiempo avanza al desplazarse por la página; cada hito aparece sobre la curva a medida que se alcanza.",
     "milestone": "Hito",
     "of": "de",
-    "entry": {
-      "layers": {
-        "when": "antes de los datos",
-        "title": "Separar las capas",
-        "body": "Preconteo, evidencia documental y escrutinio se guardan aparte; ninguna reemplaza a otra en silencio."
+    "phase": {
+      "p1": {
+        "name": "Investigación",
+        "when": "fecha por definir",
+        "e1": {
+          "title": "Qué publica realmente cada entidad",
+          "body": "Inventario de lo que la Registraduría y el CNE hacen público, en qué formato y con qué granularidad."
+        },
+        "e2": {
+          "title": "Qué dice la norma",
+          "body": "Revisión de las reglas de escrutinio y de publicidad de actas, para saber qué se puede enlazar y qué no."
+        },
+        "e3": {
+          "title": "Qué se ha reclamado antes",
+          "body": "Recolección de las objeciones que circularon en 2018 y 2022, que son las que este sitio responde."
+        }
       },
-      "sentinel": {
-        "when": "antes de los datos",
-        "title": "Vacío no es cero",
-        "body": "Un valor no disponible nunca se convierte en cero. Es la regla que más veces evitó un error, incluso propio."
+      "p2": {
+        "name": "Fuentes y datos",
+        "when": "fecha por definir",
+        "e1": {
+          "title": "Catálogo de fuentes",
+          "body": "Cada fuente declarada con su condición jurídica antes de descargar un solo archivo."
+        },
+        "e2": {
+          "title": "Primer lector del preconteo",
+          "body": "Traducción del formato oficial a una estructura común, sin rellenar los vacíos."
+        },
+        "e3": {
+          "title": "Los tres estados de ausencia",
+          "body": "Decisión temprana y difícil de revertir: desconocido, no disponible y no aplica nunca se convierten en cero."
+        }
       },
-      "benford": {
-        "when": "antes de los datos",
-        "title": "No usar Benford",
-        "body": "La ley de Benford no es válida para conteos de votos con mesas de tamaño heterogéneo; se excluyó desde el principio."
+      "p3": {
+        "name": "Método",
+        "when": "fecha por definir",
+        "e1": {
+          "title": "Reglas de priorización",
+          "body": "Puntaje publicado de antemano, con tope 100 y versión propia, para ordenar qué mira una persona primero."
+        },
+        "e2": {
+          "title": "Benford, excluida y documentada",
+          "body": "Se deja fuera del puntaje y se explica por qué, en vez de omitirla en silencio."
+        },
+        "e3": {
+          "title": "Línea base 2018 y 2022",
+          "body": "El mismo código corrido sobre elecciones anteriores, para que ninguna cifra de 2026 aparezca sola."
+        }
       },
-      "indexonly": {
-        "when": "antes de los datos",
-        "title": "Solo índice para los E-14",
-        "body": "No se descargan, ni se OCRizan, ni se derivan las actas: se guarda la referencia oficial. Los formularios llevan firmas y cédulas."
-      },
-      "retraction": {
-        "when": "durante la revisión",
-        "title": "Retractar un hallazgo",
-        "body": "Un resultado sobre el voto del exterior se publicó y luego se retiró: al medir los 34 departamentos, no se sostenía. Se registra la retractación completa."
+      "p4": {
+        "name": "Diseño y publicación",
+        "when": "fecha por definir",
+        "e1": {
+          "title": "El conteo dibujado voto por voto",
+          "body": "Decisión de mostrar el conteo nacional completo, mesa por mesa, en vez de resumirlo en un solo porcentaje."
+        },
+        "e2": {
+          "title": "Revisión de redacción y privacidad",
+          "body": "Paso obligatorio antes de publicar: vocabulario descriptivo y control de datos personales."
+        },
+        "e3": {
+          "title": "Primera versión pública",
+          "body": "Versión inmutable, con huella y contrato OpenAPI, para que cualquiera la reproduzca."
+        }
       }
     }
   },
@@ -373,6 +511,42 @@
         "format": "CSV plano",
         "size": "descarga simple",
         "hash": "sha256 por objeto"
+      }
+    }
+  },
+  "homeHeader": {
+    "items": {
+      "conteo": {
+        "label": "Conteo",
+        "desc": "26 millones de votos, el conteo nacional"
+      },
+      "reclamos": {
+        "label": "Reclamos",
+        "desc": "Lo que dice la gente, respondido"
+      },
+      "comparacion": {
+        "label": "Comparación",
+        "desc": "2018, 2022 y 2026 con el mismo código"
+      },
+      "mesa": {
+        "label": "Mesa 003",
+        "desc": "Una mesa real, en detalle"
+      },
+      "territorios": {
+        "label": "Territorios",
+        "desc": "Resultados por departamento"
+      },
+      "proceso": {
+        "label": "Proceso",
+        "desc": "Cómo llega un voto a esta página"
+      },
+      "bitacora": {
+        "label": "Bitácora",
+        "desc": "Cómo se construyó"
+      },
+      "datos": {
+        "label": "Datos",
+        "desc": "Archivos, huellas y API"
       }
     }
   }

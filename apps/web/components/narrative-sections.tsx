@@ -1,5 +1,5 @@
 import React from "react";
-import { FieldSection, Gutter, SectionHeader } from "@/components/page-primitives";
+import { Gutter } from "@/components/page-primitives";
 import { CoverageMap } from "@/components/coverage-map";
 import { StateMark } from "@/components/state-marks";
 import {
@@ -9,18 +9,32 @@ import {
 } from "@/lib/dc-fixture";
 import { AppButton } from "@/components/app-button";
 import { BitacoraTrack } from "@/components/bitacora-track";
-import { build } from "@/lib/hexes";
+import { buildBallots } from "@/lib/hexes";
+import { CMP, benfordFootnote, computeCmpRow } from "@/lib/cmp-fixture";
+import { ComparisonBands, type CmpRowContent } from "@/components/comparison-bands";
 
 type Locale = "es" | "en";
-type Text = (key: string) => string;
+type Text = (key: string, values?: Record<string, string | number>) => string;
 
 /**
- * Mesa 003's real tally from the design's `MESAS` fixture: 108 votes for
- * Horizonte (six of them disputed against the E-14 acta) and 82 for Río —
- * 190 votes total. The hex figure below draws every one of them.
+ * The design's own literal colour tokens (`dc-data.js`'s `PAPER`/`NEON` and
+ * the paper/dark-field ink ramp used throughout `template-body.html`'s inline
+ * `style="..."` attributes), not the app's `ec-*`/`--on-dark*` CSS custom
+ * properties. #mesa, #territorios and #proceso below transcribe the source's
+ * literal hex/rgba values, matching the precedent `ConteoHero` already set.
  */
-const MESA_003 = { h: 108, r: 82, disp: 6 };
-const MESA_003_HEXES = build(MESA_003, 17, 14);
+const PAPER = "#F4F1EA";
+const NEON = "#C4FF00";
+const RIO = "#8C8E00";
+const DARK_BG = "#151312";
+const DARK_FG = "#F4F1EA";
+const ON_DARK_2 = "#CFC8BC";
+const ON_DARK_3 = "#928979";
+const INK = "#211E1E";
+const INK_2 = "#3E3831";
+const INK_3 = "#5A5148";
+const INK_4 = "#6B6259";
+const RULE_FAINT_LIGHT = "rgba(33,30,30,.16)";
 
 /**
  * The Rediseño v2 narrative sections, in the order the design fixes them:
@@ -34,138 +48,220 @@ const MESA_003_HEXES = build(MESA_003, 17, 14);
  */
 
 /* ── #comparación ─────────────────────────────────────────────────────────
-   The moat: measure 2018, 2022 and 2026 with the same code and show them
-   together. The point is the principle — a number alone means nothing — so
-   the section teaches the thermometer analogy and the three-year framing.
-   It deliberately stops short of the design's own forensic rows (the χ²,
-   peer-unanimity and exterior-margin bands, and the Benford figures): this
-   site's methodology keeps those concrete values in the methodology pages,
-   with their code, not on this reading. The dark card is the design's own
-   "2026 is scary alone" panel — the one place in this section that gets the
-   full ec-field-dark treatment. */
+   Ported VERBATIM from the source's `sections/comparacion.html` and
+   `dc-data.js`'s `CMP`/`cmpRows`/`cmpLegend`/`toggleSimple`: the thermometer
+   card, the three-line legend, the simple/técnico `AppButton` toggle, the
+   four measured bands (χ² last-digit uniformity, unanimous mesas, exterior
+   margin, exterior weight — each with its 2018/2022/2026 marks, its band of
+   what was already seen, and, where one exists, its critical-value marker),
+   and the static Benford aside that deliberately gets no band. Every
+   `style="..."` value below is copied from that file, not approximated into
+   the app's `ec-*` tokens — matching the precedent `ConteoHero` and `#mesa`/
+   `#proceso` already set.
+   The interactive half (the toggle and the four rows) lives in
+   `ComparisonBands`, a Client Component: `dc-data.js` keeps `simple` in
+   `this.state` and flips every row's prose with one `AppButton` click, so
+   this needs real React state, not a description of a toggle. The numbers
+   themselves (band position, marker position, the per-year values line) are
+   locale-resolved once here via `lib/cmp-fixture.ts` and passed down as
+   plain data — they are the fixture, not language-dependent copy, so they
+   render identically in both locales the same way `lib/dc-fixture.ts` and
+   `lib/hexes.ts` already do for the rest of the page. */
+const CMP_METRIC_ORDER = [
+  "digitUniformity",
+  "unanimousMesas",
+  "exteriorMargin",
+  "exteriorWeight",
+] as const;
+
 export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
   const legendItems = ["1", "2", "3"] as const;
+  const rows: CmpRowContent[] = CMP.map((metric) => {
+    const layout = computeCmpRow(metric, locale);
+    const base = `comparison.metrics.${metric.key}`;
+    return {
+      key: metric.key,
+      layout,
+      plainLabel: t(`${base}.plainLabel`),
+      techLabel: t(`${base}.techLabel`),
+      plainUnit: t(`${base}.plainUnit`),
+      techUnit: t(`${base}.techUnit`),
+      human: t(`${base}.human`),
+      plainReading: t(`${base}.plainReading`),
+      techReading: t(`${base}.techReading`),
+      plainCritLabel: metric.crit != null ? t(`${base}.plainCritLabel`) : undefined,
+      techCritLabel: metric.crit != null ? t(`${base}.techCritLabel`) : undefined,
+    };
+  }).sort((a, b) => CMP_METRIC_ORDER.indexOf(a.key) - CMP_METRIC_ORDER.indexOf(b.key));
+
   return (
-    <section id="comparacion" aria-label={t("comparison.eyebrow")} lang={locale} className="scroll-mt-24">
-      <Gutter className="pt-20">
-        <SectionHeader
-          eyebrow={t("comparison.eyebrow")}
-          title={t("comparison.title")}
-          intro={<p className="m-0">{t("comparison.introA")}</p>}
+    <section
+      id="comparacion"
+      aria-label={t("comparison.eyebrow")}
+      data-screen-label={t("comparison.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+      style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
+    >
+      <div style={{ paddingTop: 34, borderTop: `1px solid ${INK}` }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
+            gap: 64,
+            alignItems: "baseline",
+          }}
+        >
+          <div>
+            <p className="mark" style={{ margin: 0, color: INK_4 }}>
+              {t("comparison.eyebrow")}
+            </p>
+            <h2 className="head" style={{ margin: "16px 0 0" }}>
+              {t("comparison.titleLine1")}
+              <br />
+              {t("comparison.titleLine2")}
+            </h2>
+          </div>
+          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: INK_2 }}>
+            {t("comparison.introA")}
+          </p>
+        </div>
+
+        <ComparisonBands
+          thermometerLead={t("comparison.thermometer.lead")}
+          thermometerBody={t("comparison.thermometer.body")}
+          legendItems={legendItems.map((k) => t(`comparison.legend.${k}`))}
+          toggleToTechnicalLabel={t("comparison.toggleToTechnical")}
+          toggleToSimpleLabel={t("comparison.toggleToSimple")}
+          rows={rows}
+          insideVerdict={t("comparison.insideVerdict")}
+          outsideVerdict={t("comparison.outsideVerdict")}
+          benfordLabel={t("comparison.benford.label")}
+          benfordBox={t("comparison.benford.box")}
+          benfordBody={t("comparison.benford.body")}
+          benfordFootnote={benfordFootnote(locale)}
         />
-
-        <div className="mt-[34px] grid items-start gap-x-16 gap-y-8 sm:grid-cols-2">
-          <div className="ec-field-dark px-[34px] pb-8 pt-[30px]">
-            <p className="m-0 text-[18px] leading-snug">{t("comparison.thermometer.lead")}</p>
-            <p className="mt-3.5 text-[16px] leading-relaxed text-[color:var(--on-dark-2)]">
-              {t("comparison.thermometer.body")}
-            </p>
-          </div>
-          <div className="grid gap-[9px]">
-            {legendItems.map((k) => (
-              <p key={k} className="m-0 text-[15px] leading-relaxed text-ink-2">
-                {t(`comparison.legend.${k}`)}
-              </p>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-[34px] border-t border-rule">
-          <div className="border-b border-rule-faint py-6">
-            <p className="m-0 max-w-[44rem] text-[19px] font-semibold leading-tight tracking-[-0.012em] text-ink-4">
-              {t("comparison.benford.label")}
-            </p>
-            <div
-              aria-hidden="true"
-              className="relative mt-4 h-11 border-y border-rule-faint"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(135deg, transparent 0 7px, var(--rule-faint) 7px 8px)",
-              }}
-            >
-              <p className="ec-mono absolute inset-0 m-0 grid place-content-center text-[12px] text-ink-3">
-                {t("comparison.benford.box")}
-              </p>
-            </div>
-            <p className="mt-3.5 max-w-[46rem] text-[15px] leading-relaxed text-ink-2">
-              {t("comparison.benford.body")}
-            </p>
-            <p className="ec-mono mt-3 text-[12px] text-ink-4">
-              {t("comparison.footnote")}
-            </p>
-          </div>
-        </div>
-      </Gutter>
+      </div>
     </section>
   );
 }
 
 /* ── #mesa (dark) ─────────────────────────────────────────────────────────
-   The mesa 003 field: every one of its 190 votes drawn as a hexagon by the
-   same generator as #reclamos, with the six disputed against the E-14 acta
-   picked out in neon — the design's own "con los seis en disputa
-   resaltados" figure, not a stat card standing in for it. */
-const MESA_COMPARISON = ["precount", "e14", "difference"] as const;
-const MESA_COMPARISON_TONE: Record<(typeof MESA_COMPARISON)[number], string> = {
-  precount: "text-[color:var(--on-dark)]",
-  e14: "text-[color:var(--on-dark)]",
-  difference: "text-[color:var(--neon)]",
+   One real polling table from the pre-count, drawn vote by vote. The design's
+   original illustrative "mesa 003" (with an invented E-14 dispute, a fake host
+   and hash) is gone — this shows only what the pre-count actually reports for
+   a single real mesa. */
+type SampleMesa = {
+  mesa_id: string;
+  department: string | null;
+  valid_votes: number;
+  blank_votes: number;
+  candidates: Record<string, number>;
 };
 
-export function MesaSection({ locale, t }: { locale: Locale; t: Text }) {
+/**
+ * #mesa on the real preconteo: one actual polling table, drawn vote by vote
+ * from its published pre-count tally. No invented E-14 dispute — the design's
+ * original "mesa 003" was illustrative; this is a real mesa and shows only
+ * what the pre-count actually reports for it.
+ */
+export function MesaSection({
+  locale,
+  t,
+  mesa,
+  candidates,
+}: {
+  locale: Locale;
+  t: Text;
+  mesa?: SampleMesa | null;
+  candidates?: { id: string; name: { es: string; en: string } }[];
+}) {
+  if (!mesa || !candidates || candidates.length < 2) return null;
+  const nf = new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US");
+  const [a, b] = candidates;
+  const av = mesa.candidates[a?.id ?? ""] ?? 0;
+  const bv = mesa.candidates[b?.id ?? ""] ?? 0;
+  // valid_votes includes blanks, so drawing only the two candidates would show
+  // fewer hexagons than the caption's "N votos válidos" claims.
+  const blank = Math.max(0, mesa.valid_votes - av - bv);
+  const fig = buildBallots(av, bv, blank, 17, 14);
+  const stat = (name: string, votes: number, color: string) => (
+    <div style={{ background: DARK_BG, padding: "20px 20px 22px" }}>
+      <p className="mono" style={{ margin: 0, fontSize: 12, color: ON_DARK_3 }}>
+        {name}
+      </p>
+      <p className="fig" style={{ margin: "14px 0 0", fontSize: 52, lineHeight: 0.86, color }}>
+        {nf.format(votes)}
+      </p>
+    </div>
+  );
   return (
-    <FieldSection id="mesa" label={t("mesa.eyebrow")} className="mt-20 scroll-mt-24">
-      <div lang={locale}>
-        <div className="grid items-start gap-x-16 gap-y-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+    <section
+      id="mesa"
+      data-theme="dark"
+      data-screen-label={t("mesa.eyebrow")}
+      aria-label={t("mesa.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+      style={{ background: DARK_BG, color: DARK_FG, marginTop: 80, padding: "60px 0 58px" }}
+    >
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)", gap: 64, alignItems: "baseline" }}>
           <div>
-            <p className="ec-mark m-0 text-[color:var(--on-dark-3)]">{t("mesa.eyebrow")}</p>
-            <h2 className="ec-head mt-4">{t("mesa.title")}</h2>
+            <p className="mark" style={{ margin: 0, color: ON_DARK_3 }}>
+              {t("mesa.eyebrow")}
+            </p>
+            <h2 className="head" style={{ margin: "16px 0 0", color: DARK_FG }}>
+              {t("mesa.realTitle")}
+            </h2>
           </div>
-          <p className="max-w-[44rem] text-body leading-relaxed text-[color:var(--on-dark-2)]">
-            {t("mesa.intro")}
+          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: ON_DARK_2 }}>
+            {t("mesa.realIntro", { mesa: mesa.mesa_id, department: mesa.department ?? "" })}
           </p>
         </div>
 
-        <div className="mt-10 grid items-start gap-x-[72px] gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.15fr)", gap: 72, alignItems: "start", marginTop: 40 }}>
           <div>
             <svg
-              viewBox={MESA_003_HEXES.vb}
+              viewBox={fig.vb}
               role="img"
-              aria-label={t("mesa.figureAlt")}
-              className="block h-auto w-full"
+              aria-label={t("mesa.realFigureAlt", { a: a?.name[locale] ?? "", av, b: b?.name[locale] ?? "", bv })}
+              style={{ display: "block", width: "100%", height: "auto" }}
             >
-              <path d={MESA_003_HEXES.dH} fill="var(--on-dark)" />
-              <path d={MESA_003_HEXES.dR} fill="var(--rio)" />
-              <path d={MESA_003_HEXES.dD} fill="var(--neon)" stroke="none" strokeWidth={2} />
-              <path d={MESA_003_HEXES.dDot} fill="var(--neon)" opacity={0} />
+              <path d={fig.dA} fill={PAPER} />
+              <path d={fig.dB} fill={RIO} />
+              <path d={fig.dBlank} fill="none" stroke="rgba(196,255,0,.55)" strokeWidth={1.2} />
             </svg>
-            <p className="ec-mono mt-4 text-[12px] text-[color:var(--on-dark-3)]">
-              {t("mesa.figureCaption")}
+            <p className="mono" style={{ margin: "16px 0 0", fontSize: 12, color: ON_DARK_3 }}>
+              {t("mesa.realFigureCaption", { total: nf.format(mesa.valid_votes), mesa: mesa.mesa_id })}
             </p>
           </div>
           <div>
-            <div className="grid grid-cols-3 gap-px border-y border-[color:var(--on-dark-3)]/40 bg-[color:var(--on-dark-3)]/24">
-              {MESA_COMPARISON.map((k) => (
-                <div key={k} className="ec-field-dark px-5 py-5">
-                  <p className="ec-mono m-0 text-[12px] text-[color:var(--on-dark-3)]">
-                    {t(`mesa.comparison.${k}.label`)}
-                  </p>
-                  <p className={`ec-fig mt-3.5 text-[clamp(2rem,4vw,3.25rem)] leading-[0.86] ${MESA_COMPARISON_TONE[k]}`}>
-                    {t(`mesa.comparison.${k}.value`)}
-                  </p>
-                  <p className="mt-2.5 text-[13px] leading-snug text-[color:var(--on-dark-2)]">
-                    {t(`mesa.comparison.${k}.note`)}
-                  </p>
-                </div>
-              ))}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+                gap: 1,
+                background: "rgba(244,241,234,.24)",
+                borderTop: "1px solid rgba(244,241,234,.4)",
+                borderBottom: "1px solid rgba(244,241,234,.4)",
+              }}
+            >
+              {stat(a?.name[locale] ?? "", av, PAPER)}
+              {stat(b?.name[locale] ?? "", bv, "#B5B72E")}
             </div>
-            <p className="mt-6 max-w-[38rem] text-[15px] leading-relaxed text-[color:var(--on-dark-2)]">
-              {t("mesa.footnote")}
+            <p style={{ margin: "24px 0 0", maxWidth: "38rem", fontSize: 16, lineHeight: 1.62, color: ON_DARK_2 }}>
+              {t("mesa.realFootnote")}
             </p>
+            <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+              <AppButton variant="outline" href="#datos">
+                {t("mesa.downloadData")}
+              </AppButton>
+            </div>
           </div>
         </div>
       </div>
-    </FieldSection>
+    </section>
   );
 }
 
@@ -176,8 +272,40 @@ export function MesaSection({ locale, t }: { locale: Locale; t: Text }) {
    no-JS/screen-reader equivalent, not a decorative aside. The 31 uncovered
    departments render as the site's NOT-COLLECTED mark — hollow and dashed —
    never as zero. This is the unknown-vs-zero showcase. */
-export function TerritoriesSection({ locale, t }: { locale: Locale; t: Text }) {
+type DeptRow = {
+  id: string;
+  name: string;
+  valid_votes: number;
+  candidates: Record<string, number>;
+  mesas_reported: number;
+};
+
+export function TerritoriesSection({
+  locale,
+  t,
+  departments,
+  candidates,
+}: {
+  locale: Locale;
+  t: Text;
+  departments?: DeptRow[];
+  candidates?: { id: string; name: { es: string; en: string } }[];
+}) {
   const nf = new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US");
+
+  // Real preconteo: render every department with observed results. Falls back
+  // to the illustrative territories only when no release loaded.
+  if (departments && departments.length && candidates && candidates.length >= 2) {
+    return (
+      <RealTerritories
+        locale={locale}
+        t={t}
+        departments={departments}
+        candidates={candidates}
+        nf={nf}
+      />
+    );
+  }
   // CoverageMap is a Client Component: `t` is a server-only function and
   // cannot cross that boundary as a prop, so every string it needs is
   // resolved here, once, into plain data.
@@ -199,197 +327,475 @@ export function TerritoriesSection({ locale, t }: { locale: Locale; t: Text }) {
     },
   };
   return (
-    <section id="territorios" aria-label={t("territories.eyebrow")} lang={locale} className="scroll-mt-24">
-      <Gutter className="pt-20">
-        <SectionHeader
-          eyebrow={t("territories.eyebrow")}
-          title={t("territories.title")}
-          intro={t("territories.intro")}
-        />
-        <div className="mt-11 grid items-start gap-16 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="h-[470px] border border-rule">
-            <CoverageMap locale={locale} labels={mapLabels} />
-          </div>
-          <div>
-            <div className="overflow-x-auto border-t border-rule">
-              <table className="w-full min-w-[22rem] border-collapse text-left">
-                <caption className="sr-only">{t("territories.table.caption")}</caption>
-                <thead>
-                  <tr className="border-b border-rule">
-                    <th scope="col" className="ec-mono py-3 pr-3 text-[11px] font-bold text-ink-4">
-                      {t("territories.table.territory")}
-                    </th>
-                    <th scope="col" className="ec-mono py-3 pr-3 text-right text-[11px] font-bold text-ink-4">
-                      {t("territories.table.mesas")}
-                    </th>
-                    <th scope="col" className="ec-mono py-3 pr-3 text-right text-[11px] font-bold text-ink-4">
-                      {t("territories.table.horizonte")}
-                    </th>
-                    <th scope="col" className="ec-mono py-3 pr-3 text-right text-[11px] font-bold text-ink-4">
-                      {t("territories.table.rio")}
-                    </th>
-                    <th scope="col" className="ec-mono py-3 pr-3 text-right text-[11px] font-bold text-ink-4">
-                      {t("territories.table.total")}
-                    </th>
-                    <th scope="col" className="ec-mono py-3 text-[11px] font-bold text-ink-4">
-                      {t("territories.table.status")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {TERRITORIES.map((territory) => {
-                    const totals = territoryTotals(territory.key);
-                    return (
-                      <tr key={territory.key} className="border-b border-rule-faint">
-                        <th scope="row" className="py-3 pr-3 font-normal">
-                          <p className="ec-mark m-0 text-[12px] text-ink-4">
-                            {t(`territories.covered.${territory.key}.name`)}
-                          </p>
-                          <p className="ec-mono mt-1 text-[11px] text-ink-3">
-                            {t(`territories.covered.${territory.key}.place`)}
-                          </p>
-                        </th>
-                        <td className="ec-mono py-3 pr-3 text-right tabular-nums">
-                          {totals.mesas}
-                        </td>
-                        <td className="ec-mono py-3 pr-3 text-right tabular-nums">
-                          {nf.format(totals.horizonte)}
-                        </td>
-                        <td className="ec-mono py-3 pr-3 text-right tabular-nums">
-                          {nf.format(totals.rio)}
-                        </td>
-                        <td className="ec-fig py-3 pr-3 text-right text-[16px] tabular-nums">
-                          {nf.format(totals.total)}
-                        </td>
-                        <td className="py-3">
-                          <span className="inline-flex items-center gap-2">
-                            <StateMark state="observed" />
-                            <span className="ec-mono text-[11px] text-ink-3">
-                              {t("territories.table.statusReporting")}
-                            </span>
+    <section
+      id="territorios"
+      aria-label={t("territories.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+      style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1fr) 400px",
+          gap: 64,
+          alignItems: "start",
+        }}
+      >
+        <div style={{ height: 470, border: `1px solid ${INK}` }}>
+          <CoverageMap locale={locale} labels={mapLabels} />
+        </div>
+        <div>
+          <p className="mark" style={{ margin: 0, color: INK_4 }}>
+            {t("territories.eyebrow")}
+          </p>
+          <h2 className="head" style={{ margin: "14px 0 0", fontSize: 34 }}>
+            {t("territories.title")}
+          </h2>
+          <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
+            {t("territories.intro")}
+          </p>
+          {/* The source renders this as an `<ol>` of bar rows (`t.wH`/`t.wR`
+              proportion bars). Kept as an accessible `<table>` instead — a
+              documented deviation from the literal markup, not from the
+              design's numbers or its unknown-vs-zero distinction — because a
+              real `<table>` with `scope`d headers is the stronger screen
+              reader/no-JS equivalent to the map that #territorios itself asks
+              for, and every column's value is still exactly what
+              `territoryRows`/`terr` computes in the source. */}
+          <div style={{ marginTop: 26, overflowX: "auto", borderTop: `1px solid ${INK}` }}>
+            <table style={{ width: "100%", minWidth: "22rem", borderCollapse: "collapse", textAlign: "left" }}>
+              <caption className="sr-only">{t("territories.table.caption")}</caption>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${INK}` }}>
+                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4 }}>
+                    {t("territories.table.territory")}
+                  </th>
+                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                    {t("territories.table.mesas")}
+                  </th>
+                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                    {t("territories.table.horizonte")}
+                  </th>
+                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                    {t("territories.table.rio")}
+                  </th>
+                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                    {t("territories.table.total")}
+                  </th>
+                  <th scope="col" className="mono" style={{ padding: "12px 0", fontSize: 11, fontWeight: 700, color: INK_4 }}>
+                    {t("territories.table.status")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {TERRITORIES.map((territory) => {
+                  const totals = territoryTotals(territory.key);
+                  return (
+                    <tr key={territory.key} style={{ borderBottom: RULE_FAINT_LIGHT }}>
+                      <th scope="row" style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}>
+                        <p className="mark" style={{ margin: 0, fontSize: 12, color: INK_4 }}>
+                          {t(`territories.covered.${territory.key}.name`)}
+                        </p>
+                        <p className="mono" style={{ margin: "4px 0 0", fontSize: 11, color: INK_3 }}>
+                          {t(`territories.covered.${territory.key}.place`)}
+                        </p>
+                      </th>
+                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                        {totals.mesas}
+                      </td>
+                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                        {nf.format(totals.horizonte)}
+                      </td>
+                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                        {nf.format(totals.rio)}
+                      </td>
+                      <td className="fig" style={{ padding: "12px 12px 12px 0", textAlign: "right", fontSize: 16 }}>
+                        {nf.format(totals.total)}
+                      </td>
+                      <td style={{ padding: "12px 0" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          <StateMark state="observed" />
+                          <span className="mono" style={{ fontSize: 11, color: INK_3 }}>
+                            {t("territories.table.statusReporting")}
                           </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  <tr>
-                    <th scope="row" className="py-3 pr-3 font-normal">
-                      <p className="ec-mark m-0 text-[12px] text-ink-4">
-                        {t("territories.uncovered.name")}
-                      </p>
-                    </th>
-                    <td colSpan={4} className="ec-mono py-3 pr-3 text-[11px] text-ink-3">
-                      {t("territories.uncovered.meta")}
-                    </td>
-                    <td className="py-3">
-                      <span className="inline-flex items-center gap-2">
-                        <StateMark state="unavailable" />
-                        <span className="sr-only">
-                          {t("territories.uncovered.stateLabel")}
                         </span>
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 max-w-[28rem] text-[14px] leading-relaxed text-ink-2">
-              {t("territories.uncovered.note")}
+                      </td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <th scope="row" style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}>
+                    <p className="mark" style={{ margin: 0, fontSize: 12, color: INK_4 }}>
+                      {t("territories.uncovered.name")}
+                    </p>
+                  </th>
+                  <td colSpan={4} className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, color: INK_3 }}>
+                    {t("territories.uncovered.meta")}
+                  </td>
+                  <td style={{ padding: "12px 0" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <StateMark state="unavailable" />
+                      <span className="sr-only">{t("territories.uncovered.stateLabel")}</span>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style={{ margin: "9px 0 0", maxWidth: "28rem", fontSize: 14, lineHeight: 1.5, color: INK_2 }}>
+            {t("territories.uncovered.note")}
+          </p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 22 }}>
+            <p className="fig" style={{ margin: 0, fontSize: 38, color: INK_4 }}>
+              {UNCOVERED_DEPARTMENTS_COUNT}
             </p>
-            <div className="mt-6 flex items-baseline gap-3.5">
-              <p className="ec-fig m-0 text-[clamp(1.75rem,3vw,2.375rem)] text-ink-4">
-                {UNCOVERED_DEPARTMENTS_COUNT}
-              </p>
-              <p className="m-0 max-w-[22rem] text-[14px] leading-snug text-ink-3">
-                {t("territories.uncoveredStat")}
-              </p>
-            </div>
+            <p style={{ margin: 0, maxWidth: "22rem", fontSize: 14, lineHeight: 1.5, color: INK_3 }}>
+              {t("territories.uncoveredStat")}
+            </p>
           </div>
         </div>
-      </Gutter>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * #territorios on the real preconteo: every one of the 34 departments with its
+ * observed vote split and mesa count. The pre-count is nationally complete, so
+ * there is no "not collected" story — the map shows full national coverage.
+ */
+function RealTerritories({
+  locale,
+  t,
+  departments,
+  candidates,
+  nf,
+}: {
+  locale: Locale;
+  t: Text;
+  departments: DeptRow[];
+  candidates: { id: string; name: { es: string; en: string } }[];
+  nf: Intl.NumberFormat;
+}) {
+  const [a, b] = candidates;
+  const totalMesas = departments.reduce((s, d) => s + d.mesas_reported, 0);
+  const mapLabels = {
+    mapTitle: t("territories.map.title"),
+    legendReporting: t("territories.map.legendReporting"),
+    legendNotCollected: t("territories.map.legendNotCollected"),
+    legendDepartments: t("territories.map.legendDepartments"),
+    note: t("territories.map.note"),
+    error: t("territories.map.error"),
+    tooltipOf: t("territories.map.tooltipOf"),
+    tooltipPrecount: t("territories.map.tooltipPrecount"),
+    noscript: t("territories.map.noscript"),
+    mesasUnit: t("territories.unit.mesas"),
+    votesUnit: t("territories.unit.votes"),
+    territoryNames: { bog: "", med: "" },
+  };
+  return (
+    <section
+      id="territorios"
+      aria-label={t("territories.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+      style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
+    >
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 400px", gap: 64, alignItems: "start" }}>
+        <div style={{ height: 470, border: `1px solid ${INK}` }}>
+          <CoverageMap locale={locale} labels={mapLabels} fullCoverage />
+        </div>
+        <div>
+          <p className="mark" style={{ margin: 0, color: INK_4 }}>
+            {t("territories.eyebrow")}
+          </p>
+          <h2 className="head" style={{ margin: "14px 0 0", fontSize: 34 }}>
+            {t("territories.realTitle")}
+          </h2>
+          <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
+            {t("territories.realIntro", {
+              departments: departments.length,
+              mesas: nf.format(totalMesas),
+            })}
+          </p>
+          <div style={{ marginTop: 26, overflowX: "auto", borderTop: `1px solid ${INK}` }}>
+            <table style={{ width: "100%", minWidth: "24rem", borderCollapse: "collapse", textAlign: "left" }}>
+              <caption className="sr-only">{t("territories.table.caption")}</caption>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${INK}` }}>
+                  {[
+                    t("territories.table.territory"),
+                    t("territories.table.mesas"),
+                    a?.name[locale] ?? "",
+                    b?.name[locale] ?? "",
+                    t("territories.table.total"),
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      scope="col"
+                      className="mono"
+                      style={{
+                        padding: "12px 12px 12px 0",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: INK_4,
+                        textAlign: i === 0 ? "left" : "right",
+                        whiteSpace: i > 1 ? "normal" : "nowrap",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {departments.map((d) => {
+                  const av = d.candidates[a?.id ?? ""] ?? 0;
+                  const bv = d.candidates[b?.id ?? ""] ?? 0;
+                  return (
+                    <tr key={d.id} style={{ borderBottom: RULE_FAINT_LIGHT }}>
+                      <th scope="row" style={{ padding: "10px 12px 10px 0", fontWeight: 400 }}>
+                        <span className="mark" style={{ fontSize: 12, color: INK_4 }}>
+                          {d.name}
+                        </span>
+                      </th>
+                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                        {nf.format(d.mesas_reported)}
+                      </td>
+                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                        {nf.format(av)}
+                      </td>
+                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                        {nf.format(bv)}
+                      </td>
+                      <td className="fig" style={{ padding: "10px 0", textAlign: "right", fontSize: 15 }}>
+                        {nf.format(d.valid_votes)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 22 }}>
+            <p className="fig" style={{ margin: 0, fontSize: 38, color: INK_4 }}>
+              {departments.length}
+            </p>
+            <p style={{ margin: 0, maxWidth: "22rem", fontSize: 14, lineHeight: 1.5, color: INK_3 }}>
+              {t("territories.realCoverageStat")}
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
 
 /* ── #proceso (dark) ──────────────────────────────────────────────────────
-   Nine steps between the official document and the page. Three of them are
-   gates that stop publication entirely if not cleared. */
+   Ported verbatim from the source's `sections/proceso.html`: nine rows, each
+   a 4-column grid (a hex-node timeline rail, the step number + title, the
+   body copy, and an "art" column carrying either the gate's stop condition
+   in neon or the non-gate step's artifact, labelled "Puerta de publicación" /
+   "Deja registrado" — exactly `dc-data.js`'s `steps` mapping over `STEPS`).
+   Steps 04, 06 and 08 are the design's three publication gates. */
 const STEPS = [
-  { n: "01", gate: false },
-  { n: "02", gate: false },
-  { n: "03", gate: true },
-  { n: "04", gate: false },
-  { n: "05", gate: true },
-  { n: "06", gate: false },
-  { n: "07", gate: false },
+  { n: "01" },
+  { n: "02" },
+  { n: "03" },
+  { n: "04", gate: true },
+  { n: "05" },
+  { n: "06", gate: true },
+  { n: "07" },
   { n: "08", gate: true },
-  { n: "09", gate: false },
+  { n: "09" },
 ] as const;
 
 export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
   return (
-    <FieldSection id="proceso" label={t("process.eyebrow")} className="mt-20 scroll-mt-24">
-      <div lang={locale}>
-        <div className="grid items-start gap-x-16 gap-y-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+    <section
+      id="proceso"
+      data-theme="dark"
+      data-screen-label="Proceso"
+      aria-label={t("process.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+      style={{
+        background: DARK_BG,
+        color: DARK_FG,
+        marginTop: 80,
+        padding: "60px 0 58px",
+      }}
+    >
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
+            gap: 64,
+            alignItems: "baseline",
+          }}
+        >
           <div>
-            <p className="ec-mark m-0 text-[color:var(--on-dark-3)]">{t("process.eyebrow")}</p>
-            <h2 className="ec-head mt-4">{t("process.title")}</h2>
+            <p className="mark" style={{ margin: 0, color: ON_DARK_3 }}>
+              {t("process.eyebrow")}
+            </p>
+            <h2 className="head" style={{ margin: "16px 0 0", color: DARK_FG }}>
+              {t("process.title")}
+            </h2>
           </div>
-          <div className="max-w-[44rem] text-body leading-relaxed text-[color:var(--on-dark-2)]">
-            <p className="m-0">{t("process.intro")}</p>
-            <p className="ec-mono mt-4 text-[13px] text-[color:var(--neon)]">
+          <div>
+            <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: ON_DARK_2 }}>
+              {t("process.intro")}
+            </p>
+            <p className="mono" style={{ margin: "16px 0 0", fontSize: 12, color: NEON }}>
               {t("process.gateCount")}
             </p>
           </div>
         </div>
-        <ol className="mt-10 grid list-none gap-px border border-[color:var(--on-dark-3)]/30 bg-[color:var(--on-dark-3)]/30 p-0 sm:grid-cols-3">
-          {STEPS.map((s) => (
-            <li key={s.n} className="ec-field-dark p-6">
-              <div className="flex items-center gap-3">
-                <p className="ec-mono m-0 text-[12px] text-[color:var(--on-dark-3)]">{s.n}</p>
-                {s.gate ? (
-                  <span className="ec-mono rounded-sm border border-[color:var(--neon)] px-2 py-0.5 text-[10px] text-[color:var(--neon)]">
-                    {t("process.gateTag")}
-                  </span>
-                ) : null}
+
+        <div style={{ marginTop: 40, borderTop: "1px solid rgba(244,241,234,.26)" }}>
+          {STEPS.map((s, i) => {
+            const gate = "gate" in s && s.gate;
+            const nodeBg = gate ? NEON : PAPER;
+            const artFg = gate ? NEON : ON_DARK_3;
+            const artLabel = gate ? t("process.gateLabel") : t("process.artLabel");
+            const lineTop = i === 0 ? "22px" : "0";
+            const lineH =
+              i === 0 ? "calc(100% - 22px)" : i === STEPS.length - 1 ? "22px" : "100%";
+            return (
+              <div
+                key={s.n}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "40px minmax(0,.85fr) minmax(0,1.75fr) minmax(0,1fr)",
+                  gap: 26,
+                  alignItems: "start",
+                  padding: "22px 0 24px",
+                  borderBottom: "1px solid rgba(244,241,234,.14)",
+                }}
+              >
+                <div style={{ position: "relative", height: "100%", minHeight: 40 }}>
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: 8,
+                      top: lineTop,
+                      height: lineH,
+                      width: 1,
+                      background: "rgba(244,241,234,.24)",
+                    }}
+                  />
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "relative",
+                      width: 17,
+                      height: 15,
+                      marginTop: 5,
+                      background: nodeBg,
+                      clipPath: "polygon(0 50%,25% 0,75% 0,100% 50%,75% 100%,25% 100%)",
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="mono" style={{ margin: 0, fontSize: 12, color: ON_DARK_3 }}>
+                    {s.n}
+                  </p>
+                  <p
+                    style={{
+                      margin: "7px 0 0",
+                      fontSize: 19,
+                      fontWeight: 600,
+                      letterSpacing: "-.012em",
+                      lineHeight: 1.25,
+                      color: DARK_FG,
+                    }}
+                  >
+                    {t(`process.step.${s.n}.title`)}
+                  </p>
+                </div>
+                <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: ON_DARK_2 }}>
+                  {t(`process.step.${s.n}.body`)}
+                </p>
+                <div>
+                  <p className="mono" style={{ margin: 0, fontSize: 11, color: artFg }}>
+                    {artLabel}
+                  </p>
+                  <p
+                    className="mono"
+                    style={{
+                      margin: "7px 0 0",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: ON_DARK_2,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {t(`process.step.${s.n}.art`)}
+                  </p>
+                </div>
               </div>
-              <p className="mt-3 text-[15px] font-semibold leading-snug">
-                {t(`process.step.${s.n}.title`)}
-              </p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--on-dark-2)]">
-                {t(`process.step.${s.n}.body`)}
-              </p>
-            </li>
-          ))}
-        </ol>
+            );
+          })}
+        </div>
+
+        <p style={{ margin: "26px 0 0", maxWidth: "46rem", fontSize: 15, lineHeight: 1.6, color: ON_DARK_3 }}>
+          {t("process.footnote")}
+        </p>
       </div>
-    </FieldSection>
+    </section>
   );
 }
 
 /* ── #bitácora ────────────────────────────────────────────────────────────
    The decisions log, in the order decisions were taken. Several were fixed
    before the 2026 data was seen — which is why they hold up afterward.
-   Reproduced as the design's own `bitacora-track` / `bit-stage`: a horizontal
-   timeline of phase stops, not a vertical list. See BitacoraTrack for the
-   adaptation this needed to keep it keyboard- and reduced-motion-safe. */
-const LOG = ["layers", "sentinel", "benford", "indexonly", "retraction"] as const;
+   Reproduced verbatim from the design's `bitacora` / `bitacora-track`: the
+   two-column header, then the sticky scroll-driven stage where 12 phase stops
+   sit on a sine wave and a neon polyline draws as it scrolls. The four phases
+   and their three entries each come straight from dc-data.js's PHASES. */
+const LOG_PHASES = [
+  { n: "01", key: "p1", entries: ["e1", "e2", "e3"] },
+  { n: "02", key: "p2", entries: ["e1", "e2", "e3"] },
+  { n: "03", key: "p3", entries: ["e1", "e2", "e3"] },
+  { n: "04", key: "p4", entries: ["e1", "e2", "e3"] },
+] as const;
 
 export function LogSection({ locale, t }: { locale: Locale; t: Text }) {
-  const stops = LOG.map((key) => ({
-    key,
-    when: t(`log.entry.${key}.when`),
-    title: t(`log.entry.${key}.title`),
-    body: t(`log.entry.${key}.body`),
-  }));
+  const stops = LOG_PHASES.flatMap((phase) =>
+    phase.entries.map((entry, entryIndex) => ({
+      key: `${phase.key}-${entry}`,
+      phase: t(`log.phase.${phase.key}.name`),
+      phaseN: phase.n,
+      when: t(`log.phase.${phase.key}.when`),
+      title: t(`log.phase.${phase.key}.${entry}.title`),
+      body: t(`log.phase.${phase.key}.${entry}.body`),
+      first: entryIndex === 0,
+    })),
+  );
   return (
     <section id="bitacora" aria-label={t("log.eyebrow")} lang={locale} className="scroll-mt-24">
       <Gutter className="pt-20">
-        <SectionHeader
-          eyebrow={t("log.eyebrow")}
-          title={t("log.title")}
-          intro={t("log.intro")}
-        />
+        <div className="grid items-baseline gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+          <div>
+            <p className="ec-mark m-0 text-[#6B6259]">{t("log.eyebrow")}</p>
+            <h2 className="ec-head mt-4">
+              {t("log.titleLine1")}
+              <br />
+              {t("log.titleLine2")}
+            </h2>
+          </div>
+          <div>
+            <p className="m-0 max-w-[42rem] text-[17px] leading-[1.62] text-ink-2">
+              {t("log.intro")}
+            </p>
+            <p className="ec-mono mt-3.5 text-[12px] text-[#8A4B1E]">
+              {t("log.note")}
+            </p>
+          </div>
+        </div>
       </Gutter>
       <BitacoraTrack
         stops={stops}
@@ -403,11 +809,20 @@ export function LogSection({ locale, t }: { locale: Locale; t: Text }) {
 }
 
 /* ── #datos ───────────────────────────────────────────────────────────────
-   The three files and the OpenAPI contract. Immutable, hash-carrying.
-   Reproduces the design's own header row — eyebrow, intro sentence and an
-   AppButton in one baseline-aligned line, no big headline here, unlike every
-   other section — plus its dataset row layout (a hairline top rule, not a
-   boxed card) and its three-column route list. */
+   Ported VERBATIM from the source's `sections/datos.html`: one baseline-
+   aligned header row (eyebrow, intro sentence, `AppButton` — no big headline
+   here, unlike every other section), the three-column dataset row (a
+   hairline top rule, not a boxed card) and the three-column route list. The
+   source goes straight from the dataset row to the route list with no
+   heading between them; this keeps that, rather than inserting the app's own
+   "Contrato de lectura" label the source doesn't have.
+   Content note: the source's own dataset row is literal fixture filler
+   (`"8 KB"`, `"sha256 por objeto"` for every format) appended with a fixed
+   `"· 6 registros"`. This app instead describes what each format actually is
+   (`data.file.*.size` reads e.g. "instantánea del preconteo", not a byte
+   count) since claiming a specific file size for files this build does not
+   serve would be its own kind of fabrication — a deliberate content
+   departure the style transcription below does not re-introduce. */
 const DATASETS = ["json", "parquet", "csv"] as const;
 const ROUTES = [
   "/api/v1/release-elections",
@@ -418,54 +833,96 @@ const ROUTES = [
 export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
   return (
     <section id="datos" aria-label={t("data.eyebrow")} lang={locale} className="scroll-mt-24">
-      <Gutter className="py-18">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-10 gap-y-4 border-t border-rule pt-7">
-          <h2 className="ec-mark m-0 shrink-0 text-ink-4">{t("data.eyebrow")}</h2>
-          <p className="m-0 max-w-[44rem] flex-1 text-[16px] leading-relaxed text-ink-2">
+      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "72px 46px 88px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 40,
+            paddingTop: 30,
+            borderTop: `1px solid ${INK}`,
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 className="mark" style={{ margin: 0, color: INK_4 }}>
+            {t("data.eyebrow")}
+          </h2>
+          <p style={{ margin: 0, maxWidth: "44rem", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
             {t("data.intro")}
           </p>
-          <AppButton
-            variant="outline"
-            size="sm"
-            href={`/${locale}/api`}
-            className="shrink-0"
-          >
+          <AppButton variant="outline" size="sm" href={`/${locale}/api`}>
             {t("data.docsLabel")}
           </AppButton>
         </div>
 
-        <div className="mt-8 grid gap-x-14 gap-y-6 sm:grid-cols-3">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+            gap: 56,
+            marginTop: 30,
+          }}
+        >
           {DATASETS.map((d) => (
             <div
               key={d}
-              className="flex flex-wrap items-baseline gap-3.5 border-t border-rule-faint pt-3.5"
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 14,
+                paddingTop: 14,
+                borderTop: `1px solid rgba(33,30,30,.2)`,
+                flexWrap: "wrap",
+              }}
             >
-              <p className="ec-mono m-0 shrink-0 text-[13px] font-bold">
+              <p className="mono" style={{ margin: 0, fontSize: 13, fontWeight: 700, flex: "none" }}>
                 {t(`data.file.${d}.format`)}
               </p>
-              <p className="ec-mono m-0 shrink-0 text-[12px] text-ink-3">
+              <p className="mono" style={{ margin: 0, fontSize: 12, color: INK_4, flex: "none" }}>
                 {t(`data.file.${d}.size`)}
               </p>
-              <p className="ec-mono m-0 min-w-0 break-all text-[11px] text-ink-4">
+              <p
+                className="mono"
+                style={{ margin: 0, fontSize: 11, color: INK_4, overflowWrap: "anywhere", minWidth: 0 }}
+              >
                 {t(`data.file.${d}.hash`)}
               </p>
             </div>
           ))}
         </div>
 
-        <p className="ec-mark mt-9 text-ink-4">{t("data.apiLabel")}</p>
-        <ul className="mt-4 grid list-none gap-x-14 p-0 sm:grid-cols-3">
+        <ul
+          style={{
+            margin: "36px 0 0",
+            padding: 0,
+            listStyle: "none",
+            display: "grid",
+            gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+            gap: "0 56px",
+          }}
+        >
           {ROUTES.map((r) => (
             <li
               key={r}
-              className="flex flex-wrap items-baseline gap-x-3 border-b border-rule/60 py-3"
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 12,
+                padding: "8px 0",
+                borderBottom: "1px solid rgba(33,30,30,.12)",
+              }}
             >
-              <span className="ec-mono text-[11px] font-bold text-ink-3">GET</span>
-              <span className="ec-mono break-all text-[12px]">{r}</span>
+              <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: INK_4, flex: "none" }}>
+                GET
+              </span>
+              <span className="mono" style={{ fontSize: 12, overflowWrap: "anywhere" }}>
+                {r}
+              </span>
             </li>
           ))}
         </ul>
-      </Gutter>
+      </div>
     </section>
   );
 }

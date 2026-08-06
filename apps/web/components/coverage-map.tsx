@@ -96,9 +96,13 @@ type TooltipState = {
 export function CoverageMap({
   locale,
   labels,
+  fullCoverage = false,
 }: {
   locale: Locale;
   labels: CoverageMapLabels;
+  /** Real preconteo: nationally complete, so the illustrative two-territory
+   * markers are suppressed and Colombia renders as fully covered. */
+  fullCoverage?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -165,23 +169,25 @@ export function CoverageMap({
       .filter((f) => f.properties?.name !== "Colombia")
       .map((f, i) => ({ key: String(f.id ?? i), d: path(f) ?? "" }))
       .filter((f) => f.d);
-    const markers: MarkerDatum[] = TERRITORIES.map((territory) => {
-      const point = projection([territory.lon, territory.lat]);
-      if (!point) return null;
-      const totals = territoryTotals(territory.key);
-      return {
-        key: territory.key,
-        x: point[0],
-        y: point[1],
-        name: labels.territoryNames[territory.key],
-        mesas: totals.mesas,
-        horizonte: totals.horizonte,
-        rio: totals.rio,
-        total: totals.total,
-      };
-    }).filter((m): m is MarkerDatum => m !== null);
+    const markers: MarkerDatum[] = fullCoverage
+      ? []
+      : TERRITORIES.map((territory) => {
+          const point = projection([territory.lon, territory.lat]);
+          if (!point) return null;
+          const totals = territoryTotals(territory.key);
+          return {
+            key: territory.key,
+            x: point[0],
+            y: point[1],
+            name: labels.territoryNames[territory.key],
+            mesas: totals.mesas,
+            horizonte: totals.horizonte,
+            rio: totals.rio,
+            total: totals.total,
+          };
+        }).filter((m): m is MarkerDatum => m !== null);
     return { colombiaD, graticuleD, otherLand, markers };
-  }, [ready, colombia, land, w, h, labels.territoryNames]);
+  }, [ready, colombia, land, w, h, labels.territoryNames, fullCoverage]);
 
   const showTooltip = (
     marker: MarkerDatum,
@@ -234,7 +240,8 @@ export function CoverageMap({
             ))}
             <path
               d={geometry.colombiaD}
-              fill={ST300}
+              fill={fullCoverage ? GLOW : ST300}
+              fillOpacity={fullCoverage ? 0.35 : 1}
               stroke={INK}
               strokeWidth={1.1}
               strokeLinejoin="round"

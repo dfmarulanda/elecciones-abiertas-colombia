@@ -18,8 +18,29 @@ export type EvidenceIndexDocument = {
   provenance: S["Provenance"];
 };
 
+export type DepartmentRollup = {
+  id: string;
+  code: string | null;
+  name: string;
+  valid_votes: number;
+  candidates: Record<string, number>;
+  mesas_reported: number;
+};
+
+export type SampleMesa = {
+  mesa_id: string;
+  department: string | null;
+  valid_votes: number;
+  /** valid_votes INCLUDES blanks (valid = Σcandidates + blank), so the figure
+   * needs this explicitly or it draws blank ballots as candidate votes. */
+  blank_votes: number;
+  candidates: Record<string, number>;
+};
+
 export type ReleaseView = {
   fixture_notice: Record<"es" | "en", string>;
+  department_rollup?: DepartmentRollup[];
+  sample_mesa?: SampleMesa | null;
   release: {
     release_id: string;
     data_version: string;
@@ -269,16 +290,28 @@ function projectEvidenceIndex(value: unknown): EvidenceIndexDocument {
 }
 
 async function readFixture(): Promise<ReleaseView> {
+  // The preliminary preconteo is served through the same file channel as the
+  // synthetic fixture, but it is real data — the file and the release_framing
+  // disclosure carry that distinction, never a mislabel.
+  const fixtureFile =
+    process.env.NEXT_PUBLIC_PRELIMINARY_RELEASE === "true"
+      ? "preliminary-release.json"
+      : "fixture-release.json";
   const fixturePath = path.resolve(
     process.cwd(),
-    "../../data/fixtures/fixture-release.json",
+    `../../data/fixtures/${fixtureFile}`,
   );
   const wire = JSON.parse(
     await readFile(fixturePath, "utf8"),
-  ) as FixtureWireRelease;
+  ) as FixtureWireRelease & {
+    department_rollup?: ReleaseView["department_rollup"];
+    sample_mesa?: ReleaseView["sample_mesa"];
+  };
 
   return {
     fixture_notice: wire.fixture_notice,
+    department_rollup: wire.department_rollup,
+    sample_mesa: wire.sample_mesa,
     release: wire.release,
     election: wire.election,
     provenance: wire.provenance,

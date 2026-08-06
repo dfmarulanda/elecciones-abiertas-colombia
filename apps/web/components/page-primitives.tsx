@@ -37,6 +37,36 @@ export function SyntheticDisclosure({
 }
 
 /**
+ * Preliminary preconteo disclosure. The per-table figures are the real, but
+ * non-binding, Registraduria pre-count. The certified OUTCOME (De la Espriella,
+ * CNE, 24 June 2026) is public record and is stated as such — but this band
+ * never presents the tallies below as the final certified scrutiny.
+ */
+export function PreliminaryDisclosure({
+  locale,
+  t,
+}: {
+  locale: Locale;
+  t: Text;
+}) {
+  return (
+    <div
+      id="preliminary-disclosure"
+      role="status"
+      lang={locale}
+      className="ec-field-dark border-b border-neon"
+    >
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-baseline gap-x-4 gap-y-1 px-gutter py-3.5">
+        <p className="ec-mark m-0 text-neon">{t("disclosure.preliminaryMark")}</p>
+        <p className="m-0 max-w-[64rem] text-body leading-relaxed text-on-dark">
+          {t("disclosure.preliminary")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Reading-level disclosure: this *release* is a fixture. Distinct from the
  * shell strip above, which is about the deployment — a live API can serve a
  * synthetic release, so the two are not the same claim and neither replaces

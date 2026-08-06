@@ -92,6 +92,42 @@ export function grid(n: number, step: number, cols: number): Grid {
  * votes are laid out first, then `mesa.r` — the same order the design reads
  * a table's two candidate tallies.
  */
+export type BallotHexes = { vb: string; dA: string; dB: string; dBlank: string };
+
+/**
+ * Three-bucket variant for REAL ballot data, where `valid_votes` includes blank
+ * ballots: `valid = Σcandidates + blank`, verified at every level of the 2026
+ * release (26,095,102 = 12,959,542 + 12,708,712 + 426,848).
+ *
+ * `build()` above has only two vote buckets, so drawing real data through it
+ * forces every non-winner cell onto the runner-up and silently redraws blank
+ * ballots as votes for a candidate — 426,848 of them nationally. This keeps the
+ * three quantities separate so a blank ballot is never attributed to anyone.
+ *
+ * Deliberately a sibling of `build()` rather than a change to it: `build()`'s
+ * output is byte-locked by `hexes.test.ts` against the original generator.
+ */
+export function buildBallots(
+  a: number,
+  b: number,
+  blank: number,
+  step: number,
+  cols: number,
+): BallotHexes {
+  const cells = grid(a + b + blank, step, cols);
+  const A: Cell[] = [];
+  const B: Cell[] = [];
+  const K: Cell[] = [];
+  for (let k = 0; k < cells.points.length; k++) {
+    const point = cells.points[k] as Cell;
+    if (k < a) A.push(point);
+    else if (k < a + b) B.push(point);
+    else K.push(point);
+  }
+  const rr = step * 0.93;
+  return { vb: cells.vb, dA: hexes(A, rr), dB: hexes(B, rr), dBlank: hexes(K, rr) };
+}
+
 export function build(mesa: MesaInput, step: number, cols: number): MesaHexes {
   const cells = grid(mesa.h + mesa.r, step, cols);
   const from = mesa.disp ? mesa.h - mesa.disp : -1;

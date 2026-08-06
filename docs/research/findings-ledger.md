@@ -222,13 +222,33 @@ An earlier session persisted a real 3-page R1 E-14 acta to the shared scratchpad
 
 ---
 
-## 4. The three strongest findings
+## 4. The strongest findings
 
 Each is stated as the single sentence that could be published and survive hostile expert review from either political direction. Each is followed by the qualifiers that must travel with it.
 
-### 4.1 The exterior/domestic decomposition of the 2026 second-round margin
+> ⚠️ **§4.1 below is RETRACTED.** It is kept only as a record of what was withdrawn and
+> why. See `method-record.md` §16. It must not be published, cited as a finding, or
+> restored to any reader-facing surface. Two findings stand, not three.
 
-> **In the Registraduría's own preliminary count (preconteo) of the 2026 presidential second round, the 3,670 consular mesas of department 88 cast 614,095 of 26,345,364 ballots — 2.33% — and produced a 177,809-vote margin, while the 118,350 domestic mesas produced a 73,021-vote margin; the exterior therefore accounts for 70.89% of the 250,830-vote national margin.**
+### 4.1 ~~The exterior/domestic decomposition of the 2026 second-round margin~~ — RETRACTED
+
+**Retracted (`method-record.md` §16, commit `6ee763f`).** The arithmetic below is correct;
+the *finding* is not. **The comparison set was never computed.** Measured across all 34
+departments, the exterior ranks **10th of 34** on share of the national margin and **10th
+of 34** on internal margin rate; **department 01 alone accounts for 419.5%** of the margin,
+and four of the nine departments exceeding the exterior internally have comparable or
+larger ballot counts. In a race decided by 0.95% of ballots **every** department is
+arithmetically decisive, so singling out the exterior is **selection on the outcome**.
+
+A historical control (exterior across 2018/2022/2026) *was* run and produced false
+confidence: the control required was other strata **within** 2026, not the same stratum
+across time. Running the wrong control is worse than running none.
+
+The defensible replacement is the **participation-rate decomposition** — exterior censo
+growth (+45.42%, Cancillería) against exterior ballot growth (+100.6%), yielding turnout
+abroad of ~31.5% → ~43.4%, still below the national 63.60%.
+
+> ~~**In the Registraduría's own preliminary count (preconteo) of the 2026 presidential second round, the 3,670 consular mesas of department 88 cast 614,095 of 26,345,364 ballots — 2.33% — and produced a 177,809-vote margin, while the 118,350 domestic mesas produced a 73,021-vote margin; the exterior therefore accounts for 70.89% of the 250,830-vote national margin.**~~
 
 *Why it holds under attack:* re-derived by four independent routes that agree to the unit — the national JSON, the 122,020 mesa records, the 14,438 polling-place records, and a raw pass over all 122,020 stored objects with every byte-stream verified against `items.source_hash` (0 mismatches, 0 missing, 122,020 distinct object hashes). Both internal arithmetic identities close exactly on every component (390,949 + 213,140 + 8,960 = 613,049; + 902 + 144 = 614,095 for the exterior; 12,568,593 + 12,495,572 + 417,888 = 25,482,053; + 219,861 + 29,355 = 25,731,269 for the domestic side). The exterior is fully reported in both rounds (`metota` = `mesesc` = 3,670).
 

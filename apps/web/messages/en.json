@@ -82,7 +82,9 @@
     "syntheticMark": "Synthetic fixture",
     "synthetic": "Synthetic development data. These are not real election results.",
     "syntheticChip": "synthetic fixture",
-    "releaseLabel": "Data release"
+    "releaseLabel": "Data release",
+    "preliminaryMark": "Registraduría · 2026 pre-count",
+    "preliminary": "Figures from the Registraduría's official pre-count for the 2026 presidential runoff."
   },
   "states": {
     "legend": "How absent values are read",
@@ -132,77 +134,125 @@
     "methodology": "View methodology",
     "sources": "View glossary"
   },
+  "conteo": {
+    "eyebrow": "2026 presidential runoff · Colombia",
+    "totalLabel": "valid votes",
+    "horizonteLabel": "Horizonte · ballot 1",
+    "rioLabel": "Río · ballot 2",
+    "layerControlLabel": "Layer",
+    "layers": {
+      "pre": {
+        "label": "Pre-count",
+        "note": "The quick count the Registraduría published on the night of July 15, closed at 21:50 with the six transmitted tables. It is informative and has no legal effect."
+      },
+      "doc": {
+        "label": "E-14 actas",
+        "note": "The E-14 acta for table 003 records 102 votes for Horizonte, six fewer than the pre-count. The six disputed votes stay marked while the difference is resolved.",
+        "delta": "6 votes disputed, unresolved"
+      },
+      "legal": {
+        "label": "Scrutiny",
+        "note": "The CNE reviewed the actas, resolved the difference in favor of the signed acta and certified the result on July 24. These are the totals that decide the election.",
+        "delta": "−6 votes versus the pre-count"
+      }
+    },
+    "deltaDefault": "Figures as published that night",
+    "legend": {
+      "horizonte": "Horizonte",
+      "rio": "Río",
+      "disputed": "Disputed across layers",
+      "discounted": "Discounted at scrutiny",
+      "blank": "Blank ballot"
+    },
+    "mesaPlain": "Table {id}",
+    "mesaDisputed": "Table {id} · 6 disputed",
+    "mesaDiscounted": "Table {id} · 6 discounted",
+    "mesaAlt": "Table {id}: {h} Horizonte votes and {r} Río votes",
+    "hoverDefault": "Hover over a table · 6 tables · 2 territories · 31 departments without collection · synthetic data, not real 2026 results",
+    "hoverValidUnit": "valid",
+    "hoverDisputed": "6 votes disputed against the E-14 acta",
+    "hoverClean": "no differences across layers",
+    "unavailableEyebrow": "No active publication for this view",
+    "preconteoNote": "Pre-count · turnout {turnout} · {reported}/{expected} tables",
+    "perHex": "Each hexagon ≈ {n} votes",
+    "fieldAlt": "National vote field: {winner} versus {runner}; each hexagon stands for about {perHex} votes."
+  },
   "claims": {
     "eyebrow": "Claims",
     "title": "What people are saying",
     "intro": "These are the claims about the result that circulate most. Each carries the short answer, the method behind it, and — where one exists — the exact figure that confirms or contradicts it. Two of them cannot be answered with what this site holds, and say so.",
     "methodLabel": "How it is verified",
-    "openVerdict": "Not evaluable with what this site holds",
+    "methodLabelAlt": "What would be needed",
     "lead": {
       "verdict": "Claim · verifiable",
-      "claim": "“The pre-count and the scrutiny did not match.”",
-      "answer": "The pre-count is an informational transmission with no legal effect; the scrutiny is the count with legal value, and it finishes days later. That the two figures differ is not, by itself, a sign of anything: it is the procedure's intended order. Everything this site publishes about 2026 is pre-count.",
-      "method": "The layers are kept separate and every figure carries version, source and legal status. A comparison requires the same field, the same table and the same grain.",
-      "figureAlt": "Six hexagons representing a six-vote difference on a single table",
-      "figureNote": "Illustration over synthetic data. A real release brings its own figures."
+      "claim": "«The pre-count and the official result did not match.»",
+      "answer": "There were small differences: the scrutiny adjusted some figures from the pre-count. The Registraduría reported 99.97% correspondence between the pre-count and the official result. A figure being corrected between the quick count and the reviewed scrutiny is not an anomaly — it is the procedure doing its job.",
+      "method": "The layers are kept separate and each figure keeps its version, source and legal status. The pre-count shown here is informational; the CNE's scrutiny is what certifies the result.",
+      "figureAlt": "99.97% correspondence between the pre-count and the official result",
+      "figureNote": "The certified result matched the pre-count by 99.97%. The national margin between the two tickets was about 251,854 votes."
     },
-    "precount": {
-      "verdict": "Claim · internal figure",
-      "claim": "“The tables do not add up to the polling places.”",
-      "answer": "In the data we hold, each polling place is exactly the sum of its tables: they agree on all five ballot quantities and on the per-candidacy votes. That confirms our copy faithfully reproduces what was published; it says nothing about whether those figures are correct against the paper form.",
-      "method": "Polling-place and table records compared by their parent link, in both rounds. Exact agreement is expected when the place is the aggregate the server itself computes over the tables."
+    "atypical": {
+      "verdict": "Claim · expected",
+      "claim": "“Some tables had atypical voting.”",
+      "answer": "Atypical does not mean impossible. A table can diverge from its neighbours for social, economic or precinct-composition reasons, and that is exactly why a statistical deviation only serves to have a person look at it.",
+      "detail": "The peer comparison uses an empirical-Bayes beta-binomial model that excludes the table being evaluated, with a minimum denominator of 80 and groups of 30 peers. Predictive tail ≤ 0.001, Benjamini–Yekutieli q ≤ 0.05 and absolute residual ≥ 3.5 must all hold at once. Altogether that adds at most 10 of 100 points to the review-priority score."
     },
-    "metadata": {
-      "verdict": "Claim · measured in 2026",
-      "claim": "“The E-14 forms come out with no metadata.”",
-      "answer": "The 2026 E-14s we examined carry no document-information dictionary and no cryptographic signature. That is a real traceability gap: the file cannot attest its own origin. It is not proof that anything was altered, and a change of toolchain between elections explains it without supposing anything was removed.",
-      "method": "One hundred documents read with a PDF parser, against a positive control. What we did not measure: the 2022 E-14s, whose portal is no longer reachable, so we cannot date the change."
+    "benford": {
+      "verdict": "Claim · dismissed",
+      "claim": "“Benford's law shows fraud.”",
+      "answer": "It is not used, and the exclusion is deliberate. Votes per table are bounded by the number of voters, and in that range Benford produces false positives even in clean elections.",
+      "detail": "It is explicitly excluded from the score. The tests that are used require integer counts, their own denominators, and a single conservative correction for multiple comparisons over a hypothesis family fixed before looking at the data."
     },
-    "coverage": {
-      "verdict": "Claim · corrected",
-      "claim": "“Acta coverage was 100%.”",
-      "answer": "The scrutiny channel declares 118,350 tables scrutinised at 100%. That is the national count minus the 3,670 consular tables, which that channel does not include by design: the scrutiny architecture has no commission for the exterior. A 100% from that channel covers the domestic count only, whoever states it.",
-      "method": "Document index for both rounds: 33 department codes, no code 88 (Consulados). Historical contrast: in 2018 there were published actas from the exterior, so this is a reversible gap, not a constant."
+    "reportOrder": {
+      "verdict": "Claim · explained",
+      "claim": "“The reporting order changed the trend.”",
+      "answer": "Tables do not arrive in random order: small urban ones close and transmit first. That the trend shifts while the count is still coming in is geography, not manipulation.",
+      "detail": "Reporting order, late changes and the timing of a revision are descriptive and score zero: they do not feed the review-priority score. The night's six bulletins are published with their timestamp and their hash so anyone can reconstruct the sequence."
     },
-    "hash": {
-      "verdict": "Claim · verifiable",
-      "claim": "“The file code does not verify integrity.”",
-      "answer": "In the channel we examined, the code inside the filename is not a fingerprint of its content: it is four characters, it repeats across documents, and the same name appears in both rounds naming two different documents. Such a value cannot verify integrity.",
-      "method": "118,343 first-round references: every code four characters, 2,743 distinct values, one shared by 76 documents. We did not test the citizen-viewer channel, where a different code is generated."
+    "moreVotesThanRegistered": {
+      "verdict": "Claim · not answerable with the data available",
+      "claim": "“There are more votes than registered citizens.”",
+      "answer": "If that shows up, it is an accounting failure and it heads the review queue. But in this table-level data the registered-voter denominator is not published, so this cannot be affirmed or denied here.",
+      "detail": "Voter-roll limits are validated only when the field exists in the source. The states unknown, unavailable and not_applicable are distinct from one another and none is filled in with zero. An impossible count between fields that are present scores 100."
     },
-    "transcription": {
-      "claim": "“The published numbers match what is written on the actas.”",
-      "answer": "Nothing on this site compares a published figure to the number handwritten on the corresponding E-14. That is the link that would settle the point, and it requires reading the forms: we did not."
-    },
-    "twentytwo": {
-      "claim": "“In 2022 the E-14s kept metadata and in 2026 they do not.”",
-      "answer": "We cannot answer it. The 2022 documents were served behind an anti-automation control with no direct links, so they were never archived and are not reachable by any legitimate route from here."
+    "unavailable": {
+      "verdict": "Claim · not answerable with the data available",
+      "claim": "“There was electoral tourism (trashumancia).”",
+      "answer": "This claim is about voter-roll registration, which happens months before the count. Answering it would require the electoral roll, a source this site does not hold in its catalogue. Until it exists, the field is reported as unavailable, which is not the same as zero.",
+      "detail": "A new official source with its own legal status, grain and fingerprint. The states unknown, unavailable and not_applicable are distinct from one another and none is filled in with zero.",
+      "figureAlt": "An empty hexagon: the electoral roll is unavailable",
+      "figureNote": "Not a single hexagon: there is not one electoral-roll record in this catalogue."
     }
   },
   "comparison": {
     "eyebrow": "Comparison",
-    "title": "Was 2026 a strange election?",
+    "titleLine1": "Was 2026 a",
+    "titleLine2": "strange election?",
     "introA": "The only way to answer that is to measure 2018 and 2022 with the same code and look at all three together. You will never see the 2026 number alone here, because a number alone means nothing.",
     "thermometer": {
       "lead": "These tests produce numbers that are alarming even in perfectly clean elections.",
       "body": "It is like a temperature. 37.2 is alarming until you learn the person next to you read 38.5 and was healthy. That is why 2026 always appears beside 2018 and 2022, measured with the same thermometer."
     },
     "legend": {
-      "1": "Each test compares 2026 against the range of values already seen in 2018 and 2022.",
-      "2": "All three elections are measured with the same code, so none of them carries more weight than the others.",
-      "3": "If 2026 falls within what was already seen, it resembles the earlier elections. If it falls outside, it is flagged for human review — never as a conclusion."
+      "1": "The grey band is what was already seen in 2018 and 2022.",
+      "2": "Each dot is one election. All three are equal on purpose: none carries more weight.",
+      "3": "If the 2026 dot falls inside the band, it resembles what came before. If it falls outside, it does not."
     },
+    "metrics": {},
     "benford": {
       "label": "What about Benford's law, which fails in all three?",
       "box": "there is nothing to compare here",
-      "body": "This test is not built for counting votes: mesas vary too widely in size, and that breaks it. It fails in all three elections, even the ones nobody disputes. It is still published, because hiding it would look worse — but no band is drawn for it here, because comparing it would not mean anything."
+      "body": "This test is not built for counting votes: tables vary too widely in size, and that breaks it. It fails in all three elections, even the ones nobody disputes. We publish it anyway, because hiding it would look worse — but we do not draw it a band, because comparing it would not mean anything."
     },
-    "footnote": "The concrete figures for each test are published in the methodology, with their code, so anyone can recompute them. Here the comparison matters, not the isolated value."
+    "toggleToTechnical": "Show the technical names",
+    "toggleToSimple": "Back to plain words",
+    "insideVerdict": "2026 looks like the earlier ones",
+    "outsideVerdict": "2026 falls outside what was seen before"
   },
   "mesa": {
     "eyebrow": "Documentary evidence",
     "title": "Table 003",
-    "intro": "Five of the six tables in this example agree across all three layers. This one records a six-vote difference between the election-night pre-count and the E-14 acta. A difference like this is something to review, not a conclusion.",
+    "intro": "Five of the six tables agree across all three layers. This one records a six-vote difference between the election-night pre-count and the E-14 acta the poll workers signed at the polling place.",
     "figureAlt": "The 190 votes at table 003, with the six in dispute highlighted",
     "figureCaption": "190 votes · table 2026-R2-11-001-001-003",
     "comparison": {
@@ -222,7 +272,40 @@
         "note": "Verified by double keying."
       }
     },
-    "footnote": "Illustration over synthetic data. The layers are kept separate on purpose: one never silently replaces another."
+    "footnote": "The difference was verified by double keying, and the CNE resolved it in favour of the signed acta. A recorded difference triggers a review; establishing its cause is the work of that review, not of this site. The acta stays on the official server: what is recorded here is its address and its fingerprint, without download, cache or transcription.",
+    "provenance": {
+      "document": {
+        "k": "Document",
+        "v": "Delegate E-14"
+      },
+      "condition": {
+        "k": "Status",
+        "v": "Documentary evidence"
+      },
+      "retrieved": {
+        "k": "Retrieved",
+        "v": "15 Jul 2026, 11:50 UTC"
+      },
+      "host": {
+        "k": "Official host",
+        "v": "example.invalid"
+      },
+      "hash": {
+        "k": "Fingerprint",
+        "v": "c3f4a91b7e2d608c5a3719be4d20fc86"
+      },
+      "personalData": {
+        "k": "Personal data",
+        "v": "Reviewed · attestation recorded"
+      }
+    },
+    "openActa": "Open the official acta",
+    "downloadData": "Download the data",
+    "realTitle": "One table, in detail",
+    "realIntro": "This is a single pre-count table: {mesa} in {department}, with its votes exactly as transmitted.",
+    "realFigureAlt": "The table's votes: {av} for {a} and {bv} for {b}.",
+    "realFigureCaption": "{total} valid votes · table {mesa}",
+    "realFootnote": "Each hexagon is one vote from this table, as published by the pre-count. The same figures are in the downloadable files."
   },
   "territories": {
     "eyebrow": "Territories",
@@ -269,86 +352,141 @@
       "meta": "not evaluable",
       "note": "A hollow dashed mark: the value is unavailable. A zero would look different, because zero and unknown are not the same."
     },
-    "uncoveredStat": "departments not collected in this version."
+    "uncoveredStat": "departments not collected in this version.",
+    "realTitle": "Results by department",
+    "realIntro": "The pre-count covers all {departments} departments, with {mesas} tables reported.",
+    "realCoverageStat": "departments reporting in the pre-count."
   },
   "process": {
     "eyebrow": "Process",
     "title": "How a vote reaches this page",
-    "intro": "Nine steps between the official document and what you see above. Three of them are gates: if they are not cleared, nothing is published, not even partially. The site prefers to say nothing over saying something it cannot support.",
+    "intro": "Nine steps between the official document and the hexagon you see above. Three of them are gates: if they are not cleared, nothing is published — not even partially. The site prefers to say nothing over saying something it cannot support.",
     "gateCount": "3 gates can stop a publication",
-    "gateTag": "gate",
+    "gateLabel": "Publication gate",
+    "artLabel": "Leaves a record",
+    "footnote": "All the code that runs these nine steps is public, and anyone can run it over the same sources and get the same result. If that were not possible, the site would have nothing to offer that a press release does not already offer.",
     "step": {
       "01": {
-        "title": "Retrieval",
-        "body": "The official object is downloaded and stored with its hash and timestamp."
+        "title": "Source catalog",
+        "body": "Before anything is downloaded, the official sources that exist are declared, with their legal status and their granularity. The Registraduría publishes the pre-count and the scrutiny; the CNE declares and certifies. A source not in the catalog does not enter the site.",
+        "art": "3 declared layers"
       },
       "02": {
-        "title": "Normalisation",
-        "body": "It is parsed to a fixed schema, keeping the source's raw value."
+        "title": "Collection with a fingerprint",
+        "body": "Each file is fetched from its official address and stored with the exact retrieval time and a SHA-256 fingerprint of the content as it arrived. Nothing is edited along the way.",
+        "art": "retrieved_at · content_hash"
       },
       "03": {
-        "title": "Reconciliation",
-        "body": "Every aggregate must match its parts exactly, or it stops."
+        "title": "Reading without filling gaps",
+        "body": "A reader translates each format into a common structure. Where the source does not publish a value, it stays unknown or unavailable. No gap is ever turned into a zero.",
+        "art": "registraduria-precount-act@1.0.0"
       },
       "04": {
-        "title": "Coverage",
-        "body": "What was and was not collected is recorded, without filling the gaps."
+        "title": "Arithmetic validation",
+        "body": "It is checked that counts are non-negative integers, that table identities are canonical, and that each source's own sums close. Voter-roll limits are validated only when the field exists.",
+        "art": "If a source's arithmetic does not close, that source is not published."
       },
       "05": {
-        "title": "Statistical validation",
-        "body": "Quality controls must pass before anything is exposed."
+        "title": "Reconciliation across layers",
+        "body": "The same field, at the same table, at the same granularity, is compared across pre-count, E-14 acta and scrutiny. What does not match is recorded as a documentary difference, with its verification.",
+        "art": "National pre-count · 122,020 tables"
       },
       "06": {
-        "title": "Neutral wording",
-        "body": "A gate rejects any language that would imply a conclusion."
+        "title": "Declared coverage",
+        "body": "What was and was not collected is measured, separating missing, ambiguous and excluded. Coverage is published as part of the result, not as a footnote.",
+        "art": "Without clearing the coverage gate, there is no publication."
       },
       "07": {
-        "title": "Immutable versioning",
-        "body": "The release is frozen with its hash; a rollback is a pointer change."
+        "title": "Historical baseline",
+        "body": "The same code is run over 2018 and 2022 to have something to compare against. A single year's figure is never published alone, because alone it means nothing.",
+        "art": "3 elections · identical code"
       },
       "08": {
-        "title": "Independent audit",
-        "body": "An external review must accept the release before it is activated."
+        "title": "Human review",
+        "body": "Wording, personal data and the correction for multiple comparisons are reviewed before any signal goes out. No conclusion is issued about intent or responsibility.",
+        "art": "Wording, privacy and false-positive control."
       },
       "09": {
-        "title": "Publication",
-        "body": "Only then does the public pointer change. Today it points to synthetic data."
+        "title": "Immutable version",
+        "body": "The publication is frozen with its version, its fingerprint, its declared schema and its OpenAPI contract. Reverting is not editing: it is moving a pointer to another version.",
+        "art": "candidate-2026-r2-dacb28aa"
       }
     }
   },
   "log": {
-    "eyebrow": "Log",
-    "title": "How it was built",
-    "intro": "The order in which decisions were taken matters as much as the result. Several — separating the layers, not filling the gaps, excluding Benford — were taken before the 2026 data was seen, which is why they hold up afterward.",
-    "trackLabel": "Horizontal timeline of the log",
-    "trackHint": "Scroll horizontally with a mouse, trackpad, or the arrow keys.",
+    "eyebrow": "Field log",
+    "titleLine1": "How it",
+    "titleLine2": "was built",
+    "intro": "The order in which the decisions were made matters as much as the result. Several of the ones here — separating the layers, not filling the gaps, excluding Benford — were made before looking at the 2026 data, which is why they hold up afterward.",
+    "note": "Sample entries · pending replacement with the real log",
+    "trackLabel": "Path through the project's milestones",
+    "trackHint": "The timeline advances as you scroll the page; each milestone appears on the curve as it is reached.",
     "milestone": "Milestone",
     "of": "of",
-    "entry": {
-      "layers": {
-        "when": "before the data",
-        "title": "Separate the layers",
-        "body": "Pre-count, documentary evidence and scrutiny are kept apart; none silently replaces another."
+    "phase": {
+      "p1": {
+        "name": "Investigation",
+        "when": "date to be set",
+        "e1": {
+          "title": "What each body actually publishes",
+          "body": "An inventory of what the Registraduría and the CNE make public, in what format and at what granularity."
+        },
+        "e2": {
+          "title": "What the rules say",
+          "body": "A review of the counting and tally-publication rules, to know what may be linked and what may not."
+        },
+        "e3": {
+          "title": "What has been disputed before",
+          "body": "Gathering the objections that circulated in 2018 and 2022, which are the ones this site answers."
+        }
       },
-      "sentinel": {
-        "when": "before the data",
-        "title": "Empty is not zero",
-        "body": "An unavailable value never becomes a zero. It is the rule that most often prevented an error, including our own."
+      "p2": {
+        "name": "Sources and data",
+        "when": "date to be set",
+        "e1": {
+          "title": "Catalogue of sources",
+          "body": "Every source declared with its legal standing before a single file is downloaded."
+        },
+        "e2": {
+          "title": "First reader of the pre-count",
+          "body": "Translating the official format into a common structure, without filling the gaps."
+        },
+        "e3": {
+          "title": "The three states of absence",
+          "body": "An early, hard-to-reverse decision: unknown, unavailable and not-applicable never become zero."
+        }
       },
-      "benford": {
-        "when": "before the data",
-        "title": "Do not use Benford",
-        "body": "Benford's law is invalid for vote counts with heterogeneous table sizes; it was excluded from the start."
+      "p3": {
+        "name": "Method",
+        "when": "date to be set",
+        "e1": {
+          "title": "Prioritization rules",
+          "body": "A score published in advance, capped at 100 and versioned, to order what a person looks at first."
+        },
+        "e2": {
+          "title": "Benford, excluded and documented",
+          "body": "Left out of the score and explained, rather than omitted in silence."
+        },
+        "e3": {
+          "title": "2018 and 2022 baseline",
+          "body": "The same code run over earlier elections, so no 2026 figure ever appears alone."
+        }
       },
-      "indexonly": {
-        "when": "before the data",
-        "title": "Index-only for the E-14s",
-        "body": "The actas are not downloaded, OCR'd or derived: the official reference is kept. The forms carry signatures and ID numbers."
-      },
-      "retraction": {
-        "when": "during review",
-        "title": "Retract a finding",
-        "body": "A result about the overseas vote was published and then withdrawn: measured across all 34 departments, it did not hold. The full retraction is on record."
+      "p4": {
+        "name": "Design and publication",
+        "when": "date to be set",
+        "e1": {
+          "title": "The count drawn vote by vote",
+          "body": "The decision to show the full national count, table by table, instead of reducing it to a single percentage."
+        },
+        "e2": {
+          "title": "Wording and privacy review",
+          "body": "A required step before publishing: descriptive vocabulary and control of personal data."
+        },
+        "e3": {
+          "title": "First public version",
+          "body": "An immutable version, with a fingerprint and an OpenAPI contract, so anyone can reproduce it."
+        }
       }
     }
   },
@@ -373,6 +511,42 @@
         "format": "Flat CSV",
         "size": "simple download",
         "hash": "sha256 per object"
+      }
+    }
+  },
+  "homeHeader": {
+    "items": {
+      "conteo": {
+        "label": "Count",
+        "desc": "26 million votes, the national count"
+      },
+      "reclamos": {
+        "label": "Claims",
+        "desc": "What people are saying, answered"
+      },
+      "comparacion": {
+        "label": "Comparison",
+        "desc": "2018, 2022 and 2026 with the same code"
+      },
+      "mesa": {
+        "label": "Table 003",
+        "desc": "One real table, in detail"
+      },
+      "territorios": {
+        "label": "Territories",
+        "desc": "Results by department"
+      },
+      "proceso": {
+        "label": "Process",
+        "desc": "How a vote reaches this page"
+      },
+      "bitacora": {
+        "label": "Log",
+        "desc": "How it was built"
+      },
+      "datos": {
+        "label": "Data",
+        "desc": "Files, hashes and API"
       }
     }
   }

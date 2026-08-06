@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { NationalSummary } from "@/components/national-summary";
-import { ReleaseUnavailable } from "@/components/release-unavailable";
+import "./design.css";
+import { ConteoHero } from "@/components/conteo-hero";
 import { ClaimsRegister } from "@/components/claims-register";
 import {
   ComparisonSection,
@@ -11,10 +11,7 @@ import {
   DataSection,
 } from "@/components/narrative-sections";
 import { SeoStructuredData } from "@/components/seo-structured-data";
-import {
-  dataAdapter,
-  getPublicOutcomeSensitivity,
-} from "@/data/fixture-adapter";
+import { dataAdapter } from "@/data/fixture-adapter";
 import {
   dataCatalogJsonLd,
   isIndexablePage,
@@ -61,19 +58,38 @@ export default async function LocaleHome({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  // The static narrative reads no release, so it renders in both branches —
-  // it must survive the unavailable state, not disappear with the summary.
+  // Most of the narrative reads no release and renders in both branches. The
+  // data-backed sections (#territorios) take the real release when one loaded
+  // and degrade to their unavailable state otherwise.
   const narrative = (
-    <>
-      <ClaimsRegister locale={locale} t={t} />
-      <ComparisonSection locale={locale} t={t} />
-      <MesaSection locale={locale} t={t} />
-      <TerritoriesSection locale={locale} t={t} />
-      <ProcessSection locale={locale} t={t} />
-      <LogSection locale={locale} t={t} />
-      <DataSection locale={locale} t={t} />
-    </>
-  );
+    rel?: Awaited<ReturnType<typeof dataAdapter.getRelease>>,
+  ) => {
+    const candidates = rel?.summary.candidates.map((c) => ({
+      id: c.candidate.id,
+      name: c.candidate.name,
+    }));
+    return (
+      <>
+        <ClaimsRegister locale={locale} t={t} />
+        <ComparisonSection locale={locale} t={t} />
+        <MesaSection
+          locale={locale}
+          t={t}
+          mesa={rel?.sample_mesa}
+          candidates={candidates}
+        />
+        <TerritoriesSection
+          locale={locale}
+          t={t}
+          departments={rel?.department_rollup}
+          candidates={candidates}
+        />
+        <ProcessSection locale={locale} t={t} />
+        <LogSection locale={locale} t={t} />
+        <DataSection locale={locale} t={t} />
+      </>
+    );
+  };
   // The API refuses to serve a context-only historical release through the
   // legacy release contract rather than invent completion metadata. That
   // refusal is correct; rendering an explicit unavailable state is the honest
@@ -82,41 +98,32 @@ export default async function LocaleHome({
   try {
     release = await dataAdapter.getRelease({ include: "review" });
   } catch {
-    // The national summary needs a release; the claims register does not.
-    // Keep the static narrative visible even when no release can be read.
+    // #conteo needs a release to show real vote totals; the rest of the
+    // narrative does not. Keep it visible even when no release can be read,
+    // and let #conteo itself degrade to its unavailable state rather than
+    // disappear — it is the hero, so something must still render first.
     return (
-      <>
-        <ReleaseUnavailable
-          locale={locale}
-          title={t("releaseUnavailable.title")}
-          body={t("releaseUnavailable.body")}
-          methodology={t("releaseUnavailable.methodology")}
-          sources={t("releaseUnavailable.sources")}
-        />
-        {narrative}
-      </>
+      <div className="eac-design">
+        <ConteoHero locale={locale} available={false} />
+        {narrative()}
+      </div>
     );
   }
-  const outcomeSensitivity = await getPublicOutcomeSensitivity({
-    release: release.release.release_id,
-    election: release.election.slug,
-  });
+  // The design's 8 sections (conteo, reclamos, comparación, mesa,
+  // territorios, proceso, bitácora, datos) have no outcome-sensitivity
+  // section, so the old NationalSummary's #05 panel has no home here; the
+  // fixture-adapter call that fed it is dropped rather than left unused.
   const indexable = isIndexablePage(release, "national");
   return (
-    <>
+    <div className="eac-design">
       {indexable ? (
         <>
           <SeoStructuredData value={websiteJsonLd(locale)} />
           <SeoStructuredData value={dataCatalogJsonLd(locale, release)} />
         </>
       ) : null}
-      <NationalSummary
-        release={release}
-        locale={locale}
-        t={t}
-        outcomeSensitivity={outcomeSensitivity}
-      />
-      {narrative}
-    </>
+      <ConteoHero locale={locale} available summary={release.summary} />
+      {narrative(release)}
+    </div>
   );
 }
