@@ -320,8 +320,7 @@ def _tree_rows(
             raise ReleaseLoadError("geography hierarchy contains an invalid parent")
         children[parent.external_id].append(item.external_id)
     local_ids = {
-        external_id: offset
-        for offset, external_id in enumerate(sorted(by_external), start=1)
+        external_id: offset for offset, external_id in enumerate(sorted(by_external), start=1)
     }
     bounds: dict[str, tuple[int, int]] = {}
     counter = 0
@@ -341,11 +340,7 @@ def _tree_rows(
     rows: list[tuple[object, ...]] = []
     for external_id in sorted(by_external):
         item = by_external[external_id]
-        parent_id = (
-            None
-            if item.parent_external_id is None
-            else local_ids[item.parent_external_id]
-        )
+        parent_id = None if item.parent_external_id is None else local_ids[item.parent_external_id]
         rows.append(
             (
                 scope_id,
@@ -387,9 +382,7 @@ def _iter_rollups(
                 data_version=data_version,
             )
             geography_id = _require_string(row.get("geography_id"), "rollup geography_id")
-            geography_level = _require_string(
-                row.get("geography_level"), "rollup geography_level"
-            )
+            geography_level = _require_string(row.get("geography_level"), "rollup geography_level")
             if geography_level not in _LEVELS:
                 raise ReleaseLoadError("rollup has an unknown geography level")
             category_code = _require_string(row.get("category_code"), "category_code")
@@ -433,9 +426,7 @@ def load_historical_context_release(
     source_by_round = _source_map(manifest.get("sources"), year, rounds)
     raw, raw_rows = _artifact(manifest, release_directory, "mmv-parquet")
     rollups, rollup_rows = _artifact(manifest, release_directory, "rollups-parquet")
-    geography, geography_rows = _artifact(
-        manifest, release_directory, "geography-parquet"
-    )
+    geography, geography_rows = _artifact(manifest, release_directory, "geography-parquet")
     if _parquet(raw, _ROW_PROVENANCE_COLUMNS).metadata.num_rows != raw_rows:
         raise ReleaseLoadError("raw Parquet record count differs from manifest")
     if (
@@ -443,10 +434,7 @@ def load_historical_context_release(
         != rollup_rows
     ):
         raise ReleaseLoadError("rollups Parquet record count differs from manifest")
-    if (
-        _parquet(geography, {"level", "id", "parent_id"}).metadata.num_rows
-        != geography_rows
-    ):
+    if _parquet(geography, {"level", "id", "parent_id"}).metadata.num_rows != geography_rows:
         raise ReleaseLoadError("geography Parquet record count differs from manifest")
     _validate_parquet_provenance(
         raw,
@@ -493,9 +481,7 @@ def load_historical_context_release(
     with engine.begin() as connection:
         existing_hashes = list(
             connection.execute(
-                text(
-                    "SELECT manifest_hash FROM release_exposures WHERE release_id=:release"
-                ),
+                text("SELECT manifest_hash FROM release_exposures WHERE release_id=:release"),
                 {"release": release_id},
             ).scalars()
         )
@@ -729,41 +715,49 @@ def load_historical_context_release(
                 "facts": loaded_facts_by_round[number],
                 "categories": loaded_rollups_by_round[number],
             }
-            observed = connection.execute(
-                text(
-                    "SELECT "
-                    "(SELECT count(*) FROM context_geographies WHERE scope_id=:scope) "
-                    "AS geographies,"
-                    "(SELECT count(*) FROM context_result_facts WHERE scope_id=:scope) "
-                    "AS facts,"
-                    "(SELECT count(*) FROM context_category_facts WHERE scope_id=:scope) "
-                    "AS categories"
-                ),
-                {"scope": scope_id},
-            ).mappings().one()
+            observed = (
+                connection.execute(
+                    text(
+                        "SELECT "
+                        "(SELECT count(*) FROM context_geographies WHERE scope_id=:scope) "
+                        "AS geographies,"
+                        "(SELECT count(*) FROM context_result_facts WHERE scope_id=:scope) "
+                        "AS facts,"
+                        "(SELECT count(*) FROM context_category_facts WHERE scope_id=:scope) "
+                        "AS categories"
+                    ),
+                    {"scope": scope_id},
+                )
+                .mappings()
+                .one()
+            )
             if any(int(observed[key]) != value for key, value in expected.items()):
                 raise ReleaseLoadError("compact database row counts differ after COPY")
 
             database_semantic_hash = sha256()
             database_content_hash = sha256()
-            rows = connection.execute(
-                text(
-                    "SELECT g.external_id,s.source_id,c.category_key,cf.votes,cf.status "
-                    "FROM context_category_facts cf "
-                    "JOIN context_geographies g ON "
-                    "(g.scope_id=cf.scope_id AND g.id=cf.geography_id) "
-                    "JOIN context_sources s ON "
-                    "(s.scope_id=cf.scope_id AND s.ordinal=cf.source_ordinal) "
-                    "JOIN context_categories c ON "
-                    "(c.scope_id=cf.scope_id AND c.id=cf.category_id) "
-                    "WHERE cf.scope_id=:scope ORDER BY "
-                    "CASE g.level WHEN 0 THEN 'national' WHEN 1 THEN 'department' "
-                    "WHEN 2 THEN 'municipality' WHEN 3 THEN 'zone' "
-                    "WHEN 4 THEN 'polling_place' ELSE 'mesa' END,"
-                    "g.external_id,c.category_code,c.category_key"
-                ),
-                {"scope": scope_id},
-            ).mappings().yield_per(batch_size)
+            rows = (
+                connection.execute(
+                    text(
+                        "SELECT g.external_id,s.source_id,c.category_key,cf.votes,cf.status "
+                        "FROM context_category_facts cf "
+                        "JOIN context_geographies g ON "
+                        "(g.scope_id=cf.scope_id AND g.id=cf.geography_id) "
+                        "JOIN context_sources s ON "
+                        "(s.scope_id=cf.scope_id AND s.ordinal=cf.source_ordinal) "
+                        "JOIN context_categories c ON "
+                        "(c.scope_id=cf.scope_id AND c.id=cf.category_id) "
+                        "WHERE cf.scope_id=:scope ORDER BY "
+                        "CASE g.level WHEN 0 THEN 'national' WHEN 1 THEN 'department' "
+                        "WHEN 2 THEN 'municipality' WHEN 3 THEN 'zone' "
+                        "WHEN 4 THEN 'polling_place' ELSE 'mesa' END,"
+                        "g.external_id,c.category_code,c.category_key"
+                    ),
+                    {"scope": scope_id},
+                )
+                .mappings()
+                .yield_per(batch_size)
+            )
             database_count = 0
             for database_row in rows:
                 identity = (
@@ -779,8 +773,7 @@ def load_historical_context_release(
                 database_count += 1
             if (
                 database_count != expected["categories"]
-                or database_semantic_hash.digest()
-                != semantic_hashes[number].digest()
+                or database_semantic_hash.digest() != semantic_hashes[number].digest()
                 or database_content_hash.digest() != content_hashes[number].digest()
             ):
                 raise ReleaseLoadError("compact database semantic digest differs after COPY")

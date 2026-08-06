@@ -1330,9 +1330,9 @@ def _validate_review_signals(
         "calculation",
         "peer_definition",
         "limitations",
-            "source_links",
-            "evidence_artifact_hash",
-            "evidence_artifact_kind",
+        "source_links",
+        "evidence_artifact_hash",
+        "evidence_artifact_kind",
         *_STATISTICAL_BINDING_FIELDS,
         *_OPTIONAL_ANALYZER_BINDING_FIELDS,
     }
@@ -1406,15 +1406,13 @@ def _validate_review_signals(
                     )
                 if evidence_kind not in {"reconciliation_result", "document_review"}:
                     raise SnapshotError(f"{component_label}.evidence_artifact_kind is invalid")
-                component_hash = hashlib.sha256(
-                    canonical_snapshot_bytes(raw_component)
-                ).hexdigest()
+                component_hash = hashlib.sha256(canonical_snapshot_bytes(raw_component)).hexdigest()
                 if (
                     str(item["mesa_id"]),
                     component_hash,
                     str(evidence_hash),
                     str(evidence_kind),
-                    ) not in deterministic_authorizations:
+                ) not in deterministic_authorizations:
                     raise SnapshotError(
                         f"{component_label} lacks authenticated deterministic evidence "
                         "authorization"

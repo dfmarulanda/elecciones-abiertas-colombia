@@ -118,10 +118,18 @@ export type PublicReleaseRef = {
   name_en: string;
   round: number;
   election_date: string;
-  status: "published";
+  /** Was a literal "published". A preliminary pre-count is a `candidate`
+   * release, and typing it as published made every consumer state something
+   * untrue about it. */
+  status: "published" | "candidate" | "withdrawn";
+  /** Which door authorised the read. `preliminary` must never render as
+   * published; a certified release has no preliminary grant and vice versa. */
+  exposure_class?: "certified" | "preliminary";
   methodology_version: string | null;
   release_manifest_hash: string;
-  exposure_approved_at: string;
+  /** Null for a preliminary grant: a candidate release has no certified
+   * approval, and claiming one would be the mislabel this guards against. */
+  exposure_approved_at: string | null;
   sources: Array<{
     id: string;
     source_type: S["Provenance"]["source_type"];

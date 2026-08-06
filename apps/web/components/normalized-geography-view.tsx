@@ -59,7 +59,7 @@ export function NormalizedGeographyView({
     <Page
       locale={locale}
       synthetic={false}
-      releaseStatus="published"
+      releaseStatus={view.selected?.status ?? "published"}
       eyebrow={copy(
         locale,
         "Exploración territorial",
@@ -295,7 +295,7 @@ export function NormalizedMesaView({
     <Page
       locale={locale}
       synthetic={false}
-      releaseStatus="published"
+      releaseStatus={view.selected?.status ?? "published"}
       eyebrow={copy(locale, "Ruta canónica de mesa", "Canonical mesa route")}
       title={`${copy(locale, "Mesa", "Mesa")} ${mesa.display_number}`}
     >
@@ -534,7 +534,6 @@ export function NormalizedUnavailable({
     <Page
       locale={locale}
       synthetic={false}
-      releaseStatus="published"
       eyebrow={copy(locale, "Estado de la ruta", "Route status")}
       title={copy(
         locale,

@@ -1,3 +1,7 @@
+# Every interpolated SQL fragment below is built from module constants -- metric
+# names, level names, staging table names -- and never from release data.  All
+# values travel as bound parameters.
+# ruff: noqa: S608
 """Stage B: load a standard 2026 release into PostgreSQL, internally only.
 
 Everything the 2022 loader does structurally is reused: COPY into ``ON COMMIT
@@ -39,6 +43,7 @@ not turn a blocked release into a reconciled one.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -101,7 +106,8 @@ _CATEGORY_COLUMNS = {
 }
 # The staged fact keeps its metrics in columns so the aggregates can be SUMmed
 # in SQL; the metrics JSON the read model serves is built from them at the end.
-_STAGE_FACTS_DDL = """
+_STAGE_FACTS_DDL = (
+    """
 CREATE TEMP TABLE stage_facts (
   id text NOT NULL,
   geography_id text NOT NULL,
@@ -109,12 +115,13 @@ CREATE TEMP TABLE stage_facts (
   geography_level text NOT NULL,
   mesa_id text,
   source_id text NOT NULL,
-""" + "".join(
-    f"  {metric}_value bigint, {metric}_status text NOT NULL,\n" for metric in METRICS
-) + """  content_hash text NOT NULL,
+"""
+    + "".join(f"  {metric}_value bigint, {metric}_status text NOT NULL,\n" for metric in METRICS)
+    + """  content_hash text NOT NULL,
   retrieved_at timestamptz NOT NULL
 ) ON COMMIT DROP
 """
+)
 _STAGE_CATEGORIES_DDL = """
 CREATE TEMP TABLE stage_categories (
   result_fact_id text NOT NULL,
@@ -126,10 +133,14 @@ CREATE TEMP TABLE stage_categories (
   status text NOT NULL
 ) ON COMMIT DROP
 """
-_METRICS_JSON_SQL = "jsonb_build_object(" + ",".join(
-    f"'{metric}',jsonb_build_object('value',{{p}}{metric}_value,'status',{{p}}{metric}_status)"
-    for metric in METRICS
-) + ")"
+_METRICS_JSON_SQL = (
+    "jsonb_build_object("
+    + ",".join(
+        f"'{metric}',jsonb_build_object('value',{metric}_value,'status',{metric}_status)"
+        for metric in METRICS
+    )
+    + ")"
+)
 
 
 def _artifact_path(directory: Path, load_manifest: dict[str, Any], filename: str) -> Path:
@@ -150,8 +161,6 @@ def _artifact_path(directory: Path, load_manifest: dict[str, Any], filename: str
     path = directory / filename
     if not path.is_file():
         raise ReleaseLoadError(f"missing artifact {filename}")
-    import hashlib
-
     digest = hashlib.sha256()
     size = 0
     with path.open("rb") as handle:
@@ -453,19 +462,14 @@ def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
         {"r": release_id},
         "the mesa lineage disagrees with the geography hierarchy",
     )
-    # ``registered_electors`` is deliberately absent from this sum: it is
-    # unavailable on 122,008 of 122,020 mesas, so a total would be a fabricated
-    # denominator rather than a smaller one.
-    sums = ",".join(f"SUM(f.{metric}_value) AS {metric}" for metric in _VOTE_METRICS)
-    observed = " AND ".join(f"bool_and(f.{metric}_status='observed')" for metric in _VOTE_METRICS)
+    # One row per (aggregate geography, mesa).  Three equality joins beat one
+    # OR-join across 4,236 aggregates and 122,020 mesas by orders of magnitude.
     connection.execute(
         text(
-            "CREATE TEMP TABLE stage_rollup ON COMMIT DROP AS "
+            "CREATE TEMP TABLE stage_rollup_member ON COMMIT DROP AS "
             + " UNION ALL ".join(
-                f"SELECT '{level}' AS level,l.{column} AS geography_id,{sums},"
-                f" ({observed}) AS all_observed,COUNT(*) AS mesa_count "
-                "FROM stage_facts f JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id "
-                f"WHERE f.geography_level='mesa' GROUP BY l.{column}"
+                f"SELECT '{level}' AS level,{column} AS geography_id,mesa_id "
+                "FROM stage_mesa_lineage"
                 for level, column in zip(
                     _DERIVED_LEVELS,
                     ("zone_id", "municipality_id", "department_id"),
@@ -474,56 +478,83 @@ def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
             )
         )
     )
+    connection.execute(text("CREATE INDEX stage_member_mesa ON stage_rollup_member (mesa_id)"))
+    connection.execute(
+        text("CREATE INDEX stage_member_scope ON stage_rollup_member (level,geography_id)")
+    )
+    connection.execute(text("ANALYZE stage_rollup_member"))
+    # ``registered_electors`` is deliberately absent from this sum: it is
+    # unavailable on 122,008 of 122,020 mesas, so a total would be a fabricated
+    # denominator rather than a smaller one.
+    sums = ",".join(f"SUM(f.{metric}_value) AS {metric}" for metric in _VOTE_METRICS)
+    observed = " AND ".join(f"bool_and(f.{metric}_status='observed')" for metric in _VOTE_METRICS)
+    connection.execute(
+        text(
+            "CREATE TEMP TABLE stage_rollup ON COMMIT DROP AS "
+            f"SELECT m.level,m.geography_id,{sums},({observed}) AS all_observed "
+            "FROM stage_facts f JOIN stage_rollup_member m ON m.mesa_id=f.mesa_id "
+            "WHERE f.geography_level='mesa' GROUP BY m.level,m.geography_id"
+        )
+    )
     _assert(
         connection,
         "SELECT COUNT(*) FROM stage_rollup WHERE NOT all_observed",
         {},
         "an aggregate would hide a non-observed mesa metric",
     )
-    metrics_json = _METRICS_JSON_SQL.format(p="")
     connection.execute(
         text(
             "INSERT INTO stage_facts (id,geography_id,source_geography_id,geography_level,"
-            "mesa_id,source_id," + ",".join(
-                f"{metric}_value,{metric}_status" for metric in METRICS
-            ) + ",content_hash,retrieved_at) "
+            "mesa_id,source_id,"
+            + ",".join(f"{metric}_value,{metric}_status" for metric in METRICS)
+            + ",content_hash,retrieved_at) "
             "SELECT 'rollup-' || r.level || '-' || g.code,r.geography_id,r.geography_id,r.level,"
             " NULL,:source,NULL,'unavailable',"
             + ",".join(f"r.{metric},'observed'" for metric in _VOTE_METRICS)
-            + ",:hash,:at "
+            + ",:hash,"
+            # An aggregate is only as fresh as the newest mesa it contains.
+            " (SELECT MAX(retrieved_at) FROM stage_facts WHERE geography_level='mesa') "
             "FROM stage_rollup r "
             "JOIN stage_release_geographies g ON g.release_id=:r AND g.id=r.geography_id "
             " AND g.level=r.level"
         ),
-        {
-            "r": release_id,
-            "source": SOURCE_ROLLUP,
-            "hash": _rollup_hash(connection),
-            "at": datetime.now(UTC),
-        },
+        {"r": release_id, "source": SOURCE_ROLLUP, "hash": _rollup_hash(connection)},
     )
     connection.execute(
         text(
             "INSERT INTO stage_categories "
             "(result_fact_id,category_key,category_code,category_name,category_kind,votes,status) "
-            "SELECT f.id,c.category_key,c.category_code,MIN(c.category_name),MIN(c.category_kind),"
+            "SELECT a.id,c.category_key,c.category_code,MIN(c.category_name),MIN(c.category_kind),"
             " SUM(c.votes),CASE WHEN bool_and(c.status='observed') THEN 'observed'"
             " ELSE 'unavailable' END "
-            "FROM stage_facts f "
-            "JOIN stage_mesa_lineage l ON l.zone_id=f.geography_id "
-            " OR l.municipality_id=f.geography_id OR l.department_id=f.geography_id "
-            "JOIN stage_facts mf ON mf.mesa_id=l.mesa_id "
+            "FROM stage_rollup_member m "
+            "JOIN stage_facts a ON a.geography_id=m.geography_id AND a.geography_level=m.level "
+            " AND a.source_id=:source "
+            "JOIN stage_facts mf ON mf.mesa_id=m.mesa_id "
             "JOIN stage_categories c ON c.result_fact_id=mf.id "
-            "WHERE f.source_id=:source "
-            "GROUP BY f.id,c.category_key,c.category_code"
+            "GROUP BY a.id,c.category_key,c.category_code"
         ),
         {"source": SOURCE_ROLLUP},
     )
-    return int(
+    derived = int(
         connection.execute(
             text("SELECT COUNT(*) FROM stage_facts WHERE source_id=:s"), {"s": SOURCE_ROLLUP}
         ).scalar_one()
     )
+    aggregate_geographies = int(
+        connection.execute(
+            text(
+                "SELECT COUNT(*) FROM stage_release_geographies "
+                "WHERE release_id=:r AND level = ANY(:levels)"
+            ),
+            {"r": release_id, "levels": list(_DERIVED_LEVELS)},
+        ).scalar_one()
+    )
+    # Every zone, municipality and department must get exactly one derived fact:
+    # a missing one is a hole in the read model, an extra one is a phantom.
+    if derived != aggregate_geographies:
+        raise ReleaseLoadError("derived aggregates do not cover every aggregate geography exactly")
+    return derived
 
 
 def _rollup_hash(connection: Connection) -> str:
@@ -538,7 +569,7 @@ def _rollup_hash(connection: Connection) -> str:
     )
 
 
-def _reconcile(connection: Connection, release_id: str) -> None:
+def _reconcile(connection: Connection) -> None:
     """Assert the derived numbers add up, or abort the whole transaction."""
     metric_equal = " OR ".join(f"p.{metric}_value <> s.{metric}" for metric in _VOTE_METRICS)
     sums = ",".join(f"SUM(f.{metric}_value) AS {metric}" for metric in _VOTE_METRICS)
@@ -603,7 +634,6 @@ def _reconcile(connection: Connection, release_id: str) -> None:
         {"s": SOURCE_ROLLUP},
         "a derived aggregate fabricated a registered-electors denominator",
     )
-    del release_id
 
 
 def _validate_relations(connection: Connection, release_id: str) -> None:
@@ -673,9 +703,7 @@ def load_standard_2026_release(
         name: _artifact_path(artifact_directory, load_manifest, name)
         for name in (GEOGRAPHY_ARTIFACT, MESA_ARTIFACT, FACT_ARTIFACT, CATEGORY_ARTIFACT)
     }
-    expected = {
-        entry["filename"]: entry["record_count"] for entry in load_manifest["artifacts"]
-    }
+    expected = {entry["filename"]: entry["record_count"] for entry in load_manifest["artifacts"]}
     manifest_hash = _digest(manifest)
     summary = load_manifest["summary"]
     election = load_manifest["election"]
@@ -761,9 +789,7 @@ def load_standard_2026_release(
         )
         loaded_mesas = _copy_mesa_rows(connection, release_id, paths[MESA_ARTIFACT], batch_size)
         loaded_facts = _copy_fact_rows(connection, paths[FACT_ARTIFACT], batch_size)
-        loaded_categories = _copy_category_rows(
-            connection, paths[CATEGORY_ARTIFACT], batch_size
-        )
+        loaded_categories = _copy_category_rows(connection, paths[CATEGORY_ARTIFACT], batch_size)
         for name, loaded in (
             (GEOGRAPHY_ARTIFACT, loaded_geographies),
             (MESA_ARTIFACT, loaded_mesas),
@@ -788,10 +814,10 @@ def load_standard_2026_release(
 
         _derive_mesa_geographies(connection, release_id)
         connection.execute(text("ANALYZE stage_release_geographies"))
-        derived_facts = _derive_aggregate_facts(connection, release_id)
+        _derive_aggregate_facts(connection, release_id)
         connection.execute(text("ANALYZE stage_facts"))
         connection.execute(text("ANALYZE stage_categories"))
-        _reconcile(connection, release_id)
+        _reconcile(connection)
         _validate_relations(connection, release_id)
 
         for level in _LEVEL_RANK:
@@ -818,7 +844,7 @@ def load_standard_2026_release(
                 "(release_id,election_slug,id,geography_id,geography_level,mesa_id,source_id,"
                 "metrics,fact_content_hash,fact_retrieved_at) "
                 "SELECT :r,:e,id,geography_id,geography_level,mesa_id,source_id,"
-                + _METRICS_JSON_SQL.format(p="")
+                + _METRICS_JSON_SQL
                 + ",content_hash,retrieved_at FROM stage_facts"
             ),
             {"r": release_id, "e": ELECTION_SLUG},
@@ -873,6 +899,4 @@ def load_standard_2026_release(
         ).scalar_one()
         if exposed:
             raise ReleaseLoadError("loader may not grant public or preliminary exposure")
-        if derived_facts != len(_DERIVED_LEVELS) and derived_facts <= 0:
-            raise ReleaseLoadError("no aggregate facts were derived")
     return "loaded"

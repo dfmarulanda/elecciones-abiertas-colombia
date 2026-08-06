@@ -739,10 +739,10 @@ def build_national_precount_candidate(
     profile = _profile(catalog)
     precount_source = catalog.precount_source()
     normalized = _read_national_row(state_directory / "crawl.sqlite3", plan_id)
-    if (
-        precount_source.election_id is not None
-        and normalized.get("election_id") not in {None, precount_source.election_id}
-    ):
+    if precount_source.election_id is not None and normalized.get("election_id") not in {
+        None,
+        precount_source.election_id,
+    }:
         raise CandidateBuildError("national ACT election identifier differs from catalog")
     metrics = _observed_metrics(normalized)
     candidates, candidate_results = _candidate_data(normalized, profile)
@@ -756,10 +756,9 @@ def build_national_precount_candidate(
     final_declaration = catalog.final_declaration_source()
     final_reference: dict[str, object] | None = None
     if final_declaration is not None:
-        final_url = (
-            final_declaration.entrypoints.get("declaration")
-            or final_declaration.entrypoints.get("declaration_resolution")
-        )
+        final_url = final_declaration.entrypoints.get(
+            "declaration"
+        ) or final_declaration.entrypoints.get("declaration_resolution")
         if final_url is None:
             raise CandidateBuildError(
                 "final-declaration catalog source has no official reference URL"

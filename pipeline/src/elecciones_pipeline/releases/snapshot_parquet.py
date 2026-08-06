@@ -149,7 +149,7 @@ class _Writer:
         self._writer.close()
 
 
-def _hex_digest(value: str, label: str) -> str:
+def _hex_digest(value: object, label: str) -> str:
     digest = _require_string(value, label)
     if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
         raise ReleaseLoadError(f"{label} must be a lowercase SHA-256 digest")
@@ -537,7 +537,9 @@ def snapshot_to_parquet(
             }
         )
     snapshot_hash, snapshot_size = _file_digest(snapshot_path)
-    load_manifest = {
+    if summary.get("completion") is None or summary.get("reconciliation") is None:
+        raise ReleaseLoadError("snapshot summary lacks completion/reconciliation")
+    load_manifest: dict[str, Any] = {
         "schema_version": "1.0.0",
         "release_id": _require_string(release.get("release_id"), "snapshot release_id"),
         "data_version": data_version,
@@ -568,10 +570,6 @@ def snapshot_to_parquet(
             "byte_size": snapshot_size,
         },
     }
-    if load_manifest["summary"]["completion"] is None or (
-        load_manifest["summary"]["reconciliation"] is None
-    ):
-        raise ReleaseLoadError("snapshot summary lacks completion/reconciliation")
     (output_directory / LOAD_MANIFEST).write_text(
         json.dumps(load_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
