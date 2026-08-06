@@ -1683,6 +1683,50 @@ class PostgresReadRepository:
             release_id, election_slug, str(fact["id"]), None, 500
         )
 
+        # The reader-facing summary needs candidates, not just raw categories:
+        # every consumer of ElectionSummary expects {candidate, votes, share}.
+        # Share is over valid_votes, which INCLUDES blank ballots, so the two
+        # shares deliberately do not sum to 1.
+        metrics = cast(dict[str, Any], fact["metrics"])
+        valid = cast(Any, metrics.get("valid_votes") or {}).get("value")
+        candidates: list[dict[str, object]] = []
+        for entry in categories:
+            row = cast(dict[str, Any], entry)
+            key = str(row.get("category_key", ""))
+            if not key.startswith("candidate:"):
+                continue
+            votes = row.get("votes")
+            value = (
+                votes.get("value")
+                if isinstance(votes, Mapping)
+                else votes
+                if isinstance(votes, int)
+                else None
+            )
+            candidates.append(
+                {
+                    "candidate": {
+                        "id": str(row.get("category_code") or key),
+                        "ballot_number": None,
+                        "name": {
+                            "es": row.get("category_name"),
+                            "en": row.get("category_name"),
+                        },
+                        "short_name": {
+                            "es": row.get("category_name"),
+                            "en": row.get("category_name"),
+                        },
+                    },
+                    "votes": {
+                        "value": value,
+                        "status": "observed" if value is not None else "unavailable",
+                    },
+                    "share": (
+                        (value / valid) if value is not None and valid else None
+                    ),
+                }
+            )
+
         caveat = cast(Any, grant.get("caveat")) or {
             "es": summary_row["preview_caveat_es"],
             "en": summary_row["preview_caveat_en"],
@@ -1705,6 +1749,7 @@ class PostgresReadRepository:
             "reconciliation": summary_row["reconciliation"],
             "turnout": summary_row["turnout"],
             **cast(dict[str, object], fact["metrics"]),
+            "candidates": candidates,
             "national_categories": categories,
             "provenance": {
                 "data_version": release_id,

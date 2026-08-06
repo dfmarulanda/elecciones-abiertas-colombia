@@ -151,9 +151,7 @@ def _advisory_key(release_id: str) -> int:
     on an undocumented server function whose hash could change between major
     PostgreSQL versions and silently stop serialising two loaders.
     """
-    return int.from_bytes(
-        hashlib.sha256(release_id.encode()).digest()[:8], "big", signed=True
-    )
+    return int.from_bytes(hashlib.sha256(release_id.encode()).digest()[:8], "big", signed=True)
 
 
 def _artifact_path(directory: Path, load_manifest: dict[str, Any], filename: str) -> Path:

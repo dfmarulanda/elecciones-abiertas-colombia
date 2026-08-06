@@ -11,6 +11,7 @@ import json
 import socket
 import subprocess
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -35,9 +36,7 @@ from sqlalchemy import create_engine, text
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 REAL_ARTIFACTS = (
-    REPOSITORY
-    / "data/releases/candidate-2026-r2-dacb28aa766eec87/postgres-load"
-    / LOAD_MANIFEST
+    REPOSITORY / "data/releases/candidate-2026-r2-dacb28aa766eec87/postgres-load" / LOAD_MANIFEST
 )
 BIN = Path("/opt/homebrew/bin")
 CANDIDATES = ("ivan-cepeda-aida-quilcue", "abelardo-de-la-espriella-jose-manuel-restrepo")
@@ -544,9 +543,7 @@ def _counts(url: str, release_id: str) -> dict[str, int]:
         }
 
 
-def test_stage_b_loads_derives_and_reconciles(
-    postgres_url: str, staged: tuple[Path, Path]
-) -> None:
+def test_stage_b_loads_derives_and_reconciles(postgres_url: str, staged: tuple[Path, Path]) -> None:
     manifest, artifacts = staged
     engine = create_engine(postgres_url)
     assert load_standard_2026_release(engine, manifest, artifacts) == "loaded"
@@ -670,3 +667,65 @@ def test_stage_b_aborts_when_a_place_total_disagrees_with_its_mesas(
         ),
         0,
     )
+
+
+def test_stage_b_refuses_a_rerun_whose_manifest_hash_differs(
+    postgres_url: str, tmp_path: Path
+) -> None:
+    """A re-run must never quietly accept a manifest that is not the loaded one."""
+    release = "idempotency-hash"
+    manifest, artifacts = _stage(tmp_path / "first", release)
+    engine = create_engine(postgres_url)
+    assert load_standard_2026_release(engine, manifest, artifacts) == "loaded"
+    before = _counts(postgres_url, release)
+
+    # Same release id and same artifacts, a manifest that differs in one field.
+    changed, _ = _stage(
+        tmp_path / "second", release, manifest_extra={"methodology_version": "audit-priority-v9"}
+    )
+    with pytest.raises(ReleaseLoadError, match="already loaded with a different manifest hash"):
+        load_standard_2026_release(engine, changed, artifacts)
+    assert _counts(postgres_url, release) == before
+
+
+def test_stage_b_refuses_a_release_id_reserved_without_an_exposure(
+    postgres_url: str, tmp_path: Path
+) -> None:
+    release = "idempotency-reserved"
+    manifest, artifacts = _stage(tmp_path, release)
+    engine = create_engine(postgres_url)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO releases(id,status,synthetic,created_at,manifest) "
+                "VALUES(:r,'candidate',false,now(),'{}')"
+            ),
+            {"r": release},
+        )
+    with pytest.raises(ReleaseLoadError, match="already reserved"):
+        load_standard_2026_release(engine, manifest, artifacts)
+
+
+def test_two_concurrent_loaders_yield_loaded_and_noop_not_a_driver_error(
+    postgres_url: str, tmp_path: Path
+) -> None:
+    """The race that produced `duplicate key ... releases_pkey`.
+
+    Both loaders read "absent" before either committed, so both inserted into
+    ``releases`` and the loser surfaced a raw IntegrityError. The claim is now
+    serialised, so the loser reads the committed exposure and reports the
+    documented no-op instead.
+    """
+    release = "idempotency-race"
+    manifest, artifacts = _stage(tmp_path, release)
+    engine = create_engine(postgres_url, pool_size=4)
+
+    def run() -> str:
+        return load_standard_2026_release(engine, manifest, artifacts)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = sorted(future.result() for future in [pool.submit(run), pool.submit(run)])
+    assert outcomes == ["loaded", "noop"]
+    counts = _counts(postgres_url, release)
+    assert counts["release_result_facts"] == FIXTURE_FACTS + FIXTURE_AGGREGATES
+    assert counts["release_exposures"] == 1

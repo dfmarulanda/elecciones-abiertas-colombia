@@ -898,6 +898,63 @@ async function apiRelease(options: ReleaseOptions = {}): Promise<ReleaseView> {
   };
 }
 
+/**
+ * Read the national summary through the release-scoped route.
+ *
+ * The legacy `/elections/{slug}/summary` route is certified-only by design, so
+ * it refuses a preliminary release — correctly, but that would leave the home
+ * page with no figures at all while the same numbers are being served one route
+ * over. This resolves the release from the catalogue and reads the normalized
+ * summary, which carries the preliminary label with it.
+ */
+async function normalizedSummaryRelease(): Promise<ReleaseView | null> {
+  const releases = await apiJson<PublicReleaseRef[]>("/api/v1/release-elections");
+  const selected =
+    releases.find((item) => item.election_slug === electionSlug) ?? releases[0];
+  if (!selected) return null;
+  const summary = await apiJson<
+    S["ElectionSummary"] & {
+      preliminary?: boolean;
+      preliminary_caveat?: Record<"es" | "en", string>;
+    }
+  >(
+    `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}/summary`,
+  );
+  const notice = summary.preliminary_caveat ?? {
+    es: "Datos del release inmutable indicado en la página.",
+    en: "Data from the immutable release shown on this page.",
+  };
+  return {
+    fixture_notice: notice,
+    release: {
+      release_id: selected.release_id,
+      data_version: summary.data_version,
+      status: selected.status,
+      synthetic: summary.synthetic,
+      created_at: summary.provenance.retrieved_at,
+      methodology_version:
+        summary.provenance.methodology_version ?? "unavailable",
+    },
+    election: {
+      slug: summary.election_slug,
+      name: summary.election_name,
+      round: summary.round,
+      election_date: summary.election_date,
+      candidates: summary.candidates.map((item) => item.candidate),
+    },
+    provenance: summary.provenance,
+    summary,
+    geographies: [],
+    mesas: [],
+    results: [],
+    bulletins: [],
+    evidence: [],
+    comparisons: {},
+    review_signals: [],
+    datasets: [],
+  };
+}
+
 async function apiSummaryRelease(): Promise<ReleaseView> {
   const query = withVersion(new URLSearchParams());
   const summary = await apiJson<S["ElectionSummary"]>(
@@ -942,9 +999,30 @@ async function apiSummaryRelease(): Promise<ReleaseView> {
   };
 }
 
+/**
+ * Prefer the legacy contract, fall back to the release-scoped read.
+ *
+ * A certified release answers on both. A preliminary one is refused by the
+ * legacy route by design, and falling back keeps the reader seeing real figures
+ * — labelled preliminary — instead of an unavailable state that would be
+ * indistinguishable from the API being down.
+ */
+async function releaseWithNormalizedFallback(
+  legacy: () => Promise<ReleaseView>,
+): Promise<ReleaseView> {
+  try {
+    return await legacy();
+  } catch (error) {
+    if (!(error instanceof PublicApiError) || error.status !== 404) throw error;
+    const normalized = await normalizedSummaryRelease();
+    if (!normalized) throw error;
+    return normalized;
+  }
+}
+
 const liveAdapter: DataAdapter = {
-  getRelease: apiRelease,
-  getNationalSummary: apiSummaryRelease,
+  getRelease: (options) => releaseWithNormalizedFallback(() => apiRelease(options)),
+  getNationalSummary: () => releaseWithNormalizedFallback(apiSummaryRelease),
   async getMesa(mesaId) {
     try {
       return await apiJson<S["MesaDetail"]>(

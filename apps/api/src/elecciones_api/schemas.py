@@ -324,6 +324,9 @@ class PreliminaryElectionSummary(StrictModel):
     blank_votes: MetricValue
     null_votes: MetricValue
     unmarked_votes: MetricValue
+    #: Shares are over valid_votes, which includes blank ballots, so the
+    #: candidate shares deliberately do not sum to 1.
+    candidates: list["CandidateSummary"]
     national_categories: list[NormalizedCategoryResult]
     reconciliation: "Reconciliation"
     provenance: PreviewProvenance
