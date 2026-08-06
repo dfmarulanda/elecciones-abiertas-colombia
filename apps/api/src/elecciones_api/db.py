@@ -13,6 +13,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Float,
     ForeignKeyConstraint,
     Integer,
     String,
@@ -36,6 +37,11 @@ class ReleaseExposureModel(Base):
     access_scope: Mapped[str] = mapped_column(String(16), nullable=False, default="internal")
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    # A preliminary grant is disjoint from the certified one: CHECK constraints
+    # forbid a row from carrying both approvals (migration 20260806_01).
+    preliminary_approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    preliminary_caveat_es: Mapped[str | None] = mapped_column(Text)
+    preliminary_caveat_en: Mapped[str | None] = mapped_column(Text)
 
 
 class ReleaseElectionModel(Base):
@@ -47,6 +53,35 @@ class ReleaseElectionModel(Base):
     round: Mapped[int] = mapped_column(Integer, nullable=False)
     election_date: Mapped[date] = mapped_column(Date, nullable=False)
     __table_args__ = (UniqueConstraint("release_id", "election_slug", name="uq_release_election"),)
+
+
+class ReleaseSummaryModel(Base):
+    """Pipeline-computed summary blocks, stored verbatim.
+
+    These are not derivable from the loaded rows: completion reports 122,017
+    reported against 122,020 installed, and reconciliation is ``blocked`` with
+    three exceptions. Recomputing them from the rows would silently convert a
+    blocked reconciliation into a passing one, so they are copied as recorded
+    and served as recorded.
+    """
+
+    __tablename__ = "release_summaries"
+    release_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    election_slug: Mapped[str] = mapped_column(String(160), primary_key=True)
+    release_class: Mapped[str] = mapped_column(String(32), nullable=False)
+    completion: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    coverage: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    geographic_collection_coverage: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    reconciliation: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    turnout: Mapped[float | None] = mapped_column(Float)
+    preview_caveat_es: Mapped[str | None] = mapped_column(Text)
+    preview_caveat_en: Mapped[str | None] = mapped_column(Text)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["release_id", "election_slug"],
+            ["release_elections.release_id", "release_elections.election_slug"],
+        ),
+    )
 
 
 class ReleaseGeographyModel(Base):
@@ -112,6 +147,11 @@ class ReleaseResultFactModel(Base):
     mesa_id: Mapped[str | None] = mapped_column(String(200))
     source_id: Mapped[str] = mapped_column(String(200), nullable=False)
     metrics: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    # Per-fact provenance. All 136,459 leaf facts carry distinct hashes, so
+    # hoisting provenance to the source row for list responses would lose the
+    # per-mesa evidence trail; the detail endpoint reads these instead.
+    fact_content_hash: Mapped[str | None] = mapped_column(String(64))
+    fact_retrieved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     __table_args__ = (
         ForeignKeyConstraint(
             ["release_id", "election_slug"],
