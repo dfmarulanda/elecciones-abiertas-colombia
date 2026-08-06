@@ -14,3 +14,10 @@ apps/web/output/
 .ruff_cache/
 __pycache__/
 .design-lagann/
+
+# The 2026 candidate release: a 172 MB snapshot plus its Parquet artifacts.
+# The image never copies it (apps/api/Dockerfile takes only the two historical
+# release directories), and the Postgres load runs from a workstation against
+# the database rather than from inside the container -- so shipping it in the
+# build context only slows every deploy.
+data/releases/candidate-2026-r2-*/
