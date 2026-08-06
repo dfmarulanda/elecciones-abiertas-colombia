@@ -552,6 +552,30 @@ def _normalized_summary_payload(
 
 type AppRepository = ReadRepository | HistoricalDuckDBRepository | FederatedRepository
 
+# Repositories that can answer release-scoped normalized reads. FederatedRepository
+# subclasses neither backend — it delegates to both — so leaving it out of these
+# guards did not raise anything: the release-scoped routes simply began 404ing and
+# /api/v1/release-elections began returning an empty catalogue, in exactly the
+# deployment federation exists to make work.
+NORMALIZED_REPOSITORIES = (
+    PostgresReadRepository,
+    HistoricalDuckDBRepository,
+    FederatedRepository,
+)
+
+
+def _release_backend(repository: AppRepository, release_id: str) -> AppRepository:
+    """Resolve federation to the concrete backend that owns ``release_id``.
+
+    ``datasets`` and ``dataset_file`` are the two release-scoped reads whose
+    names carry no routing prefix, so ``FederatedRepository`` cannot dispatch
+    them by release id and they would fall through to Postgres — 404ing every
+    packaged dataset of a DuckDB-held historical release.
+    """
+    if isinstance(repository, FederatedRepository):
+        return cast(AppRepository, repository.backend_for(release_id))
+    return repository
+
 
 def _historical_default_release(active_release_id: str, historical_ids: list[str]) -> str:
     """The release the DuckDB half answers for when no release id is supplied.
@@ -752,7 +776,7 @@ def create_app(
     @app.get("/api/v1/release-elections", response_model=list[ReleaseElectionRef])
     async def release_elections(request: Request) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             return _cached_json(request, [])
         values = translate(lambda: repository.public_elections())
 
@@ -790,7 +814,7 @@ def create_app(
         format: Literal["json", "csv"] = "json",
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -881,7 +905,7 @@ def create_app(
     )
     async def normalized_summary(request: Request, release_id: str, election_slug: str) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -913,7 +937,7 @@ def create_app(
         request: Request, release_id: str, election_slug: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -999,7 +1023,7 @@ def create_app(
                     "X-Content-Type-Options": "nosniff",
                 },
             )
-        if isinstance(repository, PostgresReadRepository):
+        if isinstance(repository, (PostgresReadRepository, FederatedRepository)):
             datasets = translate(lambda: repository.datasets(election_slug, release_id))
             selected = next((item for item in datasets if item.id == dataset_id), None)
             if selected is None or selected.format != "parquet":
@@ -1036,7 +1060,7 @@ def create_app(
     ) -> Response:
         """A bounded documentary sensitivity artifact at one public release scope."""
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1143,7 +1167,7 @@ def create_app(
         request: Request, release_id: str, election_slug: str, geography_id: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1174,7 +1198,7 @@ def create_app(
         level: str | None = None,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1241,7 +1265,10 @@ def create_app(
         to 228 extra round trips. This is the drill-down read.
         """
         repository = repo(request)
-        if not isinstance(repository, PostgresReadRepository):
+        # Federation answers this too: it refuses DuckDB-held releases itself
+        # (there is no compact-model children-with-results projection) rather
+        # than refusing every release the moment Postgres gains a companion.
+        if not isinstance(repository, (PostgresReadRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1292,7 +1319,7 @@ def create_app(
         request: Request, release_id: str, election_slug: str, geography_id: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1319,7 +1346,7 @@ def create_app(
         source_type: str | None = None,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1349,7 +1376,7 @@ def create_app(
         limit: Annotated[int, Query(ge=1, le=200)] = 50,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1410,7 +1437,7 @@ def create_app(
     ) -> Response:
         """Comparison authorization is an explicit code crosswalk, never a name match."""
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository)):
+        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )

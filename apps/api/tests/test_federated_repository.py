@@ -9,6 +9,7 @@ fewer elections.
 
 from typing import Any
 
+import pytest
 from elecciones_api.federated_repository import FederatedRepository
 from elecciones_api.historical_repository import HistoricalDuckDBRepository
 from elecciones_api.repository import (
@@ -16,7 +17,6 @@ from elecciones_api.repository import (
     ReleaseNotFoundError,
     RepositoryUnavailableError,
 )
-import pytest
 
 
 # ``data_version`` and ``is_fixture`` are properties on every real backend and

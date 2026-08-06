@@ -8,12 +8,13 @@ from pathlib import Path
 import duckdb
 import pytest
 from elecciones_api.config import Settings
+from elecciones_api.federated_repository import FederatedRepository
 from elecciones_api.historical_repository import (
     HistoricalDuckDBRepository,
     HistoricalReleaseError,
 )
-from elecciones_api.federated_repository import FederatedRepository
 from elecciones_api.main import create_app, select_repository
+from elecciones_api.repository import ReleaseNotFoundError
 from fastapi.testclient import TestClient
 
 DATA = Path(__file__).parents[3] / "data"
@@ -415,3 +416,71 @@ def test_federated_rollback_to_a_historical_active_release_keeps_it(tmp_path: Pa
     assert isinstance(selected, FederatedRepository)
     assert selected._historical.active_release_id == RELEASES[0]
     selected.close()
+
+
+class _UnloadedPostgres:
+    """Reachable Postgres with migrations applied but no release loaded yet.
+
+    This is the deployment's first state: the schema is at head and the 2026
+    release is still being loaded by a separate process.
+    """
+
+    is_fixture = False
+    active_release_id = "candidate-2026-r2-dacb28aa766eec87"
+
+    @property
+    def data_version(self) -> str:
+        raise ReleaseNotFoundError("The 2026 release is not loaded yet.")
+
+    def public_elections(self) -> list[dict[str, object]]:
+        return []
+
+    def __getattr__(self, name: str):  # type: ignore[no-untyped-def]
+        def _not_loaded(*_: object, **__: object) -> object:
+            raise ReleaseNotFoundError("The 2026 release is not loaded yet.")
+
+        return _not_loaded
+
+
+def test_federation_still_serves_the_historical_releases_over_http(tmp_path: Path) -> None:
+    """Every release-scoped route guards on the repository type, and
+    FederatedRepository subclasses neither backend. Leaving it out of those
+    guards raised nothing: the catalogue silently emptied and each
+    /api/v1/releases/... route 404ed, in the one deployment federation is for.
+    """
+    packaged = _packaged(tmp_path)
+    historical = HistoricalDuckDBRepository(packaged, RELEASES, RELEASES[1])
+    settings = Settings(
+        cursor_secret="a" * 64,
+        active_release_id="candidate-2026-r2-dacb28aa766eec87",
+        trusted_hosts="testserver",
+        artifact_hosts="observatorio.registraduria.gov.co",
+    )
+    app = create_app(
+        settings=settings,
+        repository=FederatedRepository(_UnloadedPostgres(), historical),  # type: ignore[arg-type]
+    )
+    with TestClient(app) as api:
+        catalogue = api.get("/api/v1/release-elections")
+        assert catalogue.status_code == 200
+        assert {row["release_id"] for row in catalogue.json()} == set(RELEASES)
+
+        for release_id, year in zip(RELEASES, ("2018", "2022"), strict=True):
+            slug = f"presidencia-{year}-round-1"
+            base = f"/api/v1/releases/{release_id}/elections/{slug}"
+            for path in (
+                f"{base}/summary",
+                f"{base}/results?limit=1",
+                # `datasets` carries no release-routing prefix, so federation
+                # cannot dispatch it by release id without help.
+                f"{base}/datasets",
+            ):
+                assert api.get(path).status_code == 200, path
+
+        # Not loaded yet is a 404, never a historical release answered in its place.
+        unloaded = api.get(
+            "/api/v1/releases/candidate-2026-r2-dacb28aa766eec87"
+            "/elections/presidencia-2026-round-2/summary"
+        )
+        assert unloaded.status_code == 404
+    historical.close()

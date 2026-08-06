@@ -1,14 +1,37 @@
 # Every interpolated SQL fragment below is built from module constants -- metric
-# names, level names, staging table names -- and never from release data.  All
-# values travel as bound parameters.
+# names, level names, table names -- and never from release data.  All values
+# travel as bound parameters.
 # ruff: noqa: S608
 """Stage B: load a standard 2026 release into PostgreSQL, internally only.
 
-Everything the 2022 loader does structurally is reused: COPY into ``ON COMMIT
-DROP`` staging tables, set-wise validation before the constraint-enforced final
-inserts, a manifest-hash idempotency check, and an exposure that can only be
-``internal``.  Promotion to ``preliminary`` or ``public`` is a separate reviewed
-step and is rejected here.
+One transaction, all-or-nothing, a manifest-hash idempotency check, and an
+exposure that can only be ``internal``.  Promotion to ``preliminary`` or
+``public`` is a separate reviewed step and is rejected here.
+
+Why there are no staging copies of the release
+----------------------------------------------
+This loader used to COPY every artifact into ``ON COMMIT DROP`` temp tables,
+validate there, and only then INSERT into the live tables.  Inside one
+transaction nothing is ever reclaimed -- ``ON COMMIT DROP`` unlinks the temp
+files at commit, not when the loader is done with them -- so staging and live
+coexisted for the whole load and the peak was roughly the release twice over,
+plus the sort/hash spill of a 366,060-row rollup-membership join.  On a capped
+volume that peak is what fails, with ``DiskFull`` on ``base/pgsql_tmp``, while
+the same load succeeds anywhere the disk is merely large.
+
+The staging tier bought nothing that survives inspection.  Every per-row rule
+is checked in Python before the row is written, and every set-wise rule is a
+query that reads exactly as well against the live tables, which are scoped by
+``release_id`` and therefore hold this release's rows and nobody else's.  The
+one rule staging carried on its own -- "no duplicate scoped primary keys" -- is
+a real primary key on each live table, so it is now enforced by the database
+rather than asserted after the fact; the driver error is translated back into
+``ReleaseLoadError`` so callers still read the sentence, not a traceback.
+
+Nothing about the all-or-nothing guarantee changes.  It is still one
+transaction, every assertion still aborts it, and the exposure row -- the gate
+every read path joins through -- is still the last write, so a load that fails
+anywhere leaves nothing readable.
 
 What is specific to this release
 --------------------------------
@@ -17,7 +40,7 @@ geographies and no mesa level, so the 122,020 mesa geographies are materialised
 in SQL from ``release_mesas``, whose ``polling_place_id`` came straight from
 ``mesas[].polling_place_id`` -- never from slicing a mesa id.  The
 ``mesa.id = place.code || mesa.display_number`` identity is asserted set-wise
-and the transaction aborts on any violation.
+on all 122,020 and the transaction aborts on any violation.
 
 *Aggregates are derived, not published.*  The Registraduria publishes nothing
 between polling place and nation: there are zero department, municipality and
@@ -26,6 +49,11 @@ transaction and attributed to a fourth, structurally separate source
 (``derived-mesa-rollup-2026-r2``, transform ``mesa-rollup@1.0.0``).  A
 department total is a number this project computed; it must never be readable as
 a document the Registraduria published.
+
+The three aggregate levels are summed in one ``GROUPING SETS`` pass over the
+mesa facts instead of through a materialised (level, geography, mesa) membership
+table.  Same three sums, same three groupings, one scan, no 366,060-row
+intermediate and no hash spill.
 
 *Turnout below the nation is impossible.*  ``registered_electors`` is
 ``unavailable`` on 122,008 of 122,020 mesas, so every derived aggregate records
@@ -81,6 +109,11 @@ from .snapshot_parquet import (
 RELEASE_CLASS = "standard"
 # Levels the Registraduria never published a fact for; every one is derived.
 _DERIVED_LEVELS = ("zone", "municipality", "department")
+_DERIVED_LEVEL_COLUMN = {
+    "zone": "zone_id",
+    "municipality": "municipality_id",
+    "department": "department_id",
+}
 _VOTE_METRICS = ("voters", "valid_votes", "blank_votes", "null_votes", "unmarked_votes")
 _EXPECTED_SOURCES = (SOURCE_NATIONAL, SOURCE_PLACE, SOURCE_MESA, SOURCE_ROLLUP)
 _GEOGRAPHY_COLUMNS = {"id", "level", "code", "name", "parent_id", "canonical_path"}
@@ -105,41 +138,64 @@ _CATEGORY_COLUMNS = {
     "votes",
     "status",
 }
-# The staged fact keeps its metrics in columns so the aggregates can be SUMmed
-# in SQL; the metrics JSON the read model serves is built from them at the end.
-_STAGE_FACTS_DDL = (
-    """
-CREATE TEMP TABLE stage_facts (
-  id text NOT NULL,
-  geography_id text NOT NULL,
-  source_geography_id text NOT NULL,
-  geography_level text NOT NULL,
-  mesa_id text,
-  source_id text NOT NULL,
-"""
-    + "".join(f"  {metric}_value bigint, {metric}_status text NOT NULL,\n" for metric in METRICS)
-    + """  content_hash text NOT NULL,
-  retrieved_at timestamptz NOT NULL
-) ON COMMIT DROP
-"""
+_GEOGRAPHY_TARGET = (
+    "release_geographies (release_id,election_slug,id,level,code,name,parent_id,canonical_path)"
 )
-_STAGE_CATEGORIES_DDL = """
-CREATE TEMP TABLE stage_categories (
-  result_fact_id text NOT NULL,
-  category_key text NOT NULL,
-  category_code text NOT NULL,
-  category_name text NOT NULL,
-  category_kind text NOT NULL,
-  votes bigint,
-  status text NOT NULL
-) ON COMMIT DROP
-"""
-_METRICS_JSON_SQL = (
-    "jsonb_build_object("
+_MESA_TARGET = (
+    "release_mesas "
+    "(release_id,election_slug,id,display_number,polling_place_id,municipality_id,department_id)"
+)
+_FACT_TARGET = (
+    "release_result_facts (release_id,election_slug,id,geography_id,geography_level,mesa_id,"
+    "source_id,metrics,fact_content_hash,fact_retrieved_at)"
+)
+_CATEGORY_TARGET = (
+    "release_category_facts (release_id,election_slug,result_fact_id,category_key,category_code,"
+    "category_name,category_kind,votes,status)"
+)
+# `metrics` is a json column, so the derived facts are built with
+# json_build_object rather than jsonb_build_object: json preserves the key order
+# it is given, which keeps every row in a release -- streamed or derived --
+# serialised the same way.
+_DERIVED_METRICS_JSON = (
+    "json_build_object("
     + ",".join(
-        f"'{metric}',jsonb_build_object('value',{metric}_value,'status',{metric}_status)"
+        f"'{metric}',json_build_object('value',NULL::bigint,'status','unavailable')"
+        if metric not in _VOTE_METRICS
+        else f"'{metric}',json_build_object('value',r.{metric},'status','observed')"
         for metric in METRICS
     )
+    + ")"
+)
+
+
+def _metric_value(alias: str, metric: str) -> str:
+    return f"({alias}.metrics->'{metric}'->>'value')::bigint"
+
+
+def _metric_status(alias: str, metric: str) -> str:
+    return f"{alias}.metrics->'{metric}'->>'status'"
+
+
+def _grouping_case(expression: dict[str, str]) -> str:
+    """Pick the value belonging to whichever GROUPING SET produced the row."""
+    return (
+        "CASE"
+        + "".join(
+            f" WHEN GROUPING(l.{_DERIVED_LEVEL_COLUMN[level]})=0 THEN {expression[level]}"
+            for level in _DERIVED_LEVELS[:-1]
+        )
+        + f" ELSE {expression[_DERIVED_LEVELS[-1]]} END"
+    )
+
+
+_ROLLUP_LEVEL = _grouping_case({level: f"'{level}'" for level in _DERIVED_LEVELS})
+_ROLLUP_GEOGRAPHY = _grouping_case(
+    {level: f"l.{_DERIVED_LEVEL_COLUMN[level]}" for level in _DERIVED_LEVELS}
+)
+_ROLLUP_GROUPING_SETS = (
+    "GROUPING SETS ("
+    + ",".join(f"(l.{_DERIVED_LEVEL_COLUMN[level]})" for level in _DERIVED_LEVELS)
     + ")"
 )
 
@@ -263,10 +319,28 @@ def _reject_foreign_id_scheme(value: str, label: str) -> None:
         raise ReleaseLoadError(f"{label} uses the historical r1:/r2: id scheme")
 
 
+def _copy(connection: Connection, target: str, rows: list[tuple[Any, ...]]) -> None:
+    """COPY one bounded batch, translating a key collision into our own error.
+
+    The scoped primary keys the staging tier used to re-derive with a GROUP BY
+    are real constraints on these tables.  A duplicate now aborts the
+    transaction at the row that caused it; the caller still gets the sentence.
+    """
+    try:
+        _copy_rows(connection, f"COPY {target} FROM STDIN", rows)
+    except Exception as exc:  # noqa: BLE001 - re-raised below unless it is class 23
+        # COPY runs on the driver connection, so a constraint violation arrives
+        # as a psycopg error rather than a SQLAlchemy one.  SQLSTATE class 23 is
+        # "integrity constraint violation"; anything else is not ours to reword.
+        if not str(getattr(exc, "sqlstate", "") or "").startswith("23"):
+            raise
+        raise ReleaseLoadError("artifacts contain duplicate scoped primary keys") from exc
+
+
 def _copy_geography_rows(connection: Connection, release_id: str, path: Path, limit: int) -> int:
     loaded = 0
-    buffer: list[tuple[Any, ...]] = []
     for batch in _batches(path, _GEOGRAPHY_COLUMNS, limit):
+        buffer: list[tuple[Any, ...]] = []
         for row in batch:
             identifier = _require_string(row.get("id"), "geography id")
             _reject_foreign_id_scheme(identifier, "geography id")
@@ -289,20 +363,14 @@ def _copy_geography_rows(connection: Connection, release_id: str, path: Path, li
                 )
             )
             loaded += 1
-        _copy_rows(
-            connection,
-            "COPY stage_release_geographies "
-            "(release_id,election_slug,id,level,code,name,parent_id,canonical_path) FROM STDIN",
-            buffer,
-        )
-        buffer = []
+        _copy(connection, _GEOGRAPHY_TARGET, buffer)
     return loaded
 
 
 def _copy_mesa_rows(connection: Connection, release_id: str, path: Path, limit: int) -> int:
     loaded = 0
-    buffer: list[tuple[Any, ...]] = []
     for batch in _batches(path, _MESA_COLUMNS, limit):
+        buffer: list[tuple[Any, ...]] = []
         for row in batch:
             identifier = _require_string(row.get("id"), "mesa id")
             _reject_foreign_id_scheme(identifier, "mesa id")
@@ -318,31 +386,23 @@ def _copy_mesa_rows(connection: Connection, release_id: str, path: Path, limit: 
                 )
             )
             loaded += 1
-        _copy_rows(
-            connection,
-            "COPY stage_release_mesas (release_id,election_slug,id,display_number,"
-            "polling_place_id,municipality_id,department_id) FROM STDIN",
-            buffer,
-        )
-        buffer = []
+        _copy(connection, _MESA_TARGET, buffer)
     return loaded
 
 
-def _copy_fact_rows(connection: Connection, path: Path, limit: int) -> int:
-    columns = (
-        "id",
-        "geography_id",
-        "source_geography_id",
-        "geography_level",
-        "mesa_id",
-        "source_id",
-        *[f"{metric}_{suffix}" for metric in METRICS for suffix in ("value", "status")],
-        "content_hash",
-        "retrieved_at",
-    )
+def _copy_fact_rows(connection: Connection, release_id: str, path: Path, limit: int) -> int:
+    """Stream the published facts straight into ``release_result_facts``.
+
+    ``source_geography_id`` is not a column of the read model -- it is the
+    polling place the Registraduria filed the mesa under, and it exists only to
+    be checked against the mesa index.  The mesa rows keep it in a two-column
+    temp table (about 8 MB) so the set-wise assertion is unchanged; nothing else
+    is duplicated.
+    """
     loaded = 0
-    buffer: list[tuple[Any, ...]] = []
     for batch in _batches(path, _FACT_COLUMNS, limit):
+        facts: list[tuple[Any, ...]] = []
+        places: list[tuple[Any, ...]] = []
         for row in batch:
             identifier = _require_string(row.get("id"), "fact id")
             level = _require_string(row.get("geography_level"), "fact geography_level")
@@ -358,6 +418,7 @@ def _copy_fact_rows(connection: Connection, path: Path, limit: int) -> int:
                 raise ReleaseLoadError(f"mesa fact {identifier!r} was not rewritten to its mesa")
             if _require_string(row.get("source_id"), "fact source_id") not in _EXPECTED_SOURCES:
                 raise ReleaseLoadError(f"fact {identifier!r} names an unknown source")
+            metrics: dict[str, Any] = {}
             for metric in METRICS:
                 status = _require_string(row.get(f"{metric}_status"), f"{metric} status")
                 value = row.get(f"{metric}_value")
@@ -365,27 +426,43 @@ def _copy_fact_rows(connection: Connection, path: Path, limit: int) -> int:
                     raise ReleaseLoadError(f"fact {identifier!r} has an incoherent {metric}")
                 if value is not None and _require_int(value, f"{metric} value") < 0:
                     raise ReleaseLoadError(f"fact {identifier!r} has a negative {metric}")
-            _timestamp(row.get("retrieved_at"), "fact retrieved_at")
-            buffer.append(tuple(row[name] for name in columns))
+                metrics[metric] = {"value": value, "status": status}
+            facts.append(
+                (
+                    release_id,
+                    ELECTION_SLUG,
+                    identifier,
+                    geography_id,
+                    level,
+                    mesa_id,
+                    row["source_id"],
+                    json.dumps(metrics, separators=(",", ":")),
+                    _require_string(row.get("content_hash"), "fact content_hash"),
+                    _timestamp(row.get("retrieved_at"), "fact retrieved_at"),
+                )
+            )
+            if mesa_id is not None:
+                places.append(
+                    (
+                        mesa_id,
+                        _require_string(row.get("source_geography_id"), "fact source_geography_id"),
+                    )
+                )
             loaded += 1
-        _copy_rows(connection, f"COPY stage_facts ({','.join(columns)}) FROM STDIN", buffer)
-        buffer = []
+        _copy(connection, _FACT_TARGET, facts)
+        if places:
+            _copy_rows(
+                connection,
+                "COPY stage_mesa_fact_place (mesa_id,source_geography_id) FROM STDIN",
+                places,
+            )
     return loaded
 
 
-def _copy_category_rows(connection: Connection, path: Path, limit: int) -> int:
-    columns = (
-        "result_fact_id",
-        "category_key",
-        "category_code",
-        "category_name",
-        "category_kind",
-        "votes",
-        "status",
-    )
+def _copy_category_rows(connection: Connection, release_id: str, path: Path, limit: int) -> int:
     loaded = 0
-    buffer: list[tuple[Any, ...]] = []
     for batch in _batches(path, _CATEGORY_COLUMNS, limit):
+        buffer: list[tuple[Any, ...]] = []
         for row in batch:
             status = _require_string(row.get("status"), "category status")
             votes = row.get("votes")
@@ -395,10 +472,21 @@ def _copy_category_rows(connection: Connection, path: Path, limit: int) -> int:
                 raise ReleaseLoadError("category votes cannot be negative")
             for field in ("result_fact_id", "category_key", "category_code", "category_name"):
                 _require_string(row.get(field), f"category {field}")
-            buffer.append(tuple(row[name] for name in columns))
+            buffer.append(
+                (
+                    release_id,
+                    ELECTION_SLUG,
+                    row["result_fact_id"],
+                    row["category_key"],
+                    row["category_code"],
+                    row["category_name"],
+                    _require_string(row.get("category_kind"), "category category_kind"),
+                    votes,
+                    status,
+                )
+            )
             loaded += 1
-        _copy_rows(connection, f"COPY stage_categories ({','.join(columns)}) FROM STDIN", buffer)
-        buffer = []
+        _copy(connection, _CATEGORY_TARGET, buffer)
     return loaded
 
 
@@ -412,21 +500,24 @@ def _assert(connection: Connection, sql: str, parameters: dict[str, Any], messag
         raise ReleaseLoadError(message)
 
 
+def _scope(release_id: str) -> dict[str, Any]:
+    return {"r": release_id, "e": ELECTION_SLUG}
+
+
 def _derive_mesa_geographies(connection: Connection, release_id: str) -> None:
     """Materialise the 122,020 mesa geographies the snapshot does not ship."""
     connection.execute(
         text(
-            "INSERT INTO stage_release_geographies "
-            "(release_id,election_slug,id,level,code,name,parent_id,canonical_path) "
+            f"INSERT INTO {_GEOGRAPHY_TARGET} "
             "SELECT m.release_id,m.election_slug,m.id,'mesa',m.display_number,"
             " 'Mesa ' || m.display_number,m.polling_place_id,"
             " p.canonical_path || '/' || m.id "
-            "FROM stage_release_mesas m "
-            "JOIN stage_release_geographies p ON (p.release_id,p.election_slug,p.id)="
+            "FROM release_mesas m "
+            "JOIN release_geographies p ON (p.release_id,p.election_slug,p.id)="
             " (m.release_id,m.election_slug,m.polling_place_id) AND p.level='polling_place' "
-            "WHERE m.release_id=:r"
+            "WHERE m.release_id=:r AND m.election_slug=:e"
         ),
-        {"r": release_id},
+        _scope(release_id),
     )
     # THE assertion.  A mesa id is 15 or 17 characters and a polling-place code
     # is 9 or 11, so slicing an id to find its place misassigns 48.5% of mesas.
@@ -434,84 +525,87 @@ def _derive_mesa_geographies(connection: Connection, release_id: str) -> None:
     # the polling place is wrong and nothing downstream can be trusted.
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_release_mesas m "
-        "LEFT JOIN stage_release_geographies p ON (p.release_id,p.election_slug,p.id)="
+        "SELECT COUNT(*) FROM release_mesas m "
+        "LEFT JOIN release_geographies p ON (p.release_id,p.election_slug,p.id)="
         " (m.release_id,m.election_slug,m.polling_place_id) AND p.level='polling_place' "
-        "WHERE m.release_id=:r AND (p.id IS NULL OR m.id <> p.code || m.display_number)",
-        {"r": release_id},
+        "WHERE m.release_id=:r AND m.election_slug=:e "
+        " AND (p.id IS NULL OR m.id <> p.code || m.display_number)",
+        _scope(release_id),
         "a mesa id is not its polling-place code plus its display number",
     )
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts f "
-        "JOIN stage_release_mesas m ON m.id=f.mesa_id AND m.release_id=:r "
-        "WHERE f.mesa_id IS NOT NULL AND f.source_geography_id <> m.polling_place_id",
-        {"r": release_id},
+        "SELECT COUNT(*) FROM stage_mesa_fact_place s "
+        "JOIN release_mesas m ON m.id=s.mesa_id AND m.release_id=:r AND m.election_slug=:e "
+        "WHERE s.source_geography_id <> m.polling_place_id",
+        _scope(release_id),
         "a mesa fact was rewritten away from its own polling place",
     )
 
 
-def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
-    """Sum the mesa facts into the zone/municipality/department levels."""
+def _build_mesa_lineage(connection: Connection, release_id: str) -> None:
+    """The (mesa -> place, zone, municipality, department) map, once.
+
+    122,020 narrow rows.  This is the only working set the load materialises:
+    the zone is the polling place's parent and is not on ``release_mesas``, and
+    the rollup and both reconciliation queries all need it.
+    """
     connection.execute(
         text(
             "CREATE TEMP TABLE stage_mesa_lineage ON COMMIT DROP AS "
             "SELECT m.id AS mesa_id,m.polling_place_id,place.parent_id AS zone_id,"
             " m.municipality_id,m.department_id "
-            "FROM stage_release_mesas m "
-            "JOIN stage_release_geographies place ON (place.release_id,place.election_slug,"
+            "FROM release_mesas m "
+            "JOIN release_geographies place ON (place.release_id,place.election_slug,"
             " place.id)=(m.release_id,m.election_slug,m.polling_place_id) "
-            "WHERE m.release_id=:r"
+            "WHERE m.release_id=:r AND m.election_slug=:e AND place.level='polling_place'"
         ),
-        {"r": release_id},
+        _scope(release_id),
     )
-    connection.execute(text("CREATE INDEX stage_lineage_mesa ON stage_mesa_lineage (mesa_id)"))
+    _analyze(connection, ("stage_mesa_lineage",))
     _assert(
         connection,
         "SELECT COUNT(*) FROM stage_mesa_lineage l "
-        "LEFT JOIN stage_release_geographies z ON z.release_id=:r AND z.id=l.zone_id "
-        " AND z.level='zone' "
-        "LEFT JOIN stage_release_geographies mu ON mu.release_id=:r AND mu.id=l.municipality_id "
-        " AND mu.level='municipality' "
+        "LEFT JOIN release_geographies z ON z.release_id=:r AND z.election_slug=:e "
+        " AND z.id=l.zone_id AND z.level='zone' "
+        "LEFT JOIN release_geographies mu ON mu.release_id=:r AND mu.election_slug=:e "
+        " AND mu.id=l.municipality_id AND mu.level='municipality' "
         "WHERE z.id IS NULL OR mu.id IS NULL OR z.parent_id <> l.municipality_id "
         " OR mu.parent_id <> l.department_id",
-        {"r": release_id},
+        _scope(release_id),
         "the mesa lineage disagrees with the geography hierarchy",
     )
-    # One row per (aggregate geography, mesa).  Three equality joins beat one
-    # OR-join across 4,236 aggregates and 122,020 mesas by orders of magnitude.
-    connection.execute(
-        text(
-            "CREATE TEMP TABLE stage_rollup_member ON COMMIT DROP AS "
-            + " UNION ALL ".join(
-                f"SELECT '{level}' AS level,{column} AS geography_id,mesa_id "
-                "FROM stage_mesa_lineage"
-                for level, column in zip(
-                    _DERIVED_LEVELS,
-                    ("zone_id", "municipality_id", "department_id"),
-                    strict=True,
-                )
-            )
-        )
-    )
-    connection.execute(text("CREATE INDEX stage_member_mesa ON stage_rollup_member (mesa_id)"))
-    connection.execute(
-        text("CREATE INDEX stage_member_scope ON stage_rollup_member (level,geography_id)")
-    )
-    _analyze(connection, ("stage_rollup_member",))
+
+
+def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
+    """Sum the mesa facts into the zone/municipality/department levels.
+
+    One pass, three groupings.  The old shape built a (level, geography, mesa)
+    membership table -- 366,060 rows plus two indexes -- and joined the facts
+    and the categories back through it; that join is what spilled into
+    ``base/pgsql_tmp`` and filled the volume.  ``GROUPING SETS`` asks the
+    planner for the same three aggregations over a single scan instead.
+    """
     # ``registered_electors`` is deliberately absent from this sum: it is
     # unavailable on 122,008 of 122,020 mesas, so a total would be a fabricated
     # denominator rather than a smaller one.
-    sums = ",".join(f"SUM(f.{metric}_value) AS {metric}" for metric in _VOTE_METRICS)
-    observed = " AND ".join(f"bool_and(f.{metric}_status='observed')" for metric in _VOTE_METRICS)
+    sums = ",".join(f"SUM({_metric_value('f', metric)}) AS {metric}" for metric in _VOTE_METRICS)
+    observed = " AND ".join(
+        f"bool_and({_metric_status('f', metric)}='observed')" for metric in _VOTE_METRICS
+    )
     connection.execute(
         text(
             "CREATE TEMP TABLE stage_rollup ON COMMIT DROP AS "
-            f"SELECT m.level,m.geography_id,{sums},({observed}) AS all_observed "
-            "FROM stage_facts f JOIN stage_rollup_member m ON m.mesa_id=f.mesa_id "
-            "WHERE f.geography_level='mesa' GROUP BY m.level,m.geography_id"
-        )
+            f"SELECT {_ROLLUP_LEVEL} AS level,{_ROLLUP_GEOGRAPHY} AS geography_id,"
+            f"{sums},({observed}) AS all_observed "
+            "FROM release_result_facts f "
+            "JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id "
+            "WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='mesa' "
+            f"GROUP BY {_ROLLUP_GROUPING_SETS}"
+        ),
+        _scope(release_id),
     )
+    _analyze(connection, ("stage_rollup",))
     _assert(
         connection,
         "SELECT COUNT(*) FROM stage_rollup WHERE NOT all_observed",
@@ -520,50 +614,65 @@ def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
     )
     connection.execute(
         text(
-            "INSERT INTO stage_facts (id,geography_id,source_geography_id,geography_level,"
-            "mesa_id,source_id,"
-            + ",".join(f"{metric}_value,{metric}_status" for metric in METRICS)
-            + ",content_hash,retrieved_at) "
-            "SELECT 'rollup-' || r.level || '-' || g.code,r.geography_id,r.geography_id,r.level,"
-            " NULL,:source,NULL,'unavailable',"
-            + ",".join(f"r.{metric},'observed'" for metric in _VOTE_METRICS)
-            + ",:hash,"
-            # An aggregate is only as fresh as the newest mesa it contains.
-            " (SELECT MAX(retrieved_at) FROM stage_facts WHERE geography_level='mesa') "
+            f"INSERT INTO {_FACT_TARGET} "
+            "SELECT :r,:e,'rollup-' || r.level || '-' || g.code,r.geography_id,r.level,"
+            f" NULL,:source,{_DERIVED_METRICS_JSON},:hash,:retrieved "
             "FROM stage_rollup r "
-            "JOIN stage_release_geographies g ON g.release_id=:r AND g.id=r.geography_id "
-            " AND g.level=r.level"
+            "JOIN release_geographies g ON (g.release_id,g.election_slug,g.id)="
+            " (:r,:e,r.geography_id) AND g.level=r.level"
         ),
-        {"r": release_id, "source": SOURCE_ROLLUP, "hash": _rollup_hash(connection)},
+        {
+            **_scope(release_id),
+            "source": SOURCE_ROLLUP,
+            "hash": _rollup_hash(connection, release_id),
+            # An aggregate is only as fresh as the newest mesa it contains.
+            "retrieved": connection.execute(
+                text(
+                    "SELECT MAX(fact_retrieved_at) FROM release_result_facts "
+                    "WHERE release_id=:r AND election_slug=:e AND geography_level='mesa'"
+                ),
+                _scope(release_id),
+            ).scalar_one(),
+        },
     )
     connection.execute(
         text(
-            "INSERT INTO stage_categories "
-            "(result_fact_id,category_key,category_code,category_name,category_kind,votes,status) "
-            "SELECT a.id,c.category_key,c.category_code,MIN(c.category_name),MIN(c.category_kind),"
-            " SUM(c.votes),CASE WHEN bool_and(c.status='observed') THEN 'observed'"
-            " ELSE 'unavailable' END "
-            "FROM stage_rollup_member m "
-            "JOIN stage_facts a ON a.geography_id=m.geography_id AND a.geography_level=m.level "
-            " AND a.source_id=:source "
-            "JOIN stage_facts mf ON mf.mesa_id=m.mesa_id "
-            "JOIN stage_categories c ON c.result_fact_id=mf.id "
-            "GROUP BY a.id,c.category_key,c.category_code"
+            f"INSERT INTO {_CATEGORY_TARGET} "
+            "SELECT :r,:e,'rollup-' || a.level || '-' || g.code,a.category_key,a.category_code,"
+            " a.category_name,a.category_kind,a.votes,a.status FROM ("
+            f" SELECT {_ROLLUP_LEVEL} AS level,{_ROLLUP_GEOGRAPHY} AS geography_id,"
+            "  c.category_key,c.category_code,MIN(c.category_name) AS category_name,"
+            "  MIN(c.category_kind) AS category_kind,SUM(c.votes) AS votes,"
+            "  CASE WHEN bool_and(c.status='observed') THEN 'observed'"
+            "   ELSE 'unavailable' END AS status"
+            "  FROM release_category_facts c"
+            "  JOIN release_result_facts f ON (f.release_id,f.election_slug,f.id)="
+            "   (c.release_id,c.election_slug,c.result_fact_id)"
+            "  JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id"
+            "  WHERE c.release_id=:r AND c.election_slug=:e AND f.geography_level='mesa'"
+            f"  GROUP BY {_ROLLUP_GROUPING_SETS},c.category_key,c.category_code"
+            ") a "
+            "JOIN release_geographies g ON (g.release_id,g.election_slug,g.id)="
+            " (:r,:e,a.geography_id) AND g.level=a.level"
         ),
-        {"source": SOURCE_ROLLUP},
+        _scope(release_id),
     )
     derived = int(
         connection.execute(
-            text("SELECT COUNT(*) FROM stage_facts WHERE source_id=:s"), {"s": SOURCE_ROLLUP}
+            text(
+                "SELECT COUNT(*) FROM release_result_facts "
+                "WHERE release_id=:r AND election_slug=:e AND source_id=:s"
+            ),
+            {**_scope(release_id), "s": SOURCE_ROLLUP},
         ).scalar_one()
     )
     aggregate_geographies = int(
         connection.execute(
             text(
-                "SELECT COUNT(*) FROM stage_release_geographies "
-                "WHERE release_id=:r AND level = ANY(:levels)"
+                "SELECT COUNT(*) FROM release_geographies "
+                "WHERE release_id=:r AND election_slug=:e AND level = ANY(:levels)"
             ),
-            {"r": release_id, "levels": list(_DERIVED_LEVELS)},
+            {**_scope(release_id), "levels": list(_DERIVED_LEVELS)},
         ).scalar_one()
     )
     # Every zone, municipality and department must get exactly one derived fact:
@@ -573,81 +682,107 @@ def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
     return derived
 
 
-def _rollup_hash(connection: Connection) -> str:
+def _rollup_hash(connection: Connection, release_id: str) -> str:
     """Digest the mesa fact set the rollup is computed from."""
     return str(
         connection.execute(
             text(
-                "SELECT encode(sha256(string_agg(id || ':' || content_hash,E'\\x1e' "
-                "ORDER BY id)::bytea),'hex') FROM stage_facts WHERE geography_level='mesa'"
-            )
+                "SELECT encode(sha256(string_agg(id || ':' || fact_content_hash,E'\\x1e' "
+                "ORDER BY id)::bytea),'hex') FROM release_result_facts "
+                "WHERE release_id=:r AND election_slug=:e AND geography_level='mesa'"
+            ),
+            _scope(release_id),
         ).scalar_one()
     )
 
 
-def _reconcile(connection: Connection) -> None:
+def _reconcile(connection: Connection, release_id: str) -> None:
     """Assert the derived numbers add up, or abort the whole transaction."""
-    metric_equal = " OR ".join(f"p.{metric}_value <> s.{metric}" for metric in _VOTE_METRICS)
-    sums = ",".join(f"SUM(f.{metric}_value) AS {metric}" for metric in _VOTE_METRICS)
+    metric_equal = " OR ".join(
+        f"{_metric_value('p', metric)} <> s.{metric}" for metric in _VOTE_METRICS
+    )
+    sums = ",".join(f"SUM({_metric_value('f', metric)}) AS {metric}" for metric in _VOTE_METRICS)
+    mesa_facts = (
+        "FROM release_result_facts f "
+        "JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id "
+        "WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='mesa'"
+    )
     # Every one of the 14,438 published polling-place facts must equal the sum
     # of the mesas the mesa index assigns to it.  This is what would fail loudly
     # if a mesa were ever attached to the wrong place.
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts p LEFT JOIN ("
-        f" SELECT l.polling_place_id AS geography_id,{sums} FROM stage_facts f"
-        "  JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id"
-        "  WHERE f.geography_level='mesa' GROUP BY l.polling_place_id"
+        "SELECT COUNT(*) FROM release_result_facts p LEFT JOIN ("
+        f" SELECT l.polling_place_id AS geography_id,{sums} {mesa_facts}"
+        "  GROUP BY l.polling_place_id"
         ") s ON s.geography_id=p.geography_id "
-        "WHERE p.geography_level='polling_place' AND (s.geography_id IS NULL OR "
-        f"{metric_equal})",
-        {},
+        "WHERE p.release_id=:r AND p.election_slug=:e AND p.geography_level='polling_place' "
+        f"AND (s.geography_id IS NULL OR {metric_equal})",
+        _scope(release_id),
         "a polling-place total does not equal the sum of its mesas",
     )
     category_sums = (
         "SELECT l.polling_place_id AS geography_id,c.category_key,SUM(c.votes) AS votes "
-        "FROM stage_facts f JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id "
-        "JOIN stage_categories c ON c.result_fact_id=f.id "
-        "WHERE f.geography_level='mesa' GROUP BY l.polling_place_id,c.category_key"
+        "FROM release_result_facts f "
+        "JOIN stage_mesa_lineage l ON l.mesa_id=f.mesa_id "
+        "JOIN release_category_facts c ON (c.release_id,c.election_slug,c.result_fact_id)="
+        " (f.release_id,f.election_slug,f.id) "
+        "WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='mesa' "
+        "GROUP BY l.polling_place_id,c.category_key"
     )
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts p "
-        "JOIN stage_categories pc ON pc.result_fact_id=p.id "
+        "SELECT COUNT(*) FROM release_result_facts p "
+        "JOIN release_category_facts pc ON (pc.release_id,pc.election_slug,pc.result_fact_id)="
+        " (p.release_id,p.election_slug,p.id) "
         f"LEFT JOIN ({category_sums}) s ON s.geography_id=p.geography_id "
         " AND s.category_key=pc.category_key "
-        "WHERE p.geography_level='polling_place' AND (s.votes IS NULL OR pc.votes <> s.votes)",
-        {},
+        "WHERE p.release_id=:r AND p.election_slug=:e AND p.geography_level='polling_place' "
+        "AND (s.votes IS NULL OR pc.votes <> s.votes)",
+        _scope(release_id),
         "a polling-place candidate total does not equal the sum of its mesas",
     )
     # And the 34 derived department totals must reproduce the published nation.
-    national_equal = " OR ".join(f"n.{metric}_value <> d.{metric}" for metric in _VOTE_METRICS)
+    national_equal = " OR ".join(
+        f"{_metric_value('n', metric)} <> d.{metric}" for metric in _VOTE_METRICS
+    )
+    department_sums = ",".join(
+        f"SUM({_metric_value('f', metric)}) AS {metric}" for metric in _VOTE_METRICS
+    )
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts n CROSS JOIN ("
-        f" SELECT {sums} FROM stage_facts f WHERE f.geography_level='department'"
-        ") d WHERE n.geography_level='national' AND (" + national_equal + ")",
-        {},
+        "SELECT COUNT(*) FROM release_result_facts n CROSS JOIN ("
+        f" SELECT {department_sums} FROM release_result_facts f"
+        "  WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='department'"
+        ") d WHERE n.release_id=:r AND n.election_slug=:e AND n.geography_level='national' "
+        f"AND ({national_equal})",
+        _scope(release_id),
         "the department totals do not reproduce the national fact",
     )
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts n "
-        "JOIN stage_categories nc ON nc.result_fact_id=n.id "
+        "SELECT COUNT(*) FROM release_result_facts n "
+        "JOIN release_category_facts nc ON (nc.release_id,nc.election_slug,nc.result_fact_id)="
+        " (n.release_id,n.election_slug,n.id) "
         "LEFT JOIN ("
-        " SELECT c.category_key,SUM(c.votes) AS votes FROM stage_facts f"
-        "  JOIN stage_categories c ON c.result_fact_id=f.id"
-        "  WHERE f.geography_level='department' GROUP BY c.category_key"
+        " SELECT c.category_key,SUM(c.votes) AS votes FROM release_result_facts f"
+        "  JOIN release_category_facts c ON (c.release_id,c.election_slug,c.result_fact_id)="
+        "   (f.release_id,f.election_slug,f.id)"
+        "  WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='department'"
+        "  GROUP BY c.category_key"
         ") d ON d.category_key=nc.category_key "
-        "WHERE n.geography_level='national' AND (d.votes IS NULL OR nc.votes <> d.votes)",
-        {},
+        "WHERE n.release_id=:r AND n.election_slug=:e AND n.geography_level='national' "
+        "AND (d.votes IS NULL OR nc.votes <> d.votes)",
+        _scope(release_id),
         "the department candidate totals do not reproduce the national fact",
     )
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_facts WHERE source_id=:s AND "
-        "(registered_electors_value IS NOT NULL OR registered_electors_status <> 'unavailable')",
-        {"s": SOURCE_ROLLUP},
+        "SELECT COUNT(*) FROM release_result_facts f "
+        "WHERE f.release_id=:r AND f.election_slug=:e AND f.source_id=:s AND "
+        f"({_metric_value('f', 'registered_electors')} IS NOT NULL OR "
+        f"{_metric_status('f', 'registered_electors')} <> 'unavailable')",
+        {**_scope(release_id), "s": SOURCE_ROLLUP},
         "a derived aggregate fabricated a registered-electors denominator",
     )
 
@@ -655,42 +790,33 @@ def _reconcile(connection: Connection) -> None:
 def _validate_relations(connection: Connection, release_id: str) -> None:
     _assert(
         connection,
-        "SELECT COUNT(*) FROM stage_release_geographies g "
-        "LEFT JOIN stage_release_geographies p ON p.release_id=g.release_id "
+        "SELECT COUNT(*) FROM release_geographies g "
+        "LEFT JOIN release_geographies p ON p.release_id=g.release_id "
         " AND p.election_slug=g.election_slug AND p.id=g.parent_id "
-        "WHERE g.release_id=:r AND g.parent_id IS NOT NULL AND p.id IS NULL",
-        {"r": release_id},
+        "WHERE g.release_id=:r AND g.election_slug=:e AND g.parent_id IS NOT NULL "
+        " AND p.id IS NULL",
+        _scope(release_id),
         "geography hierarchy contains an orphan",
     )
     _assert(
         connection,
         "SELECT COUNT(*) FROM ("
-        " SELECT f.id FROM stage_facts f"
-        " LEFT JOIN stage_release_geographies g ON g.release_id=:r AND g.id=f.geography_id"
-        " LEFT JOIN stage_release_mesas m ON m.release_id=:r AND m.id=f.mesa_id"
-        " WHERE g.id IS NULL OR f.geography_level<>g.level"
-        "  OR (g.level='mesa')<>(f.mesa_id IS NOT NULL)"
-        "  OR (f.mesa_id IS NOT NULL AND m.id IS NULL)"
+        " SELECT f.id FROM release_result_facts f"
+        " LEFT JOIN release_geographies g ON g.release_id=:r AND g.election_slug=:e"
+        "  AND g.id=f.geography_id"
+        " LEFT JOIN release_mesas m ON m.release_id=:r AND m.election_slug=:e AND m.id=f.mesa_id"
+        " WHERE f.release_id=:r AND f.election_slug=:e"
+        "  AND (g.id IS NULL OR f.geography_level<>g.level"
+        "   OR (g.level='mesa')<>(f.mesa_id IS NOT NULL)"
+        "   OR (f.mesa_id IS NOT NULL AND m.id IS NULL))"
         " UNION ALL"
-        " SELECT c.result_fact_id FROM stage_categories c"
-        " LEFT JOIN stage_facts f ON f.id=c.result_fact_id WHERE f.id IS NULL"
+        " SELECT c.result_fact_id FROM release_category_facts c"
+        " LEFT JOIN release_result_facts f ON (f.release_id,f.election_slug,f.id)="
+        "  (c.release_id,c.election_slug,c.result_fact_id)"
+        " WHERE c.release_id=:r AND c.election_slug=:e AND f.id IS NULL"
         ") invalid",
-        {"r": release_id},
+        _scope(release_id),
         "loaded rows violate a scoped relational invariant",
-    )
-    _assert(
-        connection,
-        "SELECT COUNT(*) FROM ("
-        " SELECT id FROM stage_release_geographies GROUP BY release_id,election_slug,id"
-        "  HAVING COUNT(*) > 1"
-        " UNION ALL SELECT id FROM stage_release_mesas GROUP BY release_id,election_slug,id"
-        "  HAVING COUNT(*) > 1"
-        " UNION ALL SELECT id FROM stage_facts GROUP BY id HAVING COUNT(*) > 1"
-        " UNION ALL SELECT result_fact_id FROM stage_categories"
-        "  GROUP BY result_fact_id,category_key HAVING COUNT(*) > 1"
-        ") duplicates",
-        {},
-        "artifacts contain duplicate scoped primary keys",
     )
 
 
@@ -749,13 +875,12 @@ def load_standard_2026_release(
             raise ReleaseLoadError(
                 "release id is already reserved without a matching immutable exposure"
             )
-        for staging, live in (
-            ("stage_release_geographies", "release_geographies"),
-            ("stage_release_mesas", "release_mesas"),
-        ):
-            connection.execute(text(f"CREATE TEMP TABLE {staging} (LIKE {live}) ON COMMIT DROP"))
-        connection.execute(text(_STAGE_FACTS_DDL))
-        connection.execute(text(_STAGE_CATEGORIES_DDL))
+        connection.execute(
+            text(
+                "CREATE TEMP TABLE stage_mesa_fact_place "
+                "(mesa_id text NOT NULL, source_geography_id text NOT NULL) ON COMMIT DROP"
+            )
+        )
 
         try:
             connection.execute(
@@ -786,8 +911,7 @@ def load_standard_2026_release(
                 "VALUES (:r,:e,:es,:en,:n,:d)"
             ),
             {
-                "r": release_id,
-                "e": ELECTION_SLUG,
+                **_scope(release_id),
                 "es": election["name_es"],
                 "en": election["name_en"],
                 "n": election["round"],
@@ -803,8 +927,7 @@ def load_standard_2026_release(
                     "VALUES (:r,:e,:id,:type,:legal,:url,:at,:hash,:parser,:transform)"
                 ),
                 {
-                    "r": release_id,
-                    "e": ELECTION_SLUG,
+                    **_scope(release_id),
                     "id": source["id"],
                     "type": source["source_type"],
                     "legal": source["legal_status"],
@@ -820,8 +943,10 @@ def load_standard_2026_release(
             connection, release_id, paths[GEOGRAPHY_ARTIFACT], batch_size
         )
         loaded_mesas = _copy_mesa_rows(connection, release_id, paths[MESA_ARTIFACT], batch_size)
-        loaded_facts = _copy_fact_rows(connection, paths[FACT_ARTIFACT], batch_size)
-        loaded_categories = _copy_category_rows(connection, paths[CATEGORY_ARTIFACT], batch_size)
+        loaded_facts = _copy_fact_rows(connection, release_id, paths[FACT_ARTIFACT], batch_size)
+        loaded_categories = _copy_category_rows(
+            connection, release_id, paths[CATEGORY_ARTIFACT], batch_size
+        )
         for name, loaded in (
             (GEOGRAPHY_ARTIFACT, loaded_geographies),
             (MESA_ARTIFACT, loaded_mesas),
@@ -831,74 +956,27 @@ def load_standard_2026_release(
             if loaded != expected[name]:
                 raise ReleaseLoadError(f"{name} streamed row count differs from the load manifest")
 
-        staged = (
-            "stage_release_geographies",
-            "stage_release_mesas",
-            "stage_facts",
-            "stage_categories",
+        # A freshly COPYed table has no statistics, and the planner then
+        # nested-loops 122,020 mesas against 18,675 geographies.  Analyse before
+        # the derivations, not after them.
+        _analyze(
+            connection,
+            (
+                "release_geographies",
+                "release_mesas",
+                "release_result_facts",
+                "release_category_facts",
+                "stage_mesa_fact_place",
+            ),
         )
-        for name, table, columns in (
-            ("stage_geo_identity", "stage_release_geographies", "release_id,election_slug,id"),
-            ("stage_mesa_identity", "stage_release_mesas", "release_id,election_slug,id"),
-            ("stage_mesa_place", "stage_release_mesas", "polling_place_id"),
-            ("stage_fact_identity", "stage_facts", "id"),
-            ("stage_fact_mesa", "stage_facts", "mesa_id"),
-            ("stage_fact_level", "stage_facts", "geography_level"),
-            ("stage_fact_geography", "stage_facts", "geography_id"),
-            ("stage_category_fact", "stage_categories", "result_fact_id"),
-        ):
-            connection.execute(text(f"CREATE INDEX {name} ON {table} ({columns})"))
-        # A temp table has no statistics until it is analysed, and the planner
-        # then nested-loops 122,020 mesas against 18,675 geographies.  Analyse
-        # before the derivations, not after them.
-        _analyze(connection, staged)
-
         _derive_mesa_geographies(connection, release_id)
-        _analyze(connection, ("stage_release_geographies",))
+        _analyze(connection, ("release_geographies",))
+        _build_mesa_lineage(connection, release_id)
         _derive_aggregate_facts(connection, release_id)
-        _analyze(connection, ("stage_facts", "stage_categories"))
-        _reconcile(connection)
+        _analyze(connection, ("release_result_facts", "release_category_facts"))
+        _reconcile(connection, release_id)
         _validate_relations(connection, release_id)
 
-        for level in _LEVEL_RANK:
-            connection.execute(
-                text(
-                    "INSERT INTO release_geographies "
-                    "(release_id,election_slug,id,level,code,name,parent_id,canonical_path) "
-                    "SELECT release_id,election_slug,id,level,code,name,parent_id,canonical_path "
-                    "FROM stage_release_geographies WHERE level=:level"
-                ),
-                {"level": level},
-            )
-        connection.execute(
-            text(
-                "INSERT INTO release_mesas "
-                "(release_id,election_slug,id,display_number,polling_place_id,municipality_id,"
-                "department_id) SELECT release_id,election_slug,id,display_number,"
-                "polling_place_id,municipality_id,department_id FROM stage_release_mesas"
-            )
-        )
-        connection.execute(
-            text(
-                "INSERT INTO release_result_facts "
-                "(release_id,election_slug,id,geography_id,geography_level,mesa_id,source_id,"
-                "metrics,fact_content_hash,fact_retrieved_at) "
-                "SELECT :r,:e,id,geography_id,geography_level,mesa_id,source_id,"
-                + _METRICS_JSON_SQL
-                + ",content_hash,retrieved_at FROM stage_facts"
-            ),
-            {"r": release_id, "e": ELECTION_SLUG},
-        )
-        connection.execute(
-            text(
-                "INSERT INTO release_category_facts "
-                "(release_id,election_slug,result_fact_id,category_key,category_code,"
-                "category_name,category_kind,votes,status) "
-                "SELECT :r,:e,result_fact_id,category_key,category_code,category_name,"
-                "category_kind,votes,status FROM stage_categories"
-            ),
-            {"r": release_id, "e": ELECTION_SLUG},
-        )
         connection.execute(
             text(
                 "INSERT INTO release_summaries "
@@ -908,8 +986,7 @@ def load_standard_2026_release(
                 "CAST(:geographic AS jsonb),CAST(:reconciliation AS jsonb),:turnout)"
             ),
             {
-                "r": release_id,
-                "e": ELECTION_SLUG,
+                **_scope(release_id),
                 "c": RELEASE_CLASS,
                 "completion": json.dumps(summary["completion"], separators=(",", ":")),
                 "coverage": json.dumps(summary["coverage"], separators=(",", ":")),
@@ -921,25 +998,16 @@ def load_standard_2026_release(
             },
         )
         # The exposure insert fires validate_release_exposure, which re-checks
-        # every relationship with EXCEPT queries over the freshly inserted
-        # 140,695 rows.  Without statistics the planner nested-loops them.
-        _analyze(
-            connection,
-            (
-                "release_geographies",
-                "release_mesas",
-                "release_result_facts",
-                "release_category_facts",
-                "release_sources",
-            ),
-        )
+        # every relationship with EXCEPT queries over the 140,695 loaded rows.
+        # Without statistics the planner nested-loops them.
+        _analyze(connection, ("release_sources",))
         connection.execute(
             text(
                 "INSERT INTO release_exposures "
                 "(release_id,election_slug,access_scope,approved_at,manifest_hash) "
                 "VALUES (:r,:e,'internal',NULL,:h)"
             ),
-            {"r": release_id, "e": ELECTION_SLUG, "h": manifest_hash},
+            {**_scope(release_id), "h": manifest_hash},
         )
         # Loading is not publication, and it is not a preview grant either.
         # Both wider scopes are separate reviewed steps.

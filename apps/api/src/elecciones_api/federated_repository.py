@@ -14,7 +14,7 @@ the active-release backend.
 """
 
 from collections.abc import Iterable, Iterator
-from typing import Any
+from typing import Any, cast
 
 from .historical_repository import HistoricalDuckDBRepository
 from .repository import (
@@ -41,8 +41,18 @@ class FederatedRepository:
         """Whether the DuckDB half owns this release."""
         return release_id in getattr(self._historical, "_releases", {})
 
-    def _for(self, release_id: str) -> Any:
+    def backend_for(self, release_id: str) -> Any:
+        """The concrete backend that owns this release.
+
+        Public because a handful of reads are named without a release-routing
+        prefix (``datasets``, ``dataset_file``) and so cannot be dispatched by
+        the methods below; the routes resolve the backend themselves instead of
+        falling through ``__getattr__`` to Postgres for a DuckDB-held release.
+        """
         return self._historical if self.holds_historical(release_id) else self._postgres
+
+    def _for(self, release_id: str) -> Any:
+        return self.backend_for(release_id)
 
     # ── whole-repository surface ─────────────────────────────────────────────
 
@@ -78,7 +88,10 @@ class FederatedRepository:
     def iter_normalized_results(
         self, release_id: str, *args: Any, **kwargs: Any
     ) -> Iterator[dict[str, object]]:
-        return self._for(release_id).iter_normalized_results(release_id, *args, **kwargs)
+        return cast(
+            Iterator[dict[str, object]],
+            self._for(release_id).iter_normalized_results(release_id, *args, **kwargs),
+        )
 
     def normalized_geography_path(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_geography_path(release_id, *args, **kwargs)
@@ -128,6 +141,29 @@ class FederatedRepository:
 
     def analysis_summary_for(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).analysis_summary_for(release_id, *args, **kwargs)
+
+    # ── legacy-shaped reads that still name a release ────────────────────────
+    #
+    # These take the release as their ``version`` argument rather than as a
+    # leading ``release_id``, so they look non-release-scoped and would fall
+    # through ``__getattr__`` to Postgres. The release-scoped dataset routes
+    # call them, so leaving them unrouted 404s every historical dataset.
+
+    def datasets(self, slug: str, version: str | None = None, *args: Any, **kwargs: Any) -> Any:
+        return self._for(version or "").datasets(slug, version, *args, **kwargs)
+
+    def dataset(self, dataset_id: str, version: str | None = None, *args: Any, **kwargs: Any) -> Any:
+        return self._for(version or "").dataset(dataset_id, version, *args, **kwargs)
+
+    def raw_dataset_rows(
+        self, dataset_id: str, version: str | None = None, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._for(version or "").raw_dataset_rows(dataset_id, version, *args, **kwargs)
+
+    def dataset_artifact_url(
+        self, dataset_id: str, version: str | None = None, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._for(version or "").dataset_artifact_url(dataset_id, version, *args, **kwargs)
 
     # ── everything else: the active-release backend ──────────────────────────
 
