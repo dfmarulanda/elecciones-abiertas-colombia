@@ -32,7 +32,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-import ijson
+import ijson  # type: ignore[import-untyped]
 import pyarrow as pa  # type: ignore[import-untyped]
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 

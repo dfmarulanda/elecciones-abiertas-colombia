@@ -34,6 +34,8 @@ from .ingest.relay_transport import (
 from .releases.candidate import CandidateBuildError, build_national_precount_candidate
 from .releases.compact_postgres_loader import load_historical_context_release
 from .releases.postgres_loader import ReleaseLoadError
+from .releases.snapshot_parquet import snapshot_to_parquet
+from .releases.standard_postgres_loader import load_standard_2026_release
 from .source_check import check_official_manifests
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
@@ -387,6 +389,60 @@ def historical_2018_load_postgres(
         )
     except (ReleaseLoadError, OSError, RuntimeError, ValueError) as exc:
         typer.echo(f"Historical 2018 load failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(outcome)
+
+
+@app.command("standard-2026-snapshot-parquet")
+def standard_2026_snapshot_parquet(
+    snapshot_path: Annotated[
+        Path,
+        typer.Option("--snapshot", help="Immutable api-snapshot.json for the standard release."),
+    ],
+    output_directory: Annotated[
+        Path,
+        typer.Option("--out", help="Directory receiving the Parquet artifacts and load manifest."),
+    ],
+) -> None:
+    """Stream a 172 MB standard snapshot into four bounded Parquet artifacts."""
+    try:
+        load_manifest = snapshot_to_parquet(snapshot_path, output_directory)
+    except (ReleaseLoadError, OSError, ValueError) as exc:
+        typer.echo(f"Standard 2026 snapshot conversion failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "release_id": load_manifest["release_id"],
+                "artifacts": load_manifest["artifacts"],
+                "sources": [source["id"] for source in load_manifest["sources"]],
+            },
+            sort_keys=True,
+        )
+    )
+
+
+@app.command("standard-2026-load-postgres")
+def standard_2026_load_postgres(
+    database_url: Annotated[str, typer.Option("--database-url", help="PostgreSQL URL.")],
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest", help="Release manifest for the standard candidate."),
+    ],
+    artifact_directory: Annotated[
+        Path,
+        typer.Option("--artifact-dir", help="Directory written by standard-2026-snapshot-parquet."),
+    ],
+) -> None:
+    """Load the standard 2026 release internally; this never exposes or activates it."""
+    from sqlalchemy import create_engine
+
+    try:
+        outcome = load_standard_2026_release(
+            create_engine(database_url), manifest_path, artifact_directory
+        )
+    except (ReleaseLoadError, OSError, RuntimeError, ValueError) as exc:
+        typer.echo(f"Standard 2026 load failed: {exc}", err=True)
         raise typer.Exit(code=2) from exc
     typer.echo(outcome)
 

@@ -638,6 +638,57 @@ export async function getPublicGeography(
   };
 }
 
+/** One child geography with its vote totals. Field names are deliberately
+ * short: this shape is fetched a page at a time while drilling through 122,020
+ * mesas, and the long form costs ~15x more bytes for the same information. */
+export type LeanChildResult = {
+  /** geography id */ i: string;
+  /** level */ l: string;
+  /** code */ c: string;
+  /** name */ n: string;
+  /** voters */ t: number | null;
+  /** valid votes (INCLUDES blanks) */ v: number | null;
+  /** blank */ b: number | null;
+  /** null */ x: number | null;
+  /** unmarked */ u: number | null;
+  /** candidate votes, positional against `candidates` */ k: (number | null)[];
+};
+
+export type ChildrenResultsPage = {
+  items: LeanChildResult[];
+  /** Candidate ids, in the order `k` is indexed by. */
+  candidates: string[];
+  page: S["CursorMeta"];
+  data_version: string;
+  exposure_class?: "certified" | "preliminary";
+  preliminary?: boolean;
+  preliminary_caveat?: Record<"es" | "en", string> | null;
+};
+
+/**
+ * Children plus their totals in one request. The alternative -- `/results`
+ * followed by a per-fact categories call -- costs up to 228 round trips for a
+ * single polling place, which is why drill-down needs its own read.
+ */
+export async function getPublicChildrenResults(
+  geographyId: string,
+  filters: PublicExplorerFilters & { level?: string } = {},
+): Promise<ChildrenResultsPage | null> {
+  if (!apiBase()) return null;
+  const { selected } = await publicSelection(filters);
+  if (!selected) return null;
+  const query = new URLSearchParams({ limit: "50" });
+  if (filters.cursor) query.set("cursor", filters.cursor);
+  if (filters.level) query.set("level", filters.level);
+  const prefix = `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}`;
+  return await apiJson<ChildrenResultsPage>(
+    queryPath(
+      `${prefix}/geographies/${encodeURIComponent(geographyId)}/children-results`,
+      query,
+    ),
+  );
+}
+
 export async function getPublicMesa(
   mesaId: string,
   filters: PublicExplorerFilters & { sourceId?: string },
