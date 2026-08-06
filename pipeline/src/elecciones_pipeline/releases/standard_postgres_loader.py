@@ -50,6 +50,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import Connection, Engine, text
+from sqlalchemy.exc import IntegrityError
 
 from ._bulk import (
     _LEVEL_RANK,
@@ -141,6 +142,18 @@ _METRICS_JSON_SQL = (
     )
     + ")"
 )
+
+
+def _advisory_key(release_id: str) -> int:
+    """A stable signed bigint lock key for a release id.
+
+    Derived in Python rather than with ``hashtext`` so the key does not depend
+    on an undocumented server function whose hash could change between major
+    PostgreSQL versions and silently stop serialising two loaders.
+    """
+    return int.from_bytes(
+        hashlib.sha256(release_id.encode()).digest()[:8], "big", signed=True
+    )
 
 
 def _artifact_path(directory: Path, load_manifest: dict[str, Any], filename: str) -> Path:
@@ -714,6 +727,14 @@ def load_standard_2026_release(
     election = load_manifest["election"]
 
     with engine.begin() as connection:
+        # Claim the release id before reading its state.  Without this the
+        # check and the INSERT are two steps: a second loader reads "absent",
+        # both insert, and the loser surfaces a raw duplicate-key IntegrityError
+        # instead of the documented noop.  The lock is transaction scoped, so a
+        # concurrent loader waits here and then reads the committed rows below.
+        connection.execute(
+            text("SELECT pg_advisory_xact_lock(:key)"), {"key": _advisory_key(release_id)}
+        )
         existing = list(
             connection.execute(
                 text("SELECT manifest_hash FROM release_exposures WHERE release_id=:r"),
@@ -738,20 +759,28 @@ def load_standard_2026_release(
         connection.execute(text(_STAGE_FACTS_DDL))
         connection.execute(text(_STAGE_CATEGORIES_DDL))
 
-        connection.execute(
-            text(
-                "INSERT INTO releases "
-                "(id,status,synthetic,created_at,methodology_version,manifest) "
-                "VALUES (:id,:status,false,:created,:method,CAST(:manifest AS jsonb))"
-            ),
-            {
-                "id": release_id,
-                "status": manifest["status"],
-                "created": datetime.now(UTC),
-                "method": manifest["methodology_version"],
-                "manifest": json.dumps(manifest, separators=(",", ":")),
-            },
-        )
+        try:
+            connection.execute(
+                text(
+                    "INSERT INTO releases "
+                    "(id,status,synthetic,created_at,methodology_version,manifest) "
+                    "VALUES (:id,:status,false,:created,:method,CAST(:manifest AS jsonb))"
+                ),
+                {
+                    "id": release_id,
+                    "status": manifest["status"],
+                    "created": datetime.now(UTC),
+                    "method": manifest["methodology_version"],
+                    "manifest": json.dumps(manifest, separators=(",", ":")),
+                },
+            )
+        except IntegrityError as exc:
+            # Unreachable while the advisory lock holds, and kept anyway: a
+            # caller must never have to read a driver traceback to learn that
+            # another loader owns this release id.
+            raise ReleaseLoadError(
+                "release id was claimed by a concurrent loader during this transaction"
+            ) from exc
         connection.execute(
             text(
                 "INSERT INTO release_elections "

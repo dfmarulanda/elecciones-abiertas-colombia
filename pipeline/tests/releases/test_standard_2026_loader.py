@@ -44,6 +44,7 @@ CANDIDATES = ("ivan-cepeda-aida-quilcue", "abelardo-de-la-espriella-jose-manuel-
 # 19 published geographies, 16 mesas, 25 published facts, 10 derived aggregates.
 FIXTURE_GEOGRAPHIES = 19
 FIXTURE_MESAS = 16
+FIXTURE_RELEASE = "candidate-2026-r2-fixture"
 FIXTURE_FACTS = 25
 FIXTURE_AGGREGATES = 10
 
@@ -75,7 +76,7 @@ def _fact(
             for candidate, votes in slate.items()
         ],
         "provenance": {
-            "data_version": "candidate-2026-r2-fixture",
+            "data_version": FIXTURE_RELEASE,
             "source_type": "pre_count",
             "legal_status": "preliminary",
             "source_url": url,
@@ -88,7 +89,7 @@ def _fact(
     }
 
 
-def _snapshot() -> dict[str, Any]:
+def _snapshot(release_id: str = FIXTURE_RELEASE) -> dict[str, Any]:
     """A miniature release with the real id-width trap and real arithmetic."""
     root = "https://resultadosprecpresidente2026-2v.registraduria.gov.co/json/ACT/PR/"
     geographies = [
@@ -240,15 +241,15 @@ def _snapshot() -> dict[str, Any]:
             ],
         },
         "release": {
-            "release_id": "candidate-2026-r2-fixture",
-            "data_version": "candidate-2026-r2-fixture",
+            "release_id": release_id,
+            "data_version": release_id,
             "status": "candidate",
             "synthetic": False,
             "methodology_version": "audit-priority-v1.0.0",
             "created_at": "2026-08-03T23:29:43.947689Z",
         },
         "summary": {
-            "data_version": "candidate-2026-r2-fixture",
+            "data_version": release_id,
             "completion": {"expected": 16, "reported": 15, "percent": 0.9375},
             "coverage": {"expected": 1, "retrieved": 1, "parsed": 1, "missing": 0},
             "geographic_collection_coverage": {"status": "full_scope", "expected_mesas": 16},
@@ -261,10 +262,10 @@ def _snapshot() -> dict[str, Any]:
     }
 
 
-def _manifest() -> dict[str, Any]:
+def _manifest(release_id: str = FIXTURE_RELEASE) -> dict[str, Any]:
     return {
-        "release_id": "candidate-2026-r2-fixture",
-        "data_version": "candidate-2026-r2-fixture",
+        "release_id": release_id,
+        "data_version": release_id,
         "election_slug": ELECTION_SLUG,
         "release_class": "standard",
         "status": "candidate",
@@ -288,14 +289,27 @@ def _manifest() -> dict[str, Any]:
     }
 
 
+def _stage(
+    directory: Path,
+    release_id: str = FIXTURE_RELEASE,
+    *,
+    manifest_extra: dict[str, Any] | None = None,
+) -> tuple[Path, Path]:
+    """Write a snapshot plus its manifest and convert it into artifacts."""
+    directory.mkdir(parents=True, exist_ok=True)
+    snapshot = directory / "api-snapshot.json"
+    snapshot.write_text(json.dumps(_snapshot(release_id)), encoding="utf-8")
+    manifest = directory / "manifest.json"
+    manifest.write_text(
+        json.dumps({**_manifest(release_id), **(manifest_extra or {})}), encoding="utf-8"
+    )
+    snapshot_to_parquet(snapshot, directory / "artifacts")
+    return manifest, directory / "artifacts"
+
+
 @pytest.fixture
 def staged(tmp_path: Path) -> tuple[Path, Path]:
-    snapshot = tmp_path / "api-snapshot.json"
-    snapshot.write_text(json.dumps(_snapshot()), encoding="utf-8")
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text(json.dumps(_manifest()), encoding="utf-8")
-    snapshot_to_parquet(snapshot, tmp_path / "artifacts")
-    return manifest, tmp_path / "artifacts"
+    return _stage(tmp_path)
 
 
 def _table(path: Path) -> list[dict[str, Any]]:
@@ -536,7 +550,7 @@ def test_stage_b_loads_derives_and_reconciles(
     manifest, artifacts = staged
     engine = create_engine(postgres_url)
     assert load_standard_2026_release(engine, manifest, artifacts) == "loaded"
-    counts = _counts(postgres_url, "candidate-2026-r2-fixture")
+    counts = _counts(postgres_url, FIXTURE_RELEASE)
     assert counts == {
         "release_geographies": FIXTURE_GEOGRAPHIES + FIXTURE_MESAS,
         "release_mesas": FIXTURE_MESAS,
@@ -550,7 +564,7 @@ def test_stage_b_loads_derives_and_reconciles(
         assert (
             connection.execute(
                 text("SELECT access_scope FROM release_exposures WHERE release_id=:r"),
-                {"r": "candidate-2026-r2-fixture"},
+                {"r": FIXTURE_RELEASE},
             ).scalar_one()
             == "internal"
         )
@@ -564,7 +578,7 @@ def test_stage_b_loads_derives_and_reconciles(
                 "FROM release_result_facts WHERE release_id=:r AND source_id=:s "
                 "GROUP BY geography_level ORDER BY geography_level"
             ),
-            {"r": "candidate-2026-r2-fixture", "s": SOURCE_ROLLUP},
+            {"r": FIXTURE_RELEASE, "s": SOURCE_ROLLUP},
         ).all()
         assert [tuple(row) for row in derived] == [
             ("department", 2, 0),
@@ -574,7 +588,7 @@ def test_stage_b_loads_derives_and_reconciles(
         # A mesa lookup filters on geography_id = mesa_id; that must find the fact.
         mesa_id = connection.execute(
             text("SELECT id FROM release_mesas WHERE release_id=:r ORDER BY id LIMIT 1"),
-            {"r": "candidate-2026-r2-fixture"},
+            {"r": FIXTURE_RELEASE},
         ).scalar_one()
         assert (
             connection.execute(
@@ -582,7 +596,7 @@ def test_stage_b_loads_derives_and_reconciles(
                     "SELECT COUNT(*) FROM release_result_facts "
                     "WHERE release_id=:r AND geography_id=:g AND geography_level='mesa'"
                 ),
-                {"r": "candidate-2026-r2-fixture", "g": mesa_id},
+                {"r": FIXTURE_RELEASE, "g": mesa_id},
             ).scalar_one()
             == 1
         )
@@ -594,7 +608,7 @@ def test_stage_b_loads_derives_and_reconciles(
                     "FROM release_result_facts "
                     "WHERE release_id=:r AND geography_level='national'"
                 ),
-                {"r": "candidate-2026-r2-fixture"},
+                {"r": FIXTURE_RELEASE},
             ).scalar_one(),
             connection.execute(
                 text(
@@ -602,14 +616,14 @@ def test_stage_b_loads_derives_and_reconciles(
                     "FROM release_result_facts "
                     "WHERE release_id=:r AND geography_level='department'"
                 ),
-                {"r": "candidate-2026-r2-fixture"},
+                {"r": FIXTURE_RELEASE},
             ).scalar_one(),
         )
         assert national == departments
         # The blocked reconciliation is served as recorded, not recomputed.
         assert connection.execute(
             text("SELECT reconciliation FROM release_summaries WHERE release_id=:r"),
-            {"r": "candidate-2026-r2-fixture"},
+            {"r": FIXTURE_RELEASE},
         ).scalar_one() == {"status": "blocked", "checked_facts": 24, "exceptions": 3}
 
 

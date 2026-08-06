@@ -753,7 +753,38 @@ class PostgresReadRepository:
           GROUP BY e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,x.manifest_hash,x.approved_at
           ORDER BY e.election_date,e.election_slug""",
             {},
+        ) + self._preliminary_elections()
+
+    def _preliminary_elections(self) -> list[dict[str, object]]:
+        """Catalogue entries for preliminary grants.
+
+        Kept as a separate query rather than a relaxed predicate on the one
+        above: the certified branch must stay exactly as it is. Note
+        ``exposure_approved_at`` is emitted as NULL — the contract rejects a
+        candidate release that claims an approval, and claiming one here would
+        be the same mislabel in a different field.
+
+        No extra ``exposure_class`` field is added. The frozen contract already
+        distinguishes these unambiguously: the certified branch requires
+        ``status='published'``, so a ``candidate`` entry in this catalogue can
+        only have arrived through the preliminary door. Widening the contract to
+        restate that would add a field that can disagree with the predicate that
+        produced it.
+        """
+        rows = self._normalized(
+            """SELECT e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,
+          x.manifest_hash AS release_manifest_hash,
+          NULL::timestamptz AS exposure_approved_at,
+          COALESCE(json_agg(json_build_object('id',s.id,'source_type',s.source_type,'legal_status',s.legal_status,'source_url',s.source_url,'content_hash',s.content_hash)) FILTER (WHERE s.id IS NOT NULL), '[]'::json) AS sources
+          FROM release_elections e JOIN release_exposures x USING (release_id,election_slug)
+          JOIN releases r ON r.id=e.release_id LEFT JOIN release_sources s USING (release_id,election_slug)
+          WHERE x.access_scope='preliminary' AND x.preliminary_approved_at IS NOT NULL
+            AND r.status='candidate' AND r.synthetic = false
+          GROUP BY e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,x.manifest_hash
+          ORDER BY e.election_date,e.election_slug""",
+            {},
         )
+        return rows
 
     def _authorized(self, release_id: str, election_slug: str) -> None:
         rows = self._normalized(
