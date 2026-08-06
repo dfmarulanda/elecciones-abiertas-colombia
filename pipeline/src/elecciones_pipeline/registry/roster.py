@@ -178,7 +178,9 @@ def build_family_roster(
     if duplicates:
         raise RegistryError(f"enumeration repeats member ids: {duplicates[:5]}")
     ordered = tuple(sorted(members, key=lambda member: member.member_id))
-    counts = {state: sum(1 for member in ordered if member.state == state) for state in MEMBER_STATES}
+    counts = {
+        state: sum(1 for member in ordered if member.state == state) for state in MEMBER_STATES
+    }
     source = EnumerationSource(
         source_id=source_id,
         source_url=source_url,

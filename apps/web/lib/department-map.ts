@@ -89,17 +89,80 @@ const historicalCodes: Array<[string, string]> = [
   ["72", "99"],
 ];
 
+/**
+ * The 2026 release identifies departments as `scope:NN` using the SAME
+ * Registraduría code system already reviewed for the historical releases, so
+ * these entries reuse that reviewed mapping rather than introducing a second,
+ * unreviewed one.
+ *
+ * Joining on the raw code would be catastrophic and silent: Registraduría `05`
+ * is BOLÍVAR while DANE `05` is ANTIOQUIA, Registraduría `13` is CÓRDOBA while
+ * DANE `13` is BOLÍVAR, and Registraduría `88` is CONSULADOS while DANE `88`
+ * is the San Andrés archipelago — a code join would paint every overseas vote
+ * onto an island. Nothing here may be derived from code equality.
+ */
 export const REVIEWED_DEPARTMENT_CROSSWALK: Record<string, string> = {
   "CO-ANT": "05",
   "CO-DC": "11",
-  "scope:01": "05",
   ...Object.fromEntries(
     historicalCodes.flatMap(([historicalCode, daneCode]) => [
       [`r1:dep:${historicalCode}`, daneCode],
       [`r2:dep:${historicalCode}`, daneCode],
+      [`scope:${historicalCode}`, daneCode],
     ]),
   ),
 };
+
+/**
+ * Departments that exist in the count but have no polygon, by nature rather
+ * than by omission. `scope:88` is CONSULADOS — Colombians voting abroad, 3,670
+ * mesas and 613,049 valid votes in the 2026 second round. There is no territory
+ * to shade.
+ *
+ * This set exists because `reviewedDepartmentRows` drops anything it cannot
+ * map, which would make those 613,049 votes disappear from the map with no
+ * notice at all. An off-map entity must be rendered as one, never dropped and
+ * never painted onto land.
+ */
+export const EXTRATERRITORIAL_GEOGRAPHY_IDS: ReadonlySet<string> = new Set([
+  "scope:88",
+  "r1:dep:88",
+  "r2:dep:88",
+]);
+
+export type DepartmentPartition = {
+  /** Rows with a reviewed polygon. */
+  mapped: ReviewedDepartment[];
+  /** Real rows that legitimately have no geometry (the exterior). */
+  extraterritorial: DepartmentMapRow[];
+  /** Rows matching neither — a crosswalk gap, surfaced instead of hidden. */
+  unmapped: DepartmentMapRow[];
+};
+
+/**
+ * Account for every row. Any caller rendering a map must show `mapped`, render
+ * `extraterritorial` as an explicit off-map figure, and treat a non-empty
+ * `unmapped` as a defect rather than as nothing to draw.
+ */
+export function partitionDepartments(
+  rows: DepartmentMapRow[],
+): DepartmentPartition {
+  const mapped = reviewedDepartmentRows(rows);
+  const claimed = new Set(
+    rows
+      .filter((row) => REVIEWED_DEPARTMENT_CROSSWALK[row.geographyId])
+      .map((row) => row.geographyId),
+  );
+  const extraterritorial = rows.filter((row) =>
+    EXTRATERRITORIAL_GEOGRAPHY_IDS.has(row.geographyId),
+  );
+  const unmapped = rows.filter(
+    (row) =>
+      !claimed.has(row.geographyId) &&
+      !EXTRATERRITORIAL_GEOGRAPHY_IDS.has(row.geographyId),
+  );
+  return { mapped, extraterritorial, unmapped };
+}
 
 export function reviewedDepartmentRows(
   rows: DepartmentMapRow[],

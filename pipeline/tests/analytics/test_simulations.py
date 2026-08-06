@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, replace
+from dataclasses import replace
 from types import SimpleNamespace
 
 import elecciones_pipeline.analytics.simulations as simulations

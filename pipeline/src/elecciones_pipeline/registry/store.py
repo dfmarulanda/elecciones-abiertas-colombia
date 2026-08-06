@@ -94,9 +94,9 @@ class ContentAddressedStore:
         try:
             handle = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
         except FileExistsError:
-            stored = self.get(digest)
-            if stored != payload:
-                raise RegistryError(f"stored object {digest} does not match its content") from None
+            # Already stored.  ``get`` re-hashes what is on disk, so an
+            # idempotent re-put still refuses to succeed over a corrupt object.
+            self.get(digest)
             return digest
         try:
             written = 0
