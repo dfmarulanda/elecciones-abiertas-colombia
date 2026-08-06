@@ -238,7 +238,28 @@
       "2": "Each dot is one election. All three are equal on purpose: none carries more weight.",
       "3": "If the 2026 dot falls inside the band, it resembles what came before. If it falls outside, it does not."
     },
-    "metrics": {},
+    "metrics": {
+      "digitUniformity": {
+        "plainLabel": "Do the last digits of each count come out even?",
+        "techLabel": "Last-digit uniformity · χ²",
+        "plainUnit": "a randomness test",
+        "techUnit": "χ², critical 16.92",
+        "human": "If someone invented the counts, the last digits would tend to repeat. The test measures whether they come out even.",
+        "plainReading": "All three elections exceed the threshold, and 2022 exceeds it by more than 2026 does. That is precisely why this number, alone, says nothing.",
+        "techReading": "2018 30.17 · 2022 55.72 · 2026 35.52, critical value 16.92. 2026 sits below 2022, inside the range already observed.",
+        "plainCritLabel": "here the test says “look at this”",
+        "techCritLabel": "critical 16.92"
+      },
+      "unanimousMesas": {
+        "plainLabel": "How many tables voted entirely for one candidate?",
+        "techLabel": "Unanimous tables",
+        "plainUnit": "per 100 tables",
+        "techUnit": "% of tables",
+        "human": "A unanimous table is one where the other candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes.",
+        "plainReading": "In 2026 it was 0.627 per 100 tables, more than 2018 or 2022. Still small, but above what was seen before, so it warrants human review.",
+        "techReading": "0.354% in 2018 · 0.504% in 2022 · 0.627% in 2026. A descriptive observation: it orders a look, it concludes nothing."
+      }
+    },
     "benford": {
       "label": "What about Benford's law, which fails in all three?",
       "box": "there is nothing to compare here",
@@ -247,7 +268,8 @@
     "toggleToTechnical": "Show the technical names",
     "toggleToSimple": "Back to plain words",
     "insideVerdict": "2026 looks like the earlier ones",
-    "outsideVerdict": "2026 falls outside what was seen before"
+    "outsideVerdict": "2026 falls outside what was seen before",
+    "footnote": "Computed with the same code over all three elections: 97,644 tables in 2018, 103,363 in 2022 and 122,020 in 2026. 2026 is the pre-count; 2018 and 2022 are the MMV table annex, different stages of the count."
   },
   "mesa": {
     "eyebrow": "Documentary evidence",

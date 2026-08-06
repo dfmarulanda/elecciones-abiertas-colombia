@@ -10,7 +10,7 @@ import {
 import { AppButton } from "@/components/app-button";
 import { BitacoraTrack } from "@/components/bitacora-track";
 import { buildBallots } from "@/lib/hexes";
-import { CMP, benfordFootnote, computeCmpRow } from "@/lib/cmp-fixture";
+import { CMP, computeCmpRow } from "@/lib/cmp-fixture";
 import { ComparisonBands, type CmpRowContent } from "@/components/comparison-bands";
 
 type Locale = "es" | "en";
@@ -67,12 +67,7 @@ const RULE_FAINT_LIGHT = "rgba(33,30,30,.16)";
    plain data — they are the fixture, not language-dependent copy, so they
    render identically in both locales the same way `lib/dc-fixture.ts` and
    `lib/hexes.ts` already do for the rest of the page. */
-const CMP_METRIC_ORDER = [
-  "digitUniformity",
-  "unanimousMesas",
-  "exteriorMargin",
-  "exteriorWeight",
-] as const;
+const CMP_METRIC_ORDER = ["digitUniformity", "unanimousMesas"] as const;
 
 export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
   const legendItems = ["1", "2", "3"] as const;
@@ -139,7 +134,7 @@ export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
           benfordLabel={t("comparison.benford.label")}
           benfordBox={t("comparison.benford.box")}
           benfordBody={t("comparison.benford.body")}
-          benfordFootnote={benfordFootnote(locale)}
+          benfordFootnote={t("comparison.footnote")}
         />
       </div>
     </section>

@@ -1,12 +1,9 @@
 /**
- * #comparación's four forensic tests, ported from the design's `dc-data.js`
- * `CMP` array exactly — same four metrics, same 2018/2022/2026 values, same
- * critical threshold, same padding and positioning math (`renderVals()`'s
- * `cmpRows` mapping). Kept separate from the prose (which lives in the
- * message bundle, keyed by `key` below) because these are the fixture's
- * numbers, not language-dependent copy: they must render identically in
- * Spanish and English, the same way `lib/dc-fixture.ts` and `lib/hexes.ts`
- * do for the rest of the page.
+ * #comparación's measured bands. The layout math (band placement, the critical
+ * marker, the padding) is the design's `renderVals()` `cmpRows` mapping kept
+ * verbatim; the VALUES are computed from each election's own mesa records, not
+ * ported from the mock. They live here rather than in the message bundle
+ * because they must render identically in Spanish and English.
  *
  * One locale-aware adaptation from the source: `dc-data.js`'s `cf()` builds
  * its numeral strings by hand (`.replace(".", ",")`, a manual thousands
@@ -19,11 +16,7 @@
 
 export type Locale = "es" | "en";
 
-export type CmpMetricKey =
-  | "digitUniformity"
-  | "unanimousMesas"
-  | "exteriorMargin"
-  | "exteriorWeight";
+export type CmpMetricKey = "digitUniformity" | "unanimousMesas";
 
 type CmpMetric = {
   key: CmpMetricKey;
@@ -40,25 +33,47 @@ type CmpMetric = {
 };
 
 /**
- * EMPTY BY DECISION — this array previously carried four bands copied verbatim
- * from the design mock `dc-data.js`. None of them was computed by any code in
- * this repository, and one of them was formally retracted:
+ * Computed, not copied. Every value below comes from running one code path over
+ * all three elections' own mesa records:
  *
- *  - `digitUniformity` (χ² 14.5 / 38.9 / 33.7, crit 16.9) and `unanimousMesas`
- *    (0.21 / 0.38 / 0.54 %) had no derivation, no provenance hash and no
- *    reproduction path anywhere in the repo. They were design placeholders.
- *  - `exteriorMargin` / `exteriorWeight` (the "70.9% of the national margin
- *    came from abroad" pair) were RETRACTED in `docs/research/method-record.md`
- *    §16: measured across all 34 departments the exterior ranks 10th of 34, and
- *    department 01 alone accounts for 419.5% of the margin. The figure was
- *    selection on the outcome and does not survive.
+ *   `scripts/compute-comparison-statistics.py`  → 2026, 122,020 mesas
+ *   `scripts/compute-historical-comparison.py`  → 2018, 97,644 · 2022, 103,363
  *
- * The layout math below (`computeCmpRow`, `cf`, the marker colours) is kept
- * because it is sound and locale-correct; it is waiting for values that are
- * actually computed from the real 122,020-mesa release, with provenance.
- * Until then this section publishes its principle and no numbers.
+ * emitting `data/derived/comparison-statistics-2026.json` and
+ * `comparison-statistics-historical.json`, each carrying the sha256 of its
+ * source artifact. The previous values here were design placeholders from
+ * `dc-data.js` that no code computed, alongside an exterior-margin pair that
+ * `docs/research/method-record.md` §16 formally retracted as selection on the
+ * outcome — the exterior ranks 10th of 34 departments, and department 01 alone
+ * accounts for 419.47% of the national margin. Those two bands are gone and are
+ * not replaced: the honest exterior reading is a participation rate, not a share
+ * of an unstable net margin.
+ *
+ * What the remaining two show is the section's actual argument. The last-digit
+ * test exceeds its critical value in ALL THREE elections, and 2022 — an election
+ * nobody disputes on these grounds — exceeds it by more than 2026 does.
+ *
+ * IMPORTANT comparability limit, which the copy must state: 2026 is the
+ * preconteo while 2018 and 2022 are the MMV mesa annex. Different stages of the
+ * count, not one instrument measured three times.
  */
-export const CMP: CmpMetric[] = [];
+export const CMP: CmpMetric[] = [
+  {
+    key: "digitUniformity",
+    // 2018 / 2022 / 2026 — pooled across both candidates, counts >= 10.
+    v: [30.17, 55.72, 35.52],
+    crit: 16.92,
+    dec: 2,
+  },
+  {
+    key: "unanimousMesas",
+    // Share of mesas where one candidate received exactly zero.
+    v: [0.354, 0.504, 0.627],
+    crit: null,
+    dec: 3,
+    suffix: " %",
+  },
+];
 
 /** Colours for the critical-threshold marker and the zero rule — fixture
  * constants from the design, not language-dependent, so they live beside the
@@ -67,18 +82,6 @@ export const CMP_CRIT_FG = "#8A4B1E";
 export const CMP_CRIT_BG = "rgba(138,75,30,.75)";
 export const CMP_ZERO_BG = "rgba(33,30,30,.55)";
 
-/**
- * The Benford statistic is deliberately NOT published. The previous value
- * ("2018 · 3.995   2022 · 4.415   2026 · 4.644") came from the design mock and
- * is computed nowhere in this repository. Printing a statistic for a test the
- * page itself argues is invalid — Benford does not hold for vote counts with
- * heterogeneous precinct sizes (`method-record.md`) — invites exactly the
- * misreading the section exists to prevent. The explanation stays; the number
- * goes.
- */
-export function benfordFootnote(_locale: Locale): string {
-  return "";
-}
 
 function cf(
   n: number,

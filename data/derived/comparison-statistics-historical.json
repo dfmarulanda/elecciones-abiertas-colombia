@@ -1,0 +1,179 @@
+{
+ "comparability": {
+  "known_release_anomalies": [
+   "2018 exterior is short 13-17 mesas against the official installed universe (findings-ledger.md 2.12).",
+   "2022 MMV exterior carries 2,552 mesa identities against 1,343 census-installed exterior mesas (findings-ledger.md 2.7)."
+  ],
+  "reading": "Neither statistic is evidence of irregularity in any year. The last-digit test exceeds its critical value in elections nobody disputes, which is why all three years are published together.",
+  "stage_mismatch": "2026 is the preconteo (election-night preliminary count); 2018 and 2022 are the MMV mesa annex. Different stages of the count, not the same instrument measured three times."
+ },
+ "document_sha256": "0e0afd4ec6dcfdc8e8bdec7e7a0c73593755574e4611e6a81e4bfff06e823ddf",
+ "schema": "comparison-statistics-historical-v1",
+ "statistic_definitions_match": "comparison-statistics-2026.json",
+ "years": {
+  "2018": {
+   "election_slug": "presidencia-2018-round-2",
+   "last_digit_uniformity": {
+    "combined": {
+     "chi_square": 30.17435441913584,
+     "critical_value_alpha_0_05": 16.918977604620444,
+     "degrees_of_freedom": 9,
+     "exceeds_critical_value": true,
+     "expected_count_per_digit": 18913.2,
+     "input_rows": 189132,
+     "observed_counts": [
+      19226,
+      19194,
+      19174,
+      19154,
+      18863,
+      18710,
+      18527,
+      18823,
+      18739,
+      18722
+     ]
+    },
+    "minimum_count_for_inclusion": 10,
+    "note": "The two candidates' counts within a mesa are bounded by the same valid-vote total and are therefore not independent, so the pooled statistic understates its own variance. Per-candidate figures are the primary reading.",
+    "per_candidate": {
+     "001": {
+      "chi_square": 35.40582600485854,
+      "critical_value_alpha_0_05": 16.918977604620444,
+      "degrees_of_freedom": 9,
+      "exceeds_critical_value": true,
+      "expected_count_per_digit": 9426.7,
+      "input_rows": 94267,
+      "observed_counts": [
+       9589,
+       9617,
+       9748,
+       9563,
+       9427,
+       9185,
+       9250,
+       9364,
+       9290,
+       9234
+      ]
+     },
+     "002": {
+      "chi_square": 10.067833236704791,
+      "critical_value_alpha_0_05": 16.918977604620444,
+      "degrees_of_freedom": 9,
+      "exceeds_critical_value": false,
+      "expected_count_per_digit": 9486.5,
+      "input_rows": 94865,
+      "observed_counts": [
+       9637,
+       9577,
+       9426,
+       9591,
+       9436,
+       9525,
+       9277,
+       9459,
+       9449,
+       9488
+      ]
+     }
+    }
+   },
+   "mesas_in_source": 97644,
+   "provenance": {
+    "artifact": "data/releases/historical-2018-mmv-context-v2-c456aeb032917d5c/historical-2018-mmv.parquet",
+    "artifact_sha256": "889c135956320953c422177ffeb2c4c4be21b053d0d0852a0ff7b999e104125c"
+   },
+   "unanimous_mesas": {
+    "definition": "A mesa where one candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded.",
+    "excluded_zero_candidate_vote_mesas": 0,
+    "input_rows": 97644,
+    "percent": 0.35434844946950145,
+    "share": 0.0035434844946950145,
+    "unanimous_mesas": 346
+   }
+  },
+  "2022": {
+   "election_slug": "presidencia-2022-round-2",
+   "last_digit_uniformity": {
+    "combined": {
+     "chi_square": 55.718023590117944,
+     "critical_value_alpha_0_05": 16.918977604620444,
+     "degrees_of_freedom": 9,
+     "exceeds_critical_value": true,
+     "expected_count_per_digit": 19999.9,
+     "input_rows": 199999,
+     "observed_counts": [
+      20457,
+      20455,
+      20257,
+      20159,
+      20116,
+      19809,
+      19981,
+      19768,
+      19495,
+      19502
+     ]
+    },
+    "minimum_count_for_inclusion": 10,
+    "note": "The two candidates' counts within a mesa are bounded by the same valid-vote total and are therefore not independent, so the pooled statistic understates its own variance. Per-candidate figures are the primary reading.",
+    "per_candidate": {
+     "001": {
+      "chi_square": 54.32724828415764,
+      "critical_value_alpha_0_05": 16.918977604620444,
+      "degrees_of_freedom": 9,
+      "exceeds_critical_value": true,
+      "expected_count_per_digit": 9893.1,
+      "input_rows": 98931,
+      "observed_counts": [
+       10174,
+       10115,
+       10088,
+       10030,
+       9939,
+       9834,
+       9893,
+       9827,
+       9685,
+       9346
+      ]
+     },
+     "002": {
+      "chi_square": 22.800846954525667,
+      "critical_value_alpha_0_05": 16.918977604620444,
+      "degrees_of_freedom": 9,
+      "exceeds_critical_value": true,
+      "expected_count_per_digit": 10106.8,
+      "input_rows": 101068,
+      "observed_counts": [
+       10283,
+       10340,
+       10169,
+       10129,
+       10177,
+       9975,
+       10088,
+       9941,
+       9810,
+       10156
+      ]
+     }
+    }
+   },
+   "mesas_in_source": 103363,
+   "provenance": {
+    "artifact": "data/releases/historical-2022-mmv-context-v2-288e9b41c14730e9/historical-2022-mmv.parquet",
+    "artifact_sha256": "e698b99a8ead7a7d395e8e527a240b2c7def40b3c1076c771d58314ecd8e466f"
+   },
+   "unanimous_mesas": {
+    "definition": "A mesa where one candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded.",
+    "excluded_zero_candidate_vote_mesas": 44,
+    "input_rows": 103319,
+    "percent": 0.504263494613769,
+    "share": 0.00504263494613769,
+    "unanimous_mesas": 521
+   }
+  }
+ }
+}

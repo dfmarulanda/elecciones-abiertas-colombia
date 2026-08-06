@@ -391,6 +391,11 @@ def _copy_category_rows(connection: Connection, path: Path, limit: int) -> int:
     return loaded
 
 
+def _analyze(connection: Connection, tables: tuple[str, ...]) -> None:
+    for table in tables:
+        connection.execute(text(f"ANALYZE {table}"))
+
+
 def _assert(connection: Connection, sql: str, parameters: dict[str, Any], message: str) -> None:
     if connection.execute(text(sql), parameters).scalar_one():
         raise ReleaseLoadError(message)
@@ -482,7 +487,7 @@ def _derive_aggregate_facts(connection: Connection, release_id: str) -> int:
     connection.execute(
         text("CREATE INDEX stage_member_scope ON stage_rollup_member (level,geography_id)")
     )
-    connection.execute(text("ANALYZE stage_rollup_member"))
+    _analyze(connection, ("stage_rollup_member",))
     # ``registered_electors`` is deliberately absent from this sum: it is
     # unavailable on 122,008 of 122,020 mesas, so a total would be a fabricated
     # denominator rather than a smaller one.
@@ -799,9 +804,16 @@ def load_standard_2026_release(
             if loaded != expected[name]:
                 raise ReleaseLoadError(f"{name} streamed row count differs from the load manifest")
 
+        staged = (
+            "stage_release_geographies",
+            "stage_release_mesas",
+            "stage_facts",
+            "stage_categories",
+        )
         for name, table, columns in (
             ("stage_geo_identity", "stage_release_geographies", "release_id,election_slug,id"),
             ("stage_mesa_identity", "stage_release_mesas", "release_id,election_slug,id"),
+            ("stage_mesa_place", "stage_release_mesas", "polling_place_id"),
             ("stage_fact_identity", "stage_facts", "id"),
             ("stage_fact_mesa", "stage_facts", "mesa_id"),
             ("stage_fact_level", "stage_facts", "geography_level"),
@@ -809,14 +821,15 @@ def load_standard_2026_release(
             ("stage_category_fact", "stage_categories", "result_fact_id"),
         ):
             connection.execute(text(f"CREATE INDEX {name} ON {table} ({columns})"))
-        connection.execute(text("ANALYZE stage_facts"))
-        connection.execute(text("ANALYZE stage_categories"))
+        # A temp table has no statistics until it is analysed, and the planner
+        # then nested-loops 122,020 mesas against 18,675 geographies.  Analyse
+        # before the derivations, not after them.
+        _analyze(connection, staged)
 
         _derive_mesa_geographies(connection, release_id)
-        connection.execute(text("ANALYZE stage_release_geographies"))
+        _analyze(connection, ("stage_release_geographies",))
         _derive_aggregate_facts(connection, release_id)
-        connection.execute(text("ANALYZE stage_facts"))
-        connection.execute(text("ANALYZE stage_categories"))
+        _analyze(connection, ("stage_facts", "stage_categories"))
         _reconcile(connection)
         _validate_relations(connection, release_id)
 

@@ -238,7 +238,28 @@
       "2": "Cada punto es una elección. Los tres son iguales a propósito: ninguno pesa más.",
       "3": "Si el punto de 2026 cae dentro de la franja, se parece a lo de antes. Si cae fuera, no."
     },
-    "metrics": {},
+    "metrics": {
+      "digitUniformity": {
+        "plainLabel": "¿Los últimos números de cada conteo salen parejos?",
+        "techLabel": "Uniformidad del último dígito · χ²",
+        "plainUnit": "una prueba de azar",
+        "techUnit": "χ², crítico 16,92",
+        "human": "Si alguien inventara los conteos, los últimos dígitos tenderían a repetirse. La prueba mide si salen parejos.",
+        "plainReading": "Las tres elecciones superan el umbral, y 2022 lo supera más que 2026. Eso es justamente lo que muestra que este número, solo, no dice nada.",
+        "techReading": "2018 30,17 · 2022 55,72 · 2026 35,52, con valor crítico 16,92. 2026 queda por debajo de 2022, dentro del rango ya observado.",
+        "plainCritLabel": "aquí la prueba dice «mire esto»",
+        "techCritLabel": "crítico 16,92"
+      },
+      "unanimousMesas": {
+        "plainLabel": "¿Cuántas mesas votaron enteras por un solo candidato?",
+        "techLabel": "Mesas unánimes",
+        "plainUnit": "de cada 100 mesas",
+        "techUnit": "% de mesas",
+        "human": "Una mesa unánime es aquella donde el otro candidato sacó exactamente cero. Los votos en blanco, nulos y no marcados no cuentan como votos de candidato.",
+        "plainReading": "En 2026 fueron 0,627 de cada 100 mesas, más que en 2018 y 2022. Sigue siendo poco, pero es más de lo visto antes, así que corresponde revisión humana.",
+        "techReading": "0,354 % en 2018 · 0,504 % en 2022 · 0,627 % en 2026. Es una observación descriptiva: ordena mirar, no concluye nada."
+      }
+    },
     "benford": {
       "label": "¿Y la prueba de Benford, que sale mal en las tres?",
       "box": "aquí no hay nada que comparar",
@@ -247,7 +268,8 @@
     "toggleToTechnical": "Ver los nombres técnicos",
     "toggleToSimple": "Volver a palabras simples",
     "insideVerdict": "2026 se parece a las anteriores",
-    "outsideVerdict": "2026 se sale de lo visto antes"
+    "outsideVerdict": "2026 se sale de lo visto antes",
+    "footnote": "Calculado con el mismo código sobre las tres elecciones: 97.644 mesas en 2018, 103.363 en 2022 y 122.020 en 2026. 2026 es el preconteo; 2018 y 2022 son el anexo de mesas MMV, etapas distintas del conteo."
   },
   "mesa": {
     "eyebrow": "Evidencia documental",
