@@ -893,6 +893,19 @@ def load_standard_2026_release(
                 "turnout": summary["turnout"],
             },
         )
+        # The exposure insert fires validate_release_exposure, which re-checks
+        # every relationship with EXCEPT queries over the freshly inserted
+        # 140,695 rows.  Without statistics the planner nested-loops them.
+        _analyze(
+            connection,
+            (
+                "release_geographies",
+                "release_mesas",
+                "release_result_facts",
+                "release_category_facts",
+                "release_sources",
+            ),
+        )
         connection.execute(
             text(
                 "INSERT INTO release_exposures "

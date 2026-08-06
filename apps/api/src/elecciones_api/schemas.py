@@ -285,6 +285,62 @@ class UnknownContextCoverage(StrictModel):
     reason: str | None = None
 
 
+class PreliminaryElectionSummary(StrictModel):
+    """A real, standard release served through the preliminary exposure.
+
+    A deliberate sibling of ``ContextElectionSummary`` rather than a widening of
+    it. Widening that model's literals would let a context-only historical
+    release claim standard status, which is the same class of mislabel the
+    preliminary scope exists to prevent — so each model pins the one class it
+    describes and neither can impersonate the other.
+
+    ``completion``, ``coverage`` and ``reconciliation`` are the pipeline's own
+    recorded values. For this release that means completion reports 122,017 of
+    122,020 and reconciliation is ``blocked`` with three exceptions; both are
+    served as recorded, because deriving them from the loaded rows would report
+    a complete count that reconciles.
+    """
+
+    election_slug: str
+    election_name: LocalizedText
+    round: int = Field(gt=0)
+    election_date: date
+    data_version: str
+    release_status: Literal["candidate"]
+    release_class: Literal["standard"]
+    synthetic: Literal[False]
+    #: Which door authorised this read. Required, so a preliminary payload
+    #: cannot be serialised without saying that it is one.
+    exposure_class: Literal["preliminary"]
+    preliminary: Literal[True]
+    preliminary_caveat: LocalizedText
+    completion: "Completion"
+    coverage: "Coverage"
+    geographic_collection_coverage: dict[str, object] | None = None
+    turnout: float | None = None
+    registered_electors: MetricValue
+    voters: MetricValue
+    valid_votes: MetricValue
+    blank_votes: MetricValue
+    null_votes: MetricValue
+    unmarked_votes: MetricValue
+    national_categories: list[NormalizedCategoryResult]
+    reconciliation: "Reconciliation"
+    provenance: PreviewProvenance
+
+    @model_validator(mode="after")
+    def preliminary_states_its_own_limits(self) -> "PreliminaryElectionSummary":
+        if not (self.preliminary_caveat.es and self.preliminary_caveat.en):
+            raise ValueError("A preliminary summary requires a caveat in both languages")
+        if self.provenance.data_version != self.data_version:
+            raise ValueError("Summary provenance must match the requested data version")
+        if self.provenance.legal_status != "preliminary":
+            raise ValueError(
+                "A preliminary summary cannot claim a controlling legal status"
+            )
+        return self
+
+
 class ContextElectionSummary(StrictModel):
     """Truthful historical summary with no invented completion denominator."""
 

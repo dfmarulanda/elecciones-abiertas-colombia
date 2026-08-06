@@ -1522,6 +1522,10 @@ class PostgresReadRepository:
             keyset += " AND (g.level,g.code,g.id) > (:a0,:a1,:a2)"
             values.update({"a0": after[0], "a1": after[1], "a2": after[2]})
 
+        # Categories are aggregated in a LATERAL rather than a GROUP BY: the
+        # `metrics` column is `json`, which Postgres cannot group by (no
+        # equality operator for the type), and a per-row lateral also avoids
+        # grouping the whole join.
         rows = self._normalized(
             f"""SELECT g.id, g.level, g.code, g.name,
             f.id AS fact_id,
@@ -1530,20 +1534,19 @@ class PostgresReadRepository:
             f.metrics->'blank_votes'->>'value' AS blank_votes,
             f.metrics->'null_votes'->>'value' AS null_votes,
             f.metrics->'unmarked_votes'->>'value' AS unmarked_votes,
-            COALESCE(
-                json_agg(json_build_object('k', c.category_key, 'v', c.votes)
-                         ORDER BY c.category_key)
-                FILTER (WHERE c.category_key IS NOT NULL), '[]'::json
-            ) AS categories
+            COALESCE(cats.categories, '[]'::json) AS categories
             FROM release_geographies g
             LEFT JOIN release_result_facts f
               ON (f.release_id=g.release_id AND f.election_slug=g.election_slug
                   AND f.geography_id=g.id)
-            LEFT JOIN release_category_facts c
-              ON (c.release_id=f.release_id AND c.election_slug=f.election_slug
-                  AND c.result_fact_id=f.id)
+            LEFT JOIN LATERAL (
+                SELECT json_agg(json_build_object('k', c.category_key, 'v', c.votes)
+                                ORDER BY c.category_key) AS categories
+                FROM release_category_facts c
+                WHERE c.release_id=f.release_id AND c.election_slug=f.election_slug
+                  AND c.result_fact_id=f.id
+            ) cats ON true
             WHERE g.release_id=:r AND g.election_slug=:e AND g.parent_id=:g{keyset}
-            GROUP BY g.id, g.level, g.code, g.name, f.id, f.metrics
             ORDER BY g.level, g.code, g.id LIMIT :n""",
             values,
         )

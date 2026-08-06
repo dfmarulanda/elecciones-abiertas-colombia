@@ -231,7 +231,11 @@ def _snapshot() -> dict[str, Any]:
             "election_date": "2026-06-21",
             "name": {"es": "Presidencia 2026", "en": "2026 presidency"},
             "candidates": [
-                {"id": candidate, "ballot_number": number, "name": {"es": candidate, "en": candidate}}
+                {
+                    "id": candidate,
+                    "ballot_number": number,
+                    "name": {"es": candidate, "en": candidate},
+                }
                 for number, candidate in enumerate(CANDIDATES, start=1)
             ],
         },
@@ -625,6 +629,9 @@ def test_stage_b_aborts_when_a_place_total_disagrees_with_its_mesas(
         row for row in snapshot["results"] if row["geography_level"] == "polling_place"
     )
     place_fact["voters"]["value"] += 1
+    snapshot["release"]["release_id"] = "broken"
+    snapshot["release"]["data_version"] = "broken"
+    snapshot["summary"]["data_version"] = "broken"
     path = tmp_path / "api-snapshot.json"
     path.write_text(json.dumps(snapshot), encoding="utf-8")
     manifest = tmp_path / "manifest.json"

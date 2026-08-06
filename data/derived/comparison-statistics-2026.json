@@ -1,165 +1,72 @@
 {
-  "document_sha256": "092b8e8313c377beb237a75b84e0ee549c1e53662dc2111350a83d72fb59a2c2",
+  "comparability": {
+    "identical_code_path": "All three years are measured by the same functions over the same per-mesa candidate-vote structure. Only the loader differs, because the sources differ in format.",
+    "known_release_anomalies": [
+      "findings-ledger.md 2.12: the 2018 MMV exterior is short 13-17 mesas against the official installed universe (R1 exterior 2,423 vs 2,436 official; R2 exterior 2,419). Any longitudinal exterior series must carry a +/-13-17 mesa band on the 2018 points.",
+      "findings-ledger.md 2.7 / 2.12: the 2022 MMV exterior carries 2,552 mesa identities against 1,343 census-installed exterior mesas reported at the time.",
+      "Both are unresolved release-level anomalies. They bound this series and are not corrected here."
+    ],
+    "legal_status_mismatch": "The 2018 and 2022 artifacts are marked source_type contextual_baseline and legal_status context_only. They are context for the 2026 preliminary figures, not a certified series.",
+    "reading": "Neither statistic is evidence of irregularity in any year. The last-digit statistic exceeds its critical value in all three years, including two elections whose outcomes are not in dispute -- which is the entire reason the three are published together rather than one alone.",
+    "stage_mismatch": "2026 is the PRECONTEO, the election-night preliminary count. 2018 and 2022 are the MMV mesa annex, a later and different stage of the count. These are not the same instrument measured three times, and this bounds every cross-year reading here.",
+    "zero_encoding_mismatch": "2026 records every candidate cell explicitly, including zeros. The MMV annex omits zero-vote rows, so a unanimous mesa in 2018/2022 is identified by the absence of the losing candidate's row rather than by an explicit zero. The two encodings resolve to the same quantity but not by the same evidence, and the unanimous-mesa rate is the statistic this affects."
+  },
+  "cross_year": [
+    {
+      "election_slug": "presidencia-2018-round-2",
+      "last_digit_chi_square_combined": 30.17435441913584,
+      "last_digit_exceeds_critical_value": true,
+      "last_digit_input_rows_combined": 189132,
+      "stage": "MMV mesa annex",
+      "unanimous_input_rows": 97644,
+      "unanimous_mesas": 346,
+      "unanimous_percent": 0.35434844946950145,
+      "year": "2018-r2"
+    },
+    {
+      "election_slug": "presidencia-2022-round-2",
+      "last_digit_chi_square_combined": 55.718023590117944,
+      "last_digit_exceeds_critical_value": true,
+      "last_digit_input_rows_combined": 199999,
+      "stage": "MMV mesa annex",
+      "unanimous_input_rows": 103319,
+      "unanimous_mesas": 521,
+      "unanimous_percent": 0.504263494613769,
+      "year": "2022-r2"
+    },
+    {
+      "election_slug": "presidencia-2026-segunda-vuelta",
+      "last_digit_chi_square_combined": 35.51770534966962,
+      "last_digit_exceeds_critical_value": true,
+      "last_digit_input_rows_combined": 237753,
+      "stage": "preconteo (election-night preliminary count)",
+      "unanimous_input_rows": 122006,
+      "unanimous_mesas": 765,
+      "unanimous_percent": 0.6270183433601626,
+      "year": "2026-r2"
+    }
+  ],
+  "document_sha256": "f53fe1d08419254c0c80e60ae7fdb8aa840ae767e1ecf968e27b037bc573c2a8",
   "generated_from": {
+    "artifacts": {
+      "2018-r2": {
+        "path": "data/releases/historical-2018-mmv-context-v2-c456aeb032917d5c/historical-2018-mmv.parquet",
+        "sha256": "889c135956320953c422177ffeb2c4c4be21b053d0d0852a0ff7b999e104125c"
+      },
+      "2022-r2": {
+        "path": "data/releases/historical-2022-mmv-context-v2-288e9b41c14730e9/historical-2022-mmv.parquet",
+        "sha256": "e698b99a8ead7a7d395e8e527a240b2c7def40b3c1076c771d58314ecd8e466f"
+      },
+      "2026-r2": {
+        "path": "data/releases/candidate-2026-r2-dacb28aa766eec87/api-snapshot.json",
+        "sha256": "42a51de762ced2e6341c9d3b1ceb3c9cbce79d8fcd7d44b59fd0b68cc620cc79"
+      }
+    },
+    "critical_value_alpha_0_05": 16.918977604620444,
     "data_version": "candidate-2026-r2-dacb28aa766eec87",
-    "election_slug": "presidencia-2026-segunda-vuelta",
-    "legal_status": "preliminary",
     "release_id": "candidate-2026-r2-dacb28aa766eec87",
     "release_status": "candidate",
-    "script": "scripts/compute-comparison-statistics.py",
-    "source_snapshot": "data/releases/candidate-2026-r2-dacb28aa766eec87/api-snapshot.json",
-    "source_snapshot_sha256": "42a51de762ced2e6341c9d3b1ceb3c9cbce79d8fcd7d44b59fd0b68cc620cc79"
-  },
-  "last_digit_uniformity": {
-    "primary": {
-      "combined": {
-        "chi_square": 35.51770534966962,
-        "critical_value_alpha_0_05": 16.918977604620444,
-        "degrees_of_freedom": 9,
-        "exceeds_critical_value": true,
-        "expected_count_per_digit": 23775.3,
-        "input_rows": 237753,
-        "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
-        "observed_counts": [
-          24134,
-          24142,
-          24096,
-          23728,
-          23879,
-          23638,
-          23737,
-          23631,
-          23627,
-          23141
-        ],
-        "p_value": 4.826859579171546e-05
-      },
-      "denominator_floor": 10,
-      "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
-      "per_candidate": {
-        "abelardo-de-la-espriella-jose-manuel-restrepo": {
-          "candidate_name": "De la Espriella / Restrepo",
-          "chi_square": 24.294515325573123,
-          "critical_value_alpha_0_05": 16.918977604620444,
-          "degrees_of_freedom": 9,
-          "exceeds_critical_value": true,
-          "expected_count_per_digit": 11803.8,
-          "input_rows": 118038,
-          "mesa_counts_available": 122020,
-          "observed_counts": [
-            11916,
-            11979,
-            12064,
-            11785,
-            11830,
-            11623,
-            11850,
-            11629,
-            11880,
-            11482
-          ],
-          "p_value": 0.0038591868628121144
-        },
-        "ivan-cepeda-aida-quilcue": {
-          "candidate_name": "Cepeda / Quilcué",
-          "chi_square": 22.213799440337468,
-          "critical_value_alpha_0_05": 16.918977604620444,
-          "degrees_of_freedom": 9,
-          "exceeds_critical_value": true,
-          "expected_count_per_digit": 11971.5,
-          "input_rows": 119715,
-          "mesa_counts_available": 122020,
-          "observed_counts": [
-            12218,
-            12163,
-            12032,
-            11943,
-            12049,
-            12015,
-            11887,
-            12002,
-            11747,
-            11659
-          ],
-          "p_value": 0.008225526297803357
-        }
-      }
-    },
-    "sensitivity": {
-      "combined": {
-        "chi_square": 149.5689096886355,
-        "critical_value_alpha_0_05": 16.918977604620444,
-        "degrees_of_freedom": 9,
-        "exceeds_critical_value": true,
-        "expected_count_per_digit": 12136.9,
-        "input_rows": 121369,
-        "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
-        "observed_counts": [
-          12769,
-          12577,
-          12611,
-          12275,
-          12190,
-          12089,
-          11966,
-          11839,
-          11761,
-          11292
-        ],
-        "p_value": 1.0832912377948369e-27
-      },
-      "denominator_floor": 100,
-      "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
-      "per_candidate": {
-        "abelardo-de-la-espriella-jose-manuel-restrepo": {
-          "candidate_name": "De la Espriella / Restrepo",
-          "chi_square": 62.82524238988816,
-          "critical_value_alpha_0_05": 16.918977604620444,
-          "degrees_of_freedom": 9,
-          "exceeds_critical_value": true,
-          "expected_count_per_digit": 5909.9,
-          "input_rows": 59099,
-          "mesa_counts_available": 122020,
-          "observed_counts": [
-            6144,
-            6123,
-            6236,
-            5885,
-            5941,
-            5778,
-            5832,
-            5778,
-            5806,
-            5576
-          ],
-          "p_value": 3.81406913442625e-10
-        },
-        "ivan-cepeda-aida-quilcue": {
-          "candidate_name": "Cepeda / Quilcué",
-          "chi_square": 102.33756222900273,
-          "critical_value_alpha_0_05": 16.918977604620444,
-          "degrees_of_freedom": 9,
-          "exceeds_critical_value": true,
-          "expected_count_per_digit": 6227.0,
-          "input_rows": 62270,
-          "mesa_counts_available": 122020,
-          "observed_counts": [
-            6625,
-            6454,
-            6375,
-            6390,
-            6249,
-            6311,
-            6134,
-            6061,
-            5955,
-            5716
-          ],
-          "p_value": 5.292793599834543e-18
-        }
-      }
-    },
-    "statistic": "Pearson chi-square of the last digit of mesa-level candidate vote counts against a uniform 1/10 expectation"
+    "script": "scripts/compute-comparison-statistics.py"
   },
   "margin_decomposition": {
     "departments": [
@@ -846,6 +753,7 @@
     ],
     "departments_covered": 34,
     "derivation": "Department totals are sums of the release's own mesa-level result facts. They are a derived rollup, not a figure published at department grain -- this release publishes result facts at mesa, polling-place and national grain only.",
+    "election": "2026-r2",
     "input_rows": 122020,
     "national_derived_from_mesas": {
       "candidate_votes": {
@@ -923,22 +831,576 @@
     "statistic": "decomposition of the national second-round margin across all 34 departments"
   },
   "not_computed": {
-    "benford": "No Benford statistic is computed. Benford's law does not hold for vote counts drawn from precincts of heterogeneous size; see docs/research/comparison-statistics-method.md.",
-    "turnout_below_national_grain": "registered_electors is unavailable on 122,008 of 122,020 mesa facts, so no per-mesa or per-department turnout denominator exists in this release. None is computed at those grains."
+    "benford": "No Benford statistic is computed for any year. Benford's law does not hold for vote counts drawn from precincts of heterogeneous size; see docs/research/comparison-statistics-method.md.",
+    "margin_decomposition_for_2018_and_2022": "Not computed. Candidate identity in the MMV annex is unambiguous -- exactly two candidate categories, 001 and 002, in both years -- so the arithmetic is available. It is withheld because a cross-stage margin decomposition between the preconteo and the MMV annex, over department universes carrying the unresolved exterior anomalies above, is the same kind of under-specified comparison that produced the retraction in method-record.md item 16. The 2026 decomposition stands alone and is labelled as such.",
+    "turnout_below_national_grain": "registered_electors is unavailable on 122,008 of 122,020 mesa facts in 2026, and the MMV annex carries no elector column at all. No per-mesa or per-department turnout denominator exists in any of the three sources, so none is computed at those grains."
   },
-  "schema": "comparison-statistics/1",
-  "scope": {
-    "mesa_facts_skipped_unobserved": 0,
-    "mesa_facts_with_all_candidate_cells_observed": 122020,
-    "mesa_result_facts_in_release": 122020
-  },
-  "unanimous_mesas": {
-    "definition": "Two-candidate second round, so a unanimous mesa is one where the other candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded from both sides of the ratio.",
-    "excluded_zero_candidate_vote_mesas": 14,
-    "input_rows": 122006,
-    "percent": 0.6270183433601626,
-    "share": 0.006270183433601626,
-    "statistic": "share of mesas where one candidate received every candidate vote cast in that mesa",
-    "unanimous_mesas": 765
+  "schema": "comparison-statistics/2",
+  "years": {
+    "2018-r2": {
+      "election": {
+        "corporation": "PRESIDENTE",
+        "election_slug": "presidencia-2018-round-2",
+        "round": 2
+      },
+      "last_digit_uniformity": {
+        "primary": {
+          "combined": {
+            "chi_square": 30.17435441913584,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 18913.2,
+            "input_rows": 189132,
+            "max_digit_share_deviation_percentage_points": 0.2041960112514012,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              19226,
+              19194,
+              19174,
+              19154,
+              18863,
+              18710,
+              18527,
+              18823,
+              18739,
+              18722
+            ],
+            "p_value": 0.0004097336472120189
+          },
+          "denominator_floor": 10,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "001": {
+              "candidate_name": "PETRO",
+              "chi_square": 35.40582600485854,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 9426.7,
+              "input_rows": 94267,
+              "max_digit_share_deviation_percentage_points": 0.340840378923696,
+              "mesa_counts_available": 97645,
+              "observed_counts": [
+                9589,
+                9617,
+                9748,
+                9563,
+                9427,
+                9185,
+                9250,
+                9364,
+                9290,
+                9234
+              ],
+              "p_value": 5.051891017408824e-05
+            },
+            "002": {
+              "candidate_name": "DUQUE",
+              "chi_square": 10.067833236704791,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": false,
+              "expected_count_per_digit": 9486.5,
+              "input_rows": 94865,
+              "max_digit_share_deviation_percentage_points": 0.22084014125336004,
+              "mesa_counts_available": 97645,
+              "observed_counts": [
+                9637,
+                9577,
+                9426,
+                9591,
+                9436,
+                9525,
+                9277,
+                9459,
+                9449,
+                9488
+              ],
+              "p_value": 0.3450217026936982
+            }
+          }
+        },
+        "sensitivity": {
+          "combined": {
+            "chi_square": 154.27655764088044,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 8264.1,
+            "input_rows": 82641,
+            "max_digit_share_deviation_percentage_points": 0.7380113987004027,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              8874,
+              8661,
+              8530,
+              8589,
+              8209,
+              8180,
+              7959,
+              7926,
+              7955,
+              7758
+            ],
+            "p_value": 1.1454218080325272e-28
+          },
+          "denominator_floor": 100,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "001": {
+              "candidate_name": "PETRO",
+              "chi_square": 137.08791994281628,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 3357.6,
+              "input_rows": 33576,
+              "max_digit_share_deviation_percentage_points": 1.0704074338813445,
+              "mesa_counts_available": 97645,
+              "observed_counts": [
+                3717,
+                3503,
+                3654,
+                3483,
+                3367,
+                3238,
+                3200,
+                3142,
+                3242,
+                3030
+              ],
+              "p_value": 4.115271561751188e-25
+            },
+            "002": {
+              "candidate_name": "DUQUE",
+              "chi_square": 56.70447365739326,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 4906.5,
+              "input_rows": 49065,
+              "max_digit_share_deviation_percentage_points": 0.5125853459696312,
+              "mesa_counts_available": 97645,
+              "observed_counts": [
+                5157,
+                5158,
+                4876,
+                5106,
+                4842,
+                4942,
+                4759,
+                4784,
+                4713,
+                4728
+              ],
+              "p_value": 5.756465322042269e-09
+            }
+          }
+        },
+        "statistic": "Pearson chi-square of the last digit of mesa-level candidate vote counts against a uniform 1/10 expectation"
+      },
+      "provenance": {
+        "artifact": "data/releases/historical-2018-mmv-context-v2-c456aeb032917d5c/historical-2018-mmv.parquet",
+        "artifact_sha256": "889c135956320953c422177ffeb2c4c4be21b053d0d0852a0ff7b999e104125c",
+        "legal_status": "context_only",
+        "source_type": "contextual_baseline",
+        "stage": "MMV mesa annex"
+      },
+      "scope": {
+        "distinct_mesa_identities": 97645,
+        "explicit_zero_vote_candidate_rows": 0,
+        "mesas_with_both_candidate_rows": 97298,
+        "mesas_with_no_candidate_row": 1,
+        "mesas_with_one_candidate_row": 346,
+        "source_rows_after_filter": 383131,
+        "zero_encoding": "Sparse long format: a candidate with zero votes is generally not written as a row. A missing candidate row is read as zero recorded votes. This is an encoding assumption that does NOT apply to the 2026 snapshot, where every cell is explicit and observed."
+      },
+      "unanimous_mesas": {
+        "definition": "Two-candidate second round, so a unanimous mesa is one where the other candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded from both sides of the ratio.",
+        "excluded_zero_candidate_vote_mesas": 1,
+        "input_rows": 97644,
+        "percent": 0.35434844946950145,
+        "share": 0.0035434844946950145,
+        "statistic": "share of mesas where one candidate received every candidate vote cast in that mesa",
+        "unanimous_mesas": 346
+      }
+    },
+    "2022-r2": {
+      "election": {
+        "corporation": "PRESIDENTE",
+        "election_slug": "presidencia-2022-round-2",
+        "round": 2
+      },
+      "last_digit_uniformity": {
+        "primary": {
+          "combined": {
+            "chi_square": 55.718023590117944,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 19999.9,
+            "input_rows": 199999,
+            "max_digit_share_deviation_percentage_points": 0.25245126225631154,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              20457,
+              20455,
+              20257,
+              20159,
+              20116,
+              19809,
+              19981,
+              19768,
+              19495,
+              19502
+            ],
+            "p_value": 8.885488458258283e-09
+          },
+          "denominator_floor": 10,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "001": {
+              "candidate_name": "RODOLFO HERNÁNDEZ",
+              "chi_square": 54.32724828415764,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 9893.1,
+              "input_rows": 98931,
+              "max_digit_share_deviation_percentage_points": 0.5530116950197606,
+              "mesa_counts_available": 103364,
+              "observed_counts": [
+                10174,
+                10115,
+                10088,
+                10030,
+                9939,
+                9834,
+                9893,
+                9827,
+                9685,
+                9346
+              ],
+              "p_value": 1.635794191950451e-08
+            },
+            "002": {
+              "candidate_name": "GUSTAVO PETRO",
+              "chi_square": 22.800846954525667,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 10106.8,
+              "input_rows": 101068,
+              "max_digit_share_deviation_percentage_points": 0.29366367198321974,
+              "mesa_counts_available": 103364,
+              "observed_counts": [
+                10283,
+                10340,
+                10169,
+                10129,
+                10177,
+                9975,
+                10088,
+                9941,
+                9810,
+                10156
+              ],
+              "p_value": 0.006659420765942889
+            }
+          }
+        },
+        "sensitivity": {
+          "combined": {
+            "chi_square": 120.93360287334889,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 10190.2,
+            "input_rows": 101902,
+            "max_digit_share_deviation_percentage_points": 0.5356126474455856,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              10736,
+              10651,
+              10393,
+              10334,
+              10391,
+              10019,
+              10091,
+              9904,
+              9719,
+              9664
+            ],
+            "p_value": 8.604201044637435e-22
+          },
+          "denominator_floor": 100,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "001": {
+              "candidate_name": "RODOLFO HERNÁNDEZ",
+              "chi_square": 79.91196052155786,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 4701.3,
+              "input_rows": 47013,
+              "max_digit_share_deviation_percentage_points": 0.781273264841639,
+              "mesa_counts_available": 103364,
+              "observed_counts": [
+                4985,
+                4877,
+                4839,
+                4818,
+                4796,
+                4620,
+                4720,
+                4580,
+                4444,
+                4334
+              ],
+              "p_value": 1.6825340280143804e-13
+            },
+            "002": {
+              "candidate_name": "GUSTAVO PETRO",
+              "chi_square": 52.17528102169834,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 5488.9,
+              "input_rows": 54889,
+              "max_digit_share_deviation_percentage_points": 0.5194119040244853,
+              "mesa_counts_available": 103364,
+              "observed_counts": [
+                5751,
+                5774,
+                5554,
+                5516,
+                5595,
+                5399,
+                5371,
+                5324,
+                5275,
+                5330
+              ],
+              "p_value": 4.188083602545009e-08
+            }
+          }
+        },
+        "statistic": "Pearson chi-square of the last digit of mesa-level candidate vote counts against a uniform 1/10 expectation"
+      },
+      "provenance": {
+        "artifact": "data/releases/historical-2022-mmv-context-v2-288e9b41c14730e9/historical-2022-mmv.parquet",
+        "artifact_sha256": "e698b99a8ead7a7d395e8e527a240b2c7def40b3c1076c771d58314ecd8e466f",
+        "legal_status": "context_only",
+        "source_type": "contextual_baseline",
+        "stage": "MMV mesa annex"
+      },
+      "scope": {
+        "distinct_mesa_identities": 103364,
+        "explicit_zero_vote_candidate_rows": 89,
+        "mesas_with_both_candidate_rows": 102843,
+        "mesas_with_no_candidate_row": 1,
+        "mesas_with_one_candidate_row": 520,
+        "source_rows_after_filter": 398386,
+        "zero_encoding": "Sparse long format: a candidate with zero votes is generally not written as a row. A missing candidate row is read as zero recorded votes. This is an encoding assumption that does NOT apply to the 2026 snapshot, where every cell is explicit and observed."
+      },
+      "unanimous_mesas": {
+        "definition": "Two-candidate second round, so a unanimous mesa is one where the other candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded from both sides of the ratio.",
+        "excluded_zero_candidate_vote_mesas": 45,
+        "input_rows": 103319,
+        "percent": 0.504263494613769,
+        "share": 0.00504263494613769,
+        "statistic": "share of mesas where one candidate received every candidate vote cast in that mesa",
+        "unanimous_mesas": 521
+      }
+    },
+    "2026-r2": {
+      "election": {
+        "corporation": "PRESIDENTE",
+        "election_slug": "presidencia-2026-segunda-vuelta",
+        "round": 2
+      },
+      "last_digit_uniformity": {
+        "primary": {
+          "combined": {
+            "chi_square": 35.51770534966962,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 23775.3,
+            "input_rows": 237753,
+            "max_digit_share_deviation_percentage_points": 0.26678948320315676,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              24134,
+              24142,
+              24096,
+              23728,
+              23879,
+              23638,
+              23737,
+              23631,
+              23627,
+              23141
+            ],
+            "p_value": 4.826859579171546e-05
+          },
+          "denominator_floor": 10,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "abelardo-de-la-espriella-jose-manuel-restrepo": {
+              "candidate_name": "De la Espriella / Restrepo",
+              "chi_square": 24.294515325573123,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 11803.8,
+              "input_rows": 118038,
+              "max_digit_share_deviation_percentage_points": 0.27262407021467716,
+              "mesa_counts_available": 122020,
+              "observed_counts": [
+                11916,
+                11979,
+                12064,
+                11785,
+                11830,
+                11623,
+                11850,
+                11629,
+                11880,
+                11482
+              ],
+              "p_value": 0.0038591868628121144
+            },
+            "ivan-cepeda-aida-quilcue": {
+              "candidate_name": "Cepeda / Quilcué",
+              "chi_square": 22.213799440337468,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 11971.5,
+              "input_rows": 119715,
+              "max_digit_share_deviation_percentage_points": 0.261036628659733,
+              "mesa_counts_available": 122020,
+              "observed_counts": [
+                12218,
+                12163,
+                12032,
+                11943,
+                12049,
+                12015,
+                11887,
+                12002,
+                11747,
+                11659
+              ],
+              "p_value": 0.008225526297803357
+            }
+          }
+        },
+        "sensitivity": {
+          "combined": {
+            "chi_square": 149.5689096886355,
+            "critical_value_alpha_0_05": 16.918977604620444,
+            "degrees_of_freedom": 9,
+            "exceeds_critical_value": true,
+            "expected_count_per_digit": 12136.9,
+            "input_rows": 121369,
+            "max_digit_share_deviation_percentage_points": 0.6961415188392426,
+            "note": "The two candidates' counts within a mesa are not independent -- they are bounded by the same valid-vote total -- so the pooled statistic understates its own variance. The per-candidate statistics are the primary reading; this pooled figure is descriptive only.",
+            "observed_counts": [
+              12769,
+              12577,
+              12611,
+              12275,
+              12190,
+              12089,
+              11966,
+              11839,
+              11761,
+              11292
+            ],
+            "p_value": 1.0832912377948369e-27
+          },
+          "denominator_floor": 100,
+          "floor_rationale": "Only mesa candidate counts of at least this value are included. Below 10 the last digit is the count itself, so the digit distribution is the distribution of small mesa totals and is non-uniform by construction.",
+          "per_candidate": {
+            "abelardo-de-la-espriella-jose-manuel-restrepo": {
+              "candidate_name": "De la Espriella / Restrepo",
+              "chi_square": 62.82524238988816,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 5909.9,
+              "input_rows": 59099,
+              "max_digit_share_deviation_percentage_points": 0.5649841790893255,
+              "mesa_counts_available": 122020,
+              "observed_counts": [
+                6144,
+                6123,
+                6236,
+                5885,
+                5941,
+                5778,
+                5832,
+                5778,
+                5806,
+                5576
+              ],
+              "p_value": 3.81406913442625e-10
+            },
+            "ivan-cepeda-aida-quilcue": {
+              "candidate_name": "Cepeda / Quilcué",
+              "chi_square": 102.33756222900273,
+              "critical_value_alpha_0_05": 16.918977604620444,
+              "degrees_of_freedom": 9,
+              "exceeds_critical_value": true,
+              "expected_count_per_digit": 6227.0,
+              "input_rows": 62270,
+              "max_digit_share_deviation_percentage_points": 0.8206198811626795,
+              "mesa_counts_available": 122020,
+              "observed_counts": [
+                6625,
+                6454,
+                6375,
+                6390,
+                6249,
+                6311,
+                6134,
+                6061,
+                5955,
+                5716
+              ],
+              "p_value": 5.292793599834543e-18
+            }
+          }
+        },
+        "statistic": "Pearson chi-square of the last digit of mesa-level candidate vote counts against a uniform 1/10 expectation"
+      },
+      "provenance": {
+        "artifact": "data/releases/candidate-2026-r2-dacb28aa766eec87/api-snapshot.json",
+        "artifact_sha256": "42a51de762ced2e6341c9d3b1ceb3c9cbce79d8fcd7d44b59fd0b68cc620cc79",
+        "legal_status": "preliminary",
+        "release_id": "candidate-2026-r2-dacb28aa766eec87",
+        "source_type": "pre_count",
+        "stage": "preconteo (election-night preliminary count)"
+      },
+      "scope": {
+        "mesa_facts_skipped_unobserved": 0,
+        "mesa_facts_with_all_candidate_cells_observed": 122020,
+        "mesa_result_facts_in_release": 122020,
+        "zero_encoding": "Every candidate cell in this release is explicitly present with status observed, including zeros. Nothing is inferred from absence."
+      },
+      "unanimous_mesas": {
+        "definition": "Two-candidate second round, so a unanimous mesa is one where the other candidate received exactly zero. Blank, null and unmarked ballots are not candidate votes and are excluded from both sides of the ratio.",
+        "excluded_zero_candidate_vote_mesas": 14,
+        "input_rows": 122006,
+        "percent": 0.6270183433601626,
+        "share": 0.006270183433601626,
+        "statistic": "share of mesas where one candidate received every candidate vote cast in that mesa",
+        "unanimous_mesas": 765
+      }
+    }
   }
 }

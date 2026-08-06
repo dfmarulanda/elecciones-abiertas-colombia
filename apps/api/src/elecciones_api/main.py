@@ -67,6 +67,7 @@ from .schemas import (
     NormalizedCategoryPage,
     OutcomeSensitivity,
     PackagedDataset,
+    PreliminaryElectionSummary,
     Provenance,
     ReleaseElectionRef,
     ResultFact,
@@ -865,18 +866,25 @@ def create_app(
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
-        return _cached_json(
-            request,
-            translate(
-                lambda: _validated_public(
-                    ContextElectionSummary,
-                    _normalized_summary_payload(
-                        repository.normalized_summary(release_id, election_slug),
-                        release_id,
-                    ),
-                )
-            ),
-        )
+        def summary_payload() -> dict[str, object]:
+            raw = repository.normalized_summary(release_id, election_slug)
+            payload = _normalized_summary_payload(raw, release_id)
+            # Each model pins exactly one release class, so the class in the
+            # payload selects it. A preliminary release cannot be validated as
+            # context-only, nor the reverse.
+            model = (
+                PreliminaryElectionSummary
+                if payload.get("release_class") == "standard"
+                else ContextElectionSummary
+            )
+            validated = _validated_public(model, payload)
+            # _validated_public drops unset fields; the exposure class must
+            # survive so _cached_json can stamp the transport too.
+            if payload.get("exposure_class"):
+                validated["exposure_class"] = payload["exposure_class"]
+            return validated
+
+        return _cached_json(request, translate(summary_payload))
 
     @app.get(
         "/api/v1/releases/{release_id}/elections/{election_slug}/datasets",
