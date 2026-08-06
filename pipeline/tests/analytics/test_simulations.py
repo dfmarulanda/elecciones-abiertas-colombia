@@ -165,8 +165,8 @@ def test_end_to_end_validation_separates_null_fwer_and_per_run_alternative_fdp(
             expected_family_digest=first.expected_family_digest,
             input_artifact_hash=first.input_artifact_hash,
         )
-    payload = asdict(summary)
-    payload.pop("artifact_hash")
+    payload = summary.artifact_payload()
+    assert "attestation" not in payload and "artifact_hash" not in payload
     encoded = json.dumps(
         payload,
         sort_keys=True,
@@ -175,6 +175,8 @@ def test_end_to_end_validation_separates_null_fwer_and_per_run_alternative_fdp(
         allow_nan=False,
     )
     assert summary.artifact_hash == hashlib.sha256(encoded.encode()).hexdigest()
+    assert summary.attestation is not None
+    assert summary.attestation.attests_artifact_hash == summary.artifact_hash
 
 
 def test_simulation_keys_are_canonical_and_original_cohort_must_authenticate(
@@ -224,8 +226,12 @@ def test_real_peer_detector_has_deterministic_null_control_and_injection_power()
         injection_size=0.9,
     )
 
-    assert first == replay
+    # Same measurements, same content hash.  The attestations differ in wall
+    # clock even on one machine, which is exactly why they are not hashed.
+    assert first.artifact_payload() == replay.artifact_payload()
     assert first.artifact_hash == replay.artifact_hash
+    assert first.attestation != replay.attestation
+    assert replace(first, attestation=None) == replace(replay, attestation=None)
     assert first.null_simulations == first.alternative_simulations == 100
     # The intentionally misspecified, heavy-tailed null is a stress design;
     # it must expose when the detector fails its calibration gate rather than
@@ -244,7 +250,7 @@ def test_real_peer_detector_has_deterministic_null_control_and_injection_power()
     assert not first.production_eligible
     assert first.profile_name == profile.name
     assert first.profile_hash
-    assert first.runtime_fingerprint
+    assert first.attestation is not None and first.attestation.runtime_fingerprint
     assert set(first.detector_bindings) == {"peer"}
     assert first.power_by_stratum
     assert not first.trusted_input_registry_verified
@@ -254,6 +260,166 @@ def test_real_peer_detector_has_deterministic_null_control_and_injection_power()
         for run in first.alternative_runs
         for injection in run.injections
     )
+
+
+def _perfect_detector(arm: int) -> object:
+    """A detector that flags exactly the injected mesa and nothing else.
+
+    This is not a claim about the real detector.  It is the only way to reach
+    the branch where both computed gates pass, which is the branch the
+    hardcoded ``release_gate_passed=False`` made unreachable.
+    """
+    calls = {"index": 0}
+
+    def fake_peer_signals(rows: object) -> tuple[SimpleNamespace, ...]:
+        family = tuple(rows)  # type: ignore[arg-type]
+        call_index = calls["index"]
+        calls["index"] += 1
+        family_id = "|".join(
+            (
+                family[0].data_version,
+                family[0].election_slug,
+                family[0].source_layer,
+                family[0].metric,
+                str(family[0].candidate_id),
+            )
+        )
+        flagged: set[str] = set()
+        if call_index >= arm:
+            shares = sorted(row.candidate_votes / max(row.valid_votes, 1) for row in family)
+            median = shares[len(shares) // 2]
+            # The injected mesa is the one furthest from the family centre in
+            # either direction, so this catches negative injections too.
+            target = max(
+                family,
+                key=lambda row: abs(row.candidate_votes / max(row.valid_votes, 1) - median),
+            )
+            flagged.add(target.mesa_id)
+        return tuple(
+            SimpleNamespace(
+                family_id=family_id,
+                mesa_id=row.mesa_id,
+                signal=False,
+                research_signal=row.mesa_id in flagged,
+            )
+            for row in family
+        )
+
+    return fake_peer_signals
+
+
+def test_release_gate_boolean_is_the_computed_conjunction_not_a_constant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An artifact whose two computed gates both pass must say so.
+
+    A hardcoded False here is indistinguishable, to the release verifier, from
+    a producer who tampered with the gate booleans: the verifier recomputes the
+    conjunction and reports any disagreement as a spoofed artifact.
+    """
+    profile = replace(simulations.CI_PROFILE, name="test-seed-41", seed=41)
+    monkeypatch.setattr(simulations, "peer_signals", _perfect_detector(100))
+    monkeypatch.setattr(
+        simulations, "peer_research_detection", lambda item: bool(item.research_signal)
+    )
+    summary = simulations.run_end_to_end_validation(
+        release_id="release-r2-v1",
+        peer_records=_peer_family(),
+        simulations=100,
+        seed=41,
+        profile=profile,
+        injected_discrepancies=1,
+        injection_size=0.9,
+    )
+
+    assert summary.false_discovery_gate_passed
+    assert summary.injected_discrepancy_gate_passed
+    assert summary.release_gate_passed is (
+        summary.false_discovery_gate_passed and summary.injected_discrepancy_gate_passed
+    )
+    assert summary.release_gate_passed is True
+    # Passing the statistical gates is not eligibility, and must not leak into
+    # it: those flags stay False and are not derived from this one.
+    assert not summary.production_eligible
+    assert not summary.independent_full_artifact_passed
+    assert not summary.trusted_input_registry_verified
+    assert not summary.external_family_ledger_verified
+    assert summary.detector_validation["peer"]["production_eligible"] is False
+
+
+def test_failing_gates_still_report_a_false_conjunction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The same field must go red when a gate genuinely fails."""
+    profile = replace(simulations.CI_PROFILE, name="test-seed-42", seed=42)
+    # The detector fires on every run, including the pure-null arm.
+    monkeypatch.setattr(simulations, "peer_signals", _perfect_detector(0))
+    monkeypatch.setattr(
+        simulations, "peer_research_detection", lambda item: bool(item.research_signal)
+    )
+    summary = simulations.run_end_to_end_validation(
+        release_id="release-r2-v1",
+        peer_records=_peer_family(),
+        simulations=100,
+        seed=42,
+        profile=profile,
+        injected_discrepancies=1,
+        injection_size=0.9,
+    )
+
+    assert not summary.false_discovery_gate_passed
+    assert not summary.release_gate_passed
+
+
+def test_attestation_is_recorded_but_excluded_from_the_content_hash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two hosts that measure the same numbers must produce the same hash.
+
+    Hashing the runtime fingerprint made "bit-identical" and "independently
+    replayed" mutually exclusive: no honest replay on a second machine could
+    ever match, so the byte-comparison gate could only be satisfied by the
+    producer verifying itself.
+    """
+    profile = replace(simulations.CI_PROFILE, name="test-seed-53", seed=53)
+    monkeypatch.setattr(simulations, "peer_signals", _perfect_detector(100))
+    monkeypatch.setattr(
+        simulations, "peer_research_detection", lambda item: bool(item.research_signal)
+    )
+
+    def run() -> simulations.SimulationSummary:
+        return simulations.run_end_to_end_validation(
+            release_id="release-r2-v1",
+            peer_records=_peer_family(),
+            simulations=100,
+            seed=53,
+            profile=profile,
+            injected_discrepancies=1,
+            injection_size=0.9,
+        )
+
+    produced = run()
+    assert produced.attestation is not None
+
+    # Simulate the same measurements executed on a different machine.
+    foreign = replace(
+        produced.attestation,
+        runtime_fingerprint="b" * 64,
+        platform_identity="Linux-6.1.0-x86_64-with-glibc2.36",
+        numpy_version="1.26.4",
+        executed_at="2026-08-06T00:00:00.000000+00:00",
+    )
+    replayed = replace(produced, attestation=foreign).with_hash()
+
+    assert replayed.artifact_hash == produced.artifact_hash
+    assert replayed.artifact_payload() == produced.artifact_payload()
+    assert replayed.attestation is not None
+    assert replayed.attestation.runtime_fingerprint != produced.attestation.runtime_fingerprint
+    assert replayed.attestation.attests_artifact_hash == produced.artifact_hash
+    # The fingerprint is still evidence; it is simply not hashed.
+    assert produced.attestation.runtime_fingerprint == simulations.simulation_runtime_fingerprint()
+    assert "attestation" not in produced.artifact_payload()
+    assert "runtime_fingerprint" not in produced.artifact_payload()
 
 
 def test_full_release_profile_declares_1000_independent_runs_without_running_them() -> None:

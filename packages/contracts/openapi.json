@@ -5486,6 +5486,106 @@
         "summary": "Normalized Geography Children"
       }
     },
+    "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/children-results": {
+      "get": {
+        "summary": "Normalized Children Results",
+        "description": "Children plus their vote totals in one request.\n\nExists because ``/results`` reaches candidate votes only through a\nper-fact categories call: drilling into one polling place would cost up\nto 228 extra round trips. This is the drill-down read.",
+        "operationId": "normalized_children_results_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__children_results_get",
+        "parameters": [
+          {
+            "name": "release_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Release Id"
+            }
+          },
+          {
+            "name": "election_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Election Slug"
+            }
+          },
+          {
+            "name": "geography_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Geography Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/path": {
       "get": {
         "operationId": "normalized_geography_path_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__path_get",

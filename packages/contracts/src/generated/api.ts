@@ -344,6 +344,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/children-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Normalized Children Results
+         * @description Children plus their vote totals in one request.
+         *
+         *     Exists because ``/results`` reaches candidate votes only through a
+         *     per-fact categories call: drilling into one polling place would cost up
+         *     to 228 extra round trips. This is the drill-down read.
+         */
+        get: operations["normalized_children_results_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__children_results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/path": {
         parameters: {
             query?: never;
@@ -2437,6 +2461,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GeographyChildPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    normalized_children_results_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__children_results_get: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+                limit?: number;
+                level?: string | null;
+            };
+            header?: never;
+            path: {
+                release_id: string;
+                election_slug: string;
+                geography_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

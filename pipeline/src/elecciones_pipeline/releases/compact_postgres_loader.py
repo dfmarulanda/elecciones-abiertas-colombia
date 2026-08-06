@@ -19,9 +19,8 @@ from typing import Any
 import pyarrow.compute as pc  # type: ignore[import-untyped]
 from sqlalchemy import Engine, text
 
-from .postgres_loader import (
+from ._bulk import (
     _PAIR,
-    _ROW_PROVENANCE_COLUMNS,
     ReleaseLoadError,
     _artifact,
     _batches,
@@ -32,6 +31,7 @@ from .postgres_loader import (
     _require_string,
     _timestamp,
 )
+from .postgres_loader import _ROW_PROVENANCE_COLUMNS
 
 _LEVELS = {
     "national": 0,

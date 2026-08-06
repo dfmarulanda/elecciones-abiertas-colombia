@@ -6,7 +6,7 @@ import hashlib
 import io
 import json
 import os
-from collections.abc import AsyncIterator, Callable, Iterable
+from collections.abc import AsyncIterator, Callable, Iterable, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal, TypeVar, cast
@@ -157,11 +157,27 @@ def _if_none_match(header: str | None, current: str) -> bool:
     return current_opaque in candidates
 
 
+#: Every response carrying preliminary data must say so in a header as well as
+#: in its body, so a client that only reads headers — a cache, a proxy, a
+#: scraper — cannot mistake a pre-count for a certified result.
+DATA_CLASS_HEADER = "X-Election-Data-Class"
+PreliminaryCache = "public, max-age=60"
+
+
 def _cached_json(
     request: Request, payload: object, cache_control: str = HistoricalCache
 ) -> Response:
     tag = _etag(payload)
     headers = {"ETag": tag, "Cache-Control": cache_control, "Vary": "Origin"}
+    # A preliminary payload is short-lived and must never be cached as long as
+    # an immutable certified one. The class is read off the payload the
+    # repository built, so the label and the grant that authorised it cannot
+    # drift apart.
+    if isinstance(payload, Mapping) and payload.get("exposure_class") == "preliminary":
+        headers[DATA_CLASS_HEADER] = "preliminary"
+        headers["Cache-Control"] = PreliminaryCache
+    elif isinstance(payload, Mapping) and payload.get("exposure_class") == "certified":
+        headers[DATA_CLASS_HEADER] = "certified"
     if _if_none_match(request.headers.get("if-none-match"), tag):
         return Response(status_code=304, headers=headers)
     return JSONResponse(_jsonable(payload), headers=headers)
@@ -1143,6 +1159,68 @@ def create_app(
         return _cached_json(
             request, translate(lambda: _validated_public(GeographyChildPage, payload))
         )
+
+    @app.get(
+        "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/children-results",
+    )
+    async def normalized_children_results(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        geography_id: str,
+        cursor: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 50,
+        level: str | None = None,
+    ) -> Response:
+        """Children plus their vote totals in one request.
+
+        Exists because ``/results`` reaches candidate votes only through a
+        per-fact categories call: drilling into one polling place would cost up
+        to 228 extra round trips. This is the drill-down read.
+        """
+        repository = repo(request)
+        if not isinstance(repository, PostgresReadRepository):
+            raise APIProblem(
+                404, "Resource not found", "Normalized release reads require PostgreSQL."
+            )
+        scope = scope_for(
+            {
+                "release": release_id,
+                "election": election_slug,
+                "parent": geography_id,
+                "level": level,
+                "order": "level/code/id",
+                "shape": "children-results",
+            }
+        )
+        try:
+            after = (
+                None
+                if cursor is None
+                else decode_keyset_cursor(cursor, scope, settings.cursor_secret)
+            )
+            if after is not None and len(after) != 3:
+                raise CursorError("The cursor position is invalid.")
+        except CursorError as exc:
+            raise APIProblem(400, "Invalid cursor", str(exc)) from exc
+        result = translate(
+            lambda: repository.normalized_children_results(
+                release_id, election_slug, geography_id, level, after, limit
+            )
+        )
+        last = cast(tuple[str, ...] | None, result.pop("last", None))
+        has_more = bool(result.pop("has_more", False))
+        next_cursor = (
+            encode_keyset_cursor(last, scope, settings.cursor_secret)
+            if has_more and last is not None
+            else None
+        )
+        result["page"] = {
+            "next_cursor": next_cursor,
+            "has_more": has_more,
+            "limit": limit,
+        }
+        return _cached_json(request, result)
 
     @app.get(
         "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}",

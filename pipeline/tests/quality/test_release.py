@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from elecciones_pipeline.analytics.priority import DISCLOSURE_EN, DISCLOSURE_ES
+from elecciones_pipeline.analytics.simulations import artifact_content_section
 from elecciones_pipeline.quality import (
     QualityError,
     canonical_hash,
@@ -133,6 +134,22 @@ def simulation_summary(**overrides: object) -> dict[str, object]:
     result = passing_simulation_summary()
     result.update(overrides)
     return result
+
+
+def rehash(summary: dict[str, object]) -> dict[str, object]:
+    """Re-seal a mutated artifact the way an honest producer would.
+
+    A forger who edits a measurement can always recompute the content hash and
+    re-point the attestation at it, so tests must do the same: anything a
+    tamper test catches only because the tamperer forgot to rehash is not a
+    property of the gate.
+    """
+    content_hash = canonical_hash(artifact_content_section(summary))
+    summary["artifact_hash"] = content_hash
+    attestation = summary.get("attestation")
+    if isinstance(attestation, dict):
+        summary["attestation"] = {**attestation, "attests_artifact_hash": content_hash}
+    return summary
 
 
 def test_frozen_cases_document_every_required_release_failure() -> None:
@@ -318,9 +335,7 @@ def test_statistical_release_gate_rejects_spoofed_booleans_and_all_flag_fdr() ->
         confusion_totals={"true_positive": 0, "false_positive": 100, "false_negative": 0}
     )
     all_flag["empirical_fdr"] = 1.0
-    payload = dict(all_flag)
-    payload.pop("artifact_hash")
-    all_flag["artifact_hash"] = canonical_hash(payload)
+    rehash(all_flag)
     assert "statistics" in {
         item.code
         for item in verify_release(
@@ -333,12 +348,6 @@ def test_statistical_release_gate_rejects_spoofed_booleans_and_all_flag_fdr() ->
 
 
 def test_statistical_artifact_recomputes_run_fdp_confusion_code_and_cohort_bindings() -> None:
-    def rehash(summary: dict[str, object]) -> dict[str, object]:
-        payload = dict(summary)
-        payload.pop("artifact_hash", None)
-        summary["artifact_hash"] = canonical_hash(payload)
-        return summary
-
     spoofed_fdp = deepcopy(simulation_summary())
     spoofed_fdp["empirical_fdr"] = 1 / 3
     assert _statistical_errors(rehash(spoofed_fdp), release_id="r1")
@@ -374,6 +383,104 @@ def test_statistical_artifact_recomputes_run_fdp_confusion_code_and_cohort_bindi
     assert _statistical_errors(rehash(stale_run_cohort), release_id="r1")
 
 
+def _replay_findings(summary: dict[str, object]) -> tuple[str, ...]:
+    trusted = trusted_simulation_inputs()
+    return tuple(
+        finding.detail
+        for finding in _statistical_errors(
+            summary,
+            release_id="r1",
+            replay_inputs=trusted,
+            trusted_registry_artifact_hashes=frozenset({str(trusted.registry_artifact_hash)}),
+        )
+    )
+
+
+def test_honest_artifact_is_not_reported_as_forged_or_as_a_hash_mismatch() -> None:
+    """The two conditions the gate used to make unsatisfiable, together.
+
+    An unmodified analyzer artifact must fail neither the gate-boolean check
+    nor the replay byte comparison.  Both previously fired on honest output:
+    the analyzer hardcoded ``release_gate_passed=False`` while the verifier
+    recomputed the conjunction, and the content hash covered the producer's
+    platform string so no replay could reproduce it.
+    """
+    details = _replay_findings(passing_simulation_summary())
+    assert not any("gate booleans are spoofed" in detail for detail in details)
+    assert not any("does not exactly match trusted analyzer replay" in detail for detail in details)
+    assert not any("hash does not bind its fields" in detail for detail in details)
+
+
+def test_replay_on_the_producers_own_runtime_is_not_independent_evidence() -> None:
+    """One host signing its own work is one witness, not two."""
+    same_host = _replay_findings(passing_simulation_summary())
+    assert any("replay is not independent" in detail for detail in same_host)
+
+    # The identical measurements, attested by a second machine.
+    elsewhere = deepcopy(passing_simulation_summary())
+    attestation = elsewhere["attestation"]
+    assert isinstance(attestation, dict)
+    elsewhere["attestation"] = {
+        **attestation,
+        "runtime_fingerprint": "c" * 64,
+        "platform_identity": "Linux-6.1.0-x86_64-with-glibc2.36",
+    }
+    details = _replay_findings(elsewhere)
+    assert not any("replay is not independent" in detail for detail in details)
+    # Changing only the attestation must not disturb the content comparison.
+    assert not any("does not exactly match trusted analyzer replay" in detail for detail in details)
+    assert not any("hash does not bind its fields" in detail for detail in details)
+
+
+def test_artifact_without_a_binding_attestation_is_rejected() -> None:
+    missing = deepcopy(passing_simulation_summary())
+    missing.pop("attestation")
+    assert any("missing fields" in detail for detail in _replay_findings(missing))
+
+    unbound = deepcopy(passing_simulation_summary())
+    attestation = unbound["attestation"]
+    assert isinstance(attestation, dict)
+    unbound["attestation"] = {**attestation, "attests_artifact_hash": "d" * 64}
+    assert any(
+        "attestation does not identify the executing runtime" in detail
+        for detail in _replay_findings(unbound)
+    )
+
+    unfingerprinted = deepcopy(passing_simulation_summary())
+    assert isinstance(unfingerprinted["attestation"], dict)
+    unfingerprinted["attestation"] = {
+        **unfingerprinted["attestation"],
+        "runtime_fingerprint": "not-a-digest",
+    }
+    assert any(
+        "attestation does not identify the executing runtime" in detail
+        for detail in _replay_findings(unfingerprinted)
+    )
+
+
+def test_attestation_cannot_smuggle_measurements_past_the_content_hash() -> None:
+    """The excluded section must stay non-load-bearing.
+
+    Excluding a field from the content hash is only safe if nothing reads it as
+    a measurement, so the gate result must be identical with any attestation.
+    """
+    baseline = _replay_findings(passing_simulation_summary())
+    tampered = deepcopy(passing_simulation_summary())
+    attestation = tampered["attestation"]
+    assert isinstance(attestation, dict)
+    tampered["attestation"] = {
+        **attestation,
+        "runtime_fingerprint": "c" * 64,
+        "release_gate_passed": True,
+        "production_eligible": True,
+    }
+    details = _replay_findings(tampered)
+    assert "the authenticated statistical validation gate did not pass" in details
+    assert set(details) - {
+        detail for detail in details if "replay is not independent" in detail
+    } == set(baseline) - {detail for detail in baseline if "replay is not independent" in detail}
+
+
 def test_statistical_replay_rejects_a_rehashed_perfect_fabrication() -> None:
     """A caller cannot turn a summary plus hashes into analyzer evidence."""
     trusted = trusted_simulation_inputs()
@@ -390,9 +497,7 @@ def test_statistical_replay_rejects_a_rehashed_perfect_fabrication() -> None:
         **stale_key_schema["injection_spec"],  # type: ignore[arg-type]
         "key_schema": "canonical-json-[family_id,mesa_id]",
     }
-    payload = dict(stale_key_schema)
-    payload.pop("artifact_hash")
-    stale_key_schema["artifact_hash"] = canonical_hash(payload)
+    rehash(stale_key_schema)
     assert any(
         "injection spec is invalid" in finding.detail
         for finding in _statistical_errors(
@@ -411,9 +516,7 @@ def test_statistical_replay_rejects_a_rehashed_perfect_fabrication() -> None:
     }
     fabricated["release_gate_passed"] = True
     fabricated["injected_discrepancy_gate_passed"] = True
-    payload = dict(fabricated)
-    payload.pop("artifact_hash")
-    fabricated["artifact_hash"] = canonical_hash(payload)
+    rehash(fabricated)
     assert _statistical_errors(
         fabricated,
         release_id="r1",
@@ -425,9 +528,7 @@ def test_statistical_replay_rejects_a_rehashed_perfect_fabrication() -> None:
     # smuggled through: the complete regenerated artifact is compared.
     replay_mismatch = deepcopy(real)
     replay_mismatch["limitations"] = ["manufactured helper claim"]
-    payload = dict(replay_mismatch)
-    payload.pop("artifact_hash")
-    replay_mismatch["artifact_hash"] = canonical_hash(payload)
+    rehash(replay_mismatch)
     assert any(
         "does not exactly match trusted analyzer replay" in finding.detail
         for finding in _statistical_errors(
