@@ -12,7 +12,7 @@ import json
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from math import isfinite
 from typing import Any, cast
@@ -27,6 +27,7 @@ from elecciones_pipeline.analytics.simulations import (
 )
 from elecciones_pipeline.analytics.simulations import (
     TrustedSimulationInputs,
+    artifact_content_section,
     canonical_input_hashes,
     decode_signal_key,
     detector_binding_hash,
@@ -944,6 +945,7 @@ def _statistical_errors(
         "alternative_seeds",
         "alternative_simulations",
         "artifact_hash",
+        "attestation",
         "cohort_declarations",
         "release_id",
         "cohort_hash",
@@ -976,10 +978,12 @@ def _statistical_errors(
     if missing:
         return (_finding("statistics", f"validation artifact missing fields: {sorted(missing)!r}"),)
     artifact_hash = summary.get("artifact_hash")
-    payload = dict(summary)
-    payload.pop("artifact_hash", None)
+    # The content hash covers measurements only.  The attestation section is
+    # excluded by construction: it records which machine ran the analyzer, and
+    # hashing it would make an independent replay unable to reproduce the hash
+    # it is supposed to confirm.
     try:
-        expected_artifact_hash = canonical_hash(payload)
+        expected_artifact_hash = canonical_hash(artifact_content_section(summary))
     except (TypeError, ValueError):
         expected_artifact_hash = ""
     if not (
@@ -988,6 +992,24 @@ def _statistical_errors(
         and artifact_hash == expected_artifact_hash
     ):
         return (_finding("statistics", "validation artifact hash does not bind its fields"),)
+    attestation = summary.get("attestation")
+    declared_fingerprint = (
+        attestation.get("runtime_fingerprint") if isinstance(attestation, Mapping) else None
+    )
+    if (
+        not isinstance(attestation, Mapping)
+        or not isinstance(declared_fingerprint, str)
+        or not _SHA256.fullmatch(declared_fingerprint)
+        or attestation.get("attests_artifact_hash") != artifact_hash
+        or not isinstance(attestation.get("executed_at"), str)
+        or not attestation.get("executed_at")
+    ):
+        return (
+            _finding(
+                "statistics",
+                "validation artifact attestation does not identify the executing runtime",
+            ),
+        )
     # A self-consistent summary is not evidence.  Require the exact original
     # typed rows and an external canonical-hash registry, then replay the real
     # analyzers with the declared configuration before accepting any field.
@@ -1604,11 +1626,32 @@ def _statistical_errors(
     except (TypeError, ValueError, ArithmeticError) as exc:
         errors.append(_finding("statistics", f"trusted analyzer replay failed: {exc}"))
     else:
-        if canonical_hash(summary) != canonical_hash(asdict(replayed)):
+        # Compare the content section only.  The comparison stays complete over
+        # every measured field; what it must not compare is which machine each
+        # side ran on, because that is exactly what is allowed to differ.
+        if canonical_hash(artifact_content_section(summary)) != canonical_hash(
+            replayed.artifact_payload()
+        ):
             errors.append(
                 _finding(
                     "statistics",
                     "validation artifact does not exactly match trusted analyzer replay",
+                )
+            )
+        # A replay executed on the producer's own host re-runs the producer, it
+        # does not corroborate it.  Matching runtime fingerprints mean the two
+        # artifacts share every hardware, library and OS assumption they were
+        # supposed to be testing, so this is not yet independent evidence.
+        replay_attestation = replayed.attestation
+        if replay_attestation is None:
+            errors.append(_finding("statistics", "trusted analyzer replay produced no attestation"))
+        elif replay_attestation.runtime_fingerprint == declared_fingerprint:
+            errors.append(
+                _finding(
+                    "statistics",
+                    "validation replay is not independent: the replay ran on the "
+                    "producer's runtime "
+                    f"({declared_fingerprint[:12]}), so the artifact has one witness, not two",
                 )
             )
     return tuple(errors)

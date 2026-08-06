@@ -182,21 +182,15 @@ def main() -> int:
         - mesas_skipped_unobserved
         - mesas_with_candidate_votes,
         "unanimous_mesas": unanimous,
-        "share": unanimous / mesas_with_candidate_votes
-        if mesas_with_candidate_votes
-        else None,
+        "share": unanimous / mesas_with_candidate_votes if mesas_with_candidate_votes else None,
         "percent": 100 * unanimous / mesas_with_candidate_votes
         if mesas_with_candidate_votes
         else None,
     }
 
     # --- (c) margin decomposition ---------------------------------------------
-    national_votes = {
-        c["candidate_id"]: observed(c["votes"]) for c in national["candidates"]
-    }
-    winner_id, runner_id = sorted(
-        national_votes, key=lambda cid: national_votes[cid], reverse=True
-    )
+    national_votes = {c["candidate_id"]: observed(c["votes"]) for c in national["candidates"]}
+    winner_id, runner_id = sorted(national_votes, key=lambda cid: national_votes[cid], reverse=True)
     published_margin = national_votes[winner_id] - national_votes[runner_id]
 
     derived_national = {
@@ -204,6 +198,8 @@ def main() -> int:
         for cid in candidates
     }
     derived_margin = derived_national[winner_id] - derived_national[runner_id]
+
+    derived_valid_votes = sum(d["valid_votes"] for d in department_totals.values())
 
     rows = []
     for bucket in department_totals.values():
@@ -223,15 +219,11 @@ def main() -> int:
                 "internal_winner": internal_winner,
                 "internal_margin": internal_margin,
                 "internal_margin_share_of_own_valid_votes": (
-                    internal_margin / bucket["valid_votes"]
-                    if bucket["valid_votes"]
-                    else None
+                    internal_margin / bucket["valid_votes"] if bucket["valid_votes"] else None
                 ),
                 "signed_contribution_to_national_margin": signed_contribution,
                 "percent_of_national_margin": 100 * signed_contribution / derived_margin,
-                "share_of_national_valid_votes": (
-                    bucket["valid_votes"] / sum(d["valid_votes"] for d in department_totals.values())
-                ),
+                "share_of_national_valid_votes": (bucket["valid_votes"] / derived_valid_votes),
             }
         )
 
@@ -240,15 +232,11 @@ def main() -> int:
     # carried sort to the bottom. Absolute ranks by the size of the contribution
     # regardless of direction, which is what "share of the national margin"
     # ordinarily means. They disagree, so both are emitted.
-    by_absolute = sorted(
-        rows, key=lambda r: abs(r["percent_of_national_margin"]), reverse=True
-    )
+    by_absolute = sorted(rows, key=lambda r: abs(r["percent_of_national_margin"]), reverse=True)
     for rank, row in enumerate(by_absolute, start=1):
         row["rank_by_absolute_contribution_to_national_margin"] = rank
 
-    by_signed = sorted(
-        rows, key=lambda r: r["percent_of_national_margin"], reverse=True
-    )
+    by_signed = sorted(rows, key=lambda r: r["percent_of_national_margin"], reverse=True)
     for rank, row in enumerate(by_signed, start=1):
         row["rank_by_signed_contribution_to_national_margin"] = rank
 
@@ -263,9 +251,18 @@ def main() -> int:
     exterior = next(r for r in rows if r["code"] == "88")
     antioquia = next(r for r in rows if r["code"] == "01")
 
+    exceeding_exterior_internally = [
+        r
+        for r in rows
+        if (r["internal_margin_share_of_own_valid_votes"] or 0)
+        > (exterior["internal_margin_share_of_own_valid_votes"] or 0)
+    ]
+    exceeding_and_at_least_as_large = [
+        r for r in exceeding_exterior_internally if r["valid_votes"] >= exterior["valid_votes"]
+    ]
+
     margin_block = {
-        "statistic": "decomposition of the national second-round margin across "
-        "all 34 departments",
+        "statistic": "decomposition of the national second-round margin across all 34 departments",
         "derivation": (
             "Department totals are sums of the release's own mesa-level result "
             "facts. They are a derived rollup, not a figure published at "
@@ -286,23 +283,38 @@ def main() -> int:
             "candidate_votes": derived_national,
             "margin": derived_margin,
             "margin_delta_vs_published": derived_margin - published_margin,
+            "valid_votes": derived_valid_votes,
+            "valid_votes_delta_vs_published": derived_valid_votes
+            - observed(national["valid_votes"]),
         },
-        "departments": by_contribution,
+        "departments": by_absolute,
         "retraction_checks": {
             "source": "docs/research/method-record.md item 16",
-            "exterior_rank_by_contribution_to_national_margin": {
+            "exterior_rank_by_share_of_national_margin": {
                 "claimed": 10,
-                "measured": exterior["rank_by_contribution_to_national_margin"],
-                "confirms": exterior["rank_by_contribution_to_national_margin"] == 10,
+                "measured_by_absolute_contribution": exterior[
+                    "rank_by_absolute_contribution_to_national_margin"
+                ],
+                "measured_by_signed_contribution": exterior[
+                    "rank_by_signed_contribution_to_national_margin"
+                ],
+                "confirms": exterior["rank_by_absolute_contribution_to_national_margin"] == 10,
+                "note": (
+                    "The claim holds when departments are ranked by the size of "
+                    "their contribution regardless of direction. Ranked by signed "
+                    "contribution -- counting only the departments that pushed "
+                    "toward the national winner -- the exterior places 4th. The "
+                    "retraction's conclusion does not turn on which ordering is "
+                    "used; the exterior is mid-pack under one and behind three "
+                    "larger contributors under the other."
+                ),
             },
             "exterior_rank_by_internal_margin_rate": {
                 "claimed": 10,
                 "measured": exterior["rank_by_internal_margin_rate"],
                 "confirms": exterior["rank_by_internal_margin_rate"] == 10,
             },
-            "exterior_percent_of_national_margin": exterior[
-                "percent_of_national_margin"
-            ],
+            "exterior_percent_of_national_margin": exterior["percent_of_national_margin"],
             "exterior_share_of_national_valid_votes_percent": 100
             * exterior["share_of_national_valid_votes"],
             "department_01_percent_of_national_margin": {
@@ -310,12 +322,24 @@ def main() -> int:
                 "measured": antioquia["percent_of_national_margin"],
                 "confirms": round(antioquia["percent_of_national_margin"], 1) == 419.5,
             },
-            "departments_exceeding_exterior_internal_margin_rate": sum(
-                1
-                for r in rows
-                if (r["internal_margin_share_of_own_valid_votes"] or 0)
-                > (exterior["internal_margin_share_of_own_valid_votes"] or 0)
-            ),
+            "departments_exceeding_exterior_internal_margin_rate": {
+                "claimed": 9,
+                "measured": len(exceeding_exterior_internally),
+                "confirms": len(exceeding_exterior_internally) == 9,
+                "codes": [r["code"] for r in exceeding_exterior_internally],
+            },
+            "of_those_with_valid_votes_at_least_the_exterior": {
+                "claimed": 4,
+                "measured": len(exceeding_and_at_least_as_large),
+                "confirms": len(exceeding_and_at_least_as_large) == 4,
+                "codes": [r["code"] for r in exceeding_and_at_least_as_large],
+                "note": (
+                    "The retraction says four of the nine have comparable or "
+                    "larger ballot counts. Five of the nine have strictly more "
+                    "valid votes than the exterior. The direction of the "
+                    "retraction's argument is unaffected."
+                ),
+            },
             "reading": (
                 "In a race decided by a margin this small relative to ballots "
                 "cast, many departments individually exceed the national "
@@ -364,12 +388,9 @@ def main() -> int:
     document["document_sha256"] = hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(
-        json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    )
+    OUT.write_text(json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
-    print(f"  document_sha256 (over the payload without this field) "
-          f"{document['document_sha256']}")
+    print(f"  document_sha256 (over the payload without this field) {document['document_sha256']}")
     return 0
 
 

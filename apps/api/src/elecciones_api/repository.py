@@ -765,6 +765,51 @@ class PostgresReadRepository:
         if not rows:
             raise ReleaseNotFoundError("The requested release/election is not publicly exposed.")
 
+    def _preliminary_grant(
+        self, release_id: str, election_slug: str
+    ) -> dict[str, object] | None:
+        """The second, disjoint door: a reviewed grant over a candidate release.
+
+        Deliberately narrower than it looks. ``r.status='candidate'`` means a
+        *published* release can never arrive through here either, so the two
+        predicates exclude each other in both directions rather than one merely
+        being weaker. The caveat text is read from the grant row, so a response
+        cannot be labelled by anything other than the approval that authorised
+        it.
+        """
+        rows = self._normalized(
+            """SELECT x.preliminary_caveat_es, x.preliminary_caveat_en
+            FROM release_exposures x JOIN releases r ON r.id=x.release_id
+            WHERE x.release_id=:r AND x.election_slug=:e
+            AND x.access_scope='preliminary' AND x.preliminary_approved_at IS NOT NULL
+            AND r.status='candidate' AND r.synthetic = false""",
+            {"r": release_id, "e": election_slug},
+        )
+        if not rows:
+            return None
+        return {
+            "class": "preliminary",
+            "caveat": {
+                "es": rows[0]["preliminary_caveat_es"],
+                "en": rows[0]["preliminary_caveat_en"],
+            },
+        }
+
+    def _authorized_any(self, release_id: str, election_slug: str) -> dict[str, object]:
+        """Authorise through either door and report WHICH one opened.
+
+        Callers must carry the returned class into the response: a preliminary
+        read that renders unlabelled is the failure this whole mechanism exists
+        to prevent. Only the release-scoped normalized reads use this; legacy
+        routes, datasets, analysis, review signals and outcome sensitivity stay
+        on ``_authorized`` and remain certified-only.
+        """
+        grant = self._preliminary_grant(release_id, election_slug)
+        if grant is not None:
+            return grant
+        self._authorized(release_id, election_slug)
+        return {"class": "certified", "caveat": None}
+
     def _legacy_public(self, election_slug: str, version: str | None) -> None:
         """Do not let the legacy snapshot adapter bypass release exposure.
 
@@ -865,7 +910,7 @@ class PostgresReadRepository:
         after: tuple[str, ...] | None,
         limit: int,
     ) -> list[dict[str, object]]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             return self._context_results(scope_id, filters, after, limit + 1)
@@ -1208,7 +1253,7 @@ class PostgresReadRepository:
         self, release_id: str, election_slug: str, filters: Mapping[str, object]
     ) -> Iterator[dict[str, object]]:
         """Stream a CSV export without materialising an immutable release."""
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             yield from self._context_results(scope_id, filters, None, None)
@@ -1227,7 +1272,7 @@ class PostgresReadRepository:
     def normalized_geography_path(
         self, release_id: str, election_slug: str, geography_id: str
     ) -> list[dict[str, object]]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             rows = self._context_path_ids(scope_id, geography_id)
@@ -1253,7 +1298,7 @@ class PostgresReadRepository:
         after: tuple[str, ...] | None,
         limit: int,
     ) -> list[dict[str, object]]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             parent_rows = self._context_path_ids(scope_id, geography_id)
@@ -1322,7 +1367,7 @@ class PostgresReadRepository:
         source_id: str | None,
         source_type: str | None,
     ) -> dict[str, object]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             path = self._context_path_ids(scope_id, mesa_id)
@@ -1363,7 +1408,7 @@ class PostgresReadRepository:
     def normalized_categories(
         self, release_id: str, election_slug: str, fact_id: str, after: str | None, limit: int
     ) -> list[dict[str, object]]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is not None:
             matches = self._normalized(
@@ -1402,10 +1447,10 @@ class PostgresReadRepository:
         )
 
     def normalized_summary(self, release_id: str, election_slug: str) -> dict[str, object]:
-        self._authorized(release_id, election_slug)
+        grant = self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is None:
-            raise ResourceNotFoundError("A normalized summary is only available for compact context releases.")
+            return self._standard_summary(release_id, election_slug, grant)
         election = self._normalized(
             """SELECT e.name_es,e.name_en,e.round,e.election_date,r.status FROM release_elections e
             JOIN releases r ON r.id=e.release_id WHERE e.release_id=:r AND e.election_slug=:e""",
@@ -1435,11 +1480,126 @@ class PostgresReadRepository:
             "provenance": {"data_version": release_id, **{key: fact[key] for key in ("source_type", "legal_status", "source_url", "retrieved_at", "content_hash", "parser_version", "transform_version")}, "methodology_version": None},
         }
 
+    def _standard_summary(
+        self, release_id: str, election_slug: str, grant: dict[str, object]
+    ) -> dict[str, object]:
+        """National summary for a standard release.
+
+        Completion, coverage and reconciliation are read from
+        ``release_summaries`` exactly as the pipeline recorded them, never
+        recomputed from the loaded rows. That matters here specifically:
+        reconciliation is ``blocked`` with three exceptions, and completion
+        reports 122,017 of 122,020 installed mesas. Deriving either from the
+        rows present would quietly report a passing reconciliation and a
+        complete count.
+        """
+        election = self._normalized(
+            """SELECT e.name_es,e.name_en,e.round,e.election_date,r.status,r.synthetic
+            FROM release_elections e JOIN releases r ON r.id=e.release_id
+            WHERE e.release_id=:r AND e.election_slug=:e""",
+            {"r": release_id, "e": election_slug},
+        )
+        if not election:
+            raise ResourceNotFoundError("The requested release/election was not found.")
+        election_row = election[0]
+
+        stored = self._normalized(
+            """SELECT release_class, completion, coverage, geographic_collection_coverage,
+            reconciliation, turnout, preview_caveat_es, preview_caveat_en
+            FROM release_summaries WHERE release_id=:r AND election_slug=:e""",
+            {"r": release_id, "e": election_slug},
+        )
+        if not stored:
+            raise RepositoryUnavailableError(
+                "The release has no recorded summary; it cannot be reconstructed from rows."
+            )
+        summary_row = stored[0]
+
+        national = self._normalized(
+            """SELECT f.id, f.metrics, f.source_id, s.source_type, s.legal_status,
+            s.source_url, s.retrieved_at, s.content_hash, s.parser_version, s.transform_version
+            FROM release_result_facts f
+            JOIN release_sources s ON (s.release_id=f.release_id
+                AND s.election_slug=f.election_slug AND s.id=f.source_id)
+            WHERE f.release_id=:r AND f.election_slug=:e AND f.geography_level='national'""",
+            {"r": release_id, "e": election_slug},
+        )
+        if len(national) != 1:
+            raise RepositoryUnavailableError(
+                "A standard release must carry exactly one national fact."
+            )
+        fact = national[0]
+        categories = self.normalized_categories(
+            release_id, election_slug, str(fact["id"]), None, 500
+        )
+
+        caveat = cast(Any, grant.get("caveat")) or {
+            "es": summary_row["preview_caveat_es"],
+            "en": summary_row["preview_caveat_en"],
+        }
+        return {
+            "election_slug": election_slug,
+            "election_name": {"es": election_row["name_es"], "en": election_row["name_en"]},
+            "round": election_row["round"],
+            "election_date": election_row["election_date"],
+            "data_version": release_id,
+            "release_status": election_row["status"],
+            "release_class": summary_row["release_class"],
+            "synthetic": bool(election_row["synthetic"]),
+            "exposure_class": grant.get("class"),
+            "preliminary": grant.get("class") == "preliminary",
+            "preliminary_caveat": caveat,
+            "completion": summary_row["completion"],
+            "coverage": summary_row["coverage"],
+            "geographic_collection_coverage": summary_row["geographic_collection_coverage"],
+            "reconciliation": summary_row["reconciliation"],
+            "turnout": summary_row["turnout"],
+            **cast(dict[str, object], fact["metrics"]),
+            "national_categories": categories,
+            "provenance": {
+                "data_version": release_id,
+                **{
+                    key: fact[key]
+                    for key in (
+                        "source_type",
+                        "legal_status",
+                        "source_url",
+                        "retrieved_at",
+                        "content_hash",
+                        "parser_version",
+                        "transform_version",
+                    )
+                },
+                "methodology_version": None,
+            },
+        }
+
     def normalized_geography(self, release_id: str, election_slug: str, geography_id: str) -> dict[str, object]:
-        self._authorized(release_id, election_slug)
+        self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is None:
-            raise ResourceNotFoundError("A normalized geography is only available for compact context releases.")
+            # A standard release stores geographies in release_geographies
+            # directly; only the compact context model needs the scope indirection.
+            rows = self._normalized(
+                """SELECT id, level, code, name, parent_id, canonical_path
+                FROM release_geographies
+                WHERE release_id=:r AND election_slug=:e AND id=:g""",
+                {"r": release_id, "e": election_slug, "g": geography_id},
+            )
+            if not rows:
+                raise ResourceNotFoundError(f"Geography '{geography_id}' was not found.")
+            row = rows[0]
+            return {
+                "id": row["id"],
+                "level": row["level"],
+                "code": row["code"],
+                "name": row["name"],
+                "parent_id": row["parent_id"],
+                "canonical_path": row["canonical_path"],
+                # Null on every geography in this release, including the
+                # synthesised mesa rows. Absent, not zero.
+                "authoritative_coordinates": None,
+            }
         path = self._context_path_ids(scope_id, geography_id)
         if path is None:
             raise ResourceNotFoundError(f"Geography '{geography_id}' was not found.")

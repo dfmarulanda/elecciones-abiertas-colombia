@@ -14,6 +14,7 @@ import platform
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime
 from math import isfinite
 from pathlib import Path
 from typing import Literal
@@ -138,14 +139,26 @@ SIMULATION_PROFILES = {
 }
 
 
+_RUNTIME_CONTRACT = "numpy-generator-pcg64/scipy-beta-clopper-pearson"
+
+
 def simulation_runtime_fingerprint() -> str:
-    """Hash the deterministic runtime identity recorded with every artifact."""
+    """Hash the runtime identity of the host that executed this run.
+
+    This value identifies a *machine*, not a measurement.  It must never enter
+    the artifact content hash: two hosts that agree on every measured number
+    still disagree here, so a content hash containing it makes "independently
+    replayed" and "bit-identical" mutually exclusive conditions that no honest
+    artifact can satisfy at once.  It is recorded in the attestation section
+    instead, where a differing value is the evidence of independence rather
+    than a hash mismatch.
+    """
     return _hash(
         {
             "numpy": np.__version__,
             "platform": platform.platform(),
             "python": platform.python_version(),
-            "runtime_contract": "numpy-generator-pcg64/scipy-beta-clopper-pearson",
+            "runtime_contract": _RUNTIME_CONTRACT,
         }
     )
 
@@ -304,8 +317,58 @@ def canonical_input_hashes(inputs: TrustedSimulationInputs) -> dict[str, str]:
 
 
 @dataclass(frozen=True)
+class RuntimeAttestation:
+    """Who executed one run, on what machine, and when.
+
+    This is the artifact's attestation section.  It is deliberately excluded
+    from :meth:`SimulationSummary.artifact_payload`, and therefore from the
+    content hash, so that one content hash can carry N attestations from N
+    hosts.  Nothing here is a measurement and nothing here may gate a release
+    on its own; it is the record that lets a verifier tell an independent
+    replay apart from the producer re-running itself.
+    """
+
+    runtime_fingerprint: str
+    numpy_version: str
+    python_version: str
+    platform_identity: str
+    runtime_contract: str
+    executed_at: str
+    attests_artifact_hash: str = ""
+
+
+def runtime_attestation() -> RuntimeAttestation:
+    """Capture the executing host's identity and wall clock."""
+    return RuntimeAttestation(
+        runtime_fingerprint=simulation_runtime_fingerprint(),
+        numpy_version=np.__version__,
+        python_version=platform.python_version(),
+        platform_identity=platform.platform(),
+        runtime_contract=_RUNTIME_CONTRACT,
+        executed_at=datetime.now(UTC).isoformat(timespec="microseconds"),
+    )
+
+
+# Everything outside the content-hashed measurement section.  A verifier that
+# compares two artifacts for equality must strip exactly these fields.
+ATTESTATION_FIELDS = frozenset({"artifact_hash", "attestation"})
+
+
+def artifact_content_section(summary: Mapping[str, object]) -> dict[str, object]:
+    """Return only the content-hashed measurements of an artifact mapping."""
+    return {key: value for key, value in summary.items() if key not in ATTESTATION_FIELDS}
+
+
+@dataclass(frozen=True)
 class SimulationSummary:
-    """A canonical, self-hashed Pass B statistical validation artifact."""
+    """A canonical, self-hashed Pass B statistical validation artifact.
+
+    The artifact has two sections.  Every measured quantity is content-hashed
+    into :attr:`artifact_hash`; host identity and wall clock live in
+    :attr:`attestation`, which is not hashed.  An independent replay on a
+    different machine therefore reproduces the content hash exactly while
+    carrying its own attestation.
+    """
 
     simulations: int
     null_simulations: int
@@ -344,13 +407,13 @@ class SimulationSummary:
     family_error_count: int
     profile_name: str = "unprofiled"
     profile_hash: str = ""
-    runtime_fingerprint: str = ""
     independent_full_artifact_required: bool = True
     independent_full_artifact_passed: bool = False
     production_eligible: bool = False
     trusted_input_registry_verified: bool = False
     external_family_ledger_verified: bool = False
     artifact_hash: str = ""
+    attestation: RuntimeAttestation | None = None
     methodology_version: str = METHODOLOGY_VERSION
     limitations: tuple[str, ...] = (
         "Synthetic calibration assesses the declared detector under the simulated design, "
@@ -369,12 +432,18 @@ class SimulationSummary:
     )
 
     def artifact_payload(self) -> dict[str, object]:
+        """The content-hashed section: measurements only, no host identity."""
         payload = asdict(self)
-        payload.pop("artifact_hash")
+        for field in ATTESTATION_FIELDS:
+            payload.pop(field)
         return payload
 
     def with_hash(self) -> SimulationSummary:
-        return replace(self, artifact_hash=_hash(self.artifact_payload()))
+        content_hash = _hash(self.artifact_payload())
+        attestation = self.attestation
+        if attestation is not None:
+            attestation = replace(attestation, attests_artifact_hash=content_hash)
+        return replace(self, artifact_hash=content_hash, attestation=attestation)
 
 
 def _upper_binomial_bound(events: int, trials: int) -> float:
@@ -1308,9 +1377,13 @@ def run_end_to_end_validation(
         false_discovery_target=_TARGET,
         false_discovery_gate_passed=false_discovery_gate,
         injected_discrepancy_gate_passed=power_gate,
-        # This process cannot self-attest independence.  A separate full
-        # artifact must be reviewed by release governance before production.
-        release_gate_passed=False,
+        # The honest conjunction of the two computed gates, and nothing more.
+        # It was previously hardcoded False to express "not production ready",
+        # which made an artifact whose gates genuinely passed indistinguishable
+        # from a forgery to the verifier.  Production readiness is expressed by
+        # production_eligible / independent_full_artifact_passed below, which
+        # remain False and do not read this field.
+        release_gate_passed=false_discovery_gate and power_gate,
         release_id=release_id,
         cohort_hash=cohort_hash,
         detector_hash=detector_binding_hash(bindings),
@@ -1367,7 +1440,7 @@ def run_end_to_end_validation(
         family_error_count=family_error_count,
         profile_name=selected_profile.name,
         profile_hash=selected_profile.artifact_hash,
-        runtime_fingerprint=simulation_runtime_fingerprint(),
+        attestation=runtime_attestation(),
         independent_full_artifact_required=selected_profile.independent_artifact_required,
         independent_full_artifact_passed=False,
         production_eligible=False,

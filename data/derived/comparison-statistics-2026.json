@@ -1,5 +1,5 @@
 {
-  "document_sha256": "585bd5fb9e5c9906ed5c9a9ac625761ee1c2ecfd3675fef2fa1cfacb0a0b85e5",
+  "document_sha256": "092b8e8313c377beb237a75b84e0ee549c1e53662dc2111350a83d72fb59a2c2",
   "generated_from": {
     "data_version": "candidate-2026-r2-dacb28aa766eec87",
     "election_slug": "presidencia-2026-segunda-vuelta",
@@ -176,11 +176,52 @@
         "mesa_facts": 15801,
         "name": "ANTIOQUIA",
         "percent_of_national_margin": 419.4685643663039,
-        "rank_by_contribution_to_national_margin": 1,
+        "rank_by_absolute_contribution_to_national_margin": 1,
         "rank_by_internal_margin_rate": 8,
+        "rank_by_signed_contribution_to_national_margin": 1,
         "share_of_national_valid_votes": 0.13002612520924425,
         "signed_contribution_to_national_margin": 1052153,
         "valid_votes": 3393045
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 870000,
+          "ivan-cepeda-aida-quilcue": 1404083
+        },
+        "code": "31",
+        "geography_id": "scope:31",
+        "internal_margin": 534083,
+        "internal_margin_share_of_own_valid_votes": 0.23135930190599174,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 11087,
+        "name": "VALLE",
+        "percent_of_national_margin": -212.92628473468085,
+        "rank_by_absolute_contribution_to_national_margin": 2,
+        "rank_by_internal_margin_rate": 14,
+        "rank_by_signed_contribution_to_national_margin": 34,
+        "share_of_national_valid_votes": 0.08846322961297488,
+        "signed_contribution_to_national_margin": -534083,
+        "valid_votes": 2308457
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 188619,
+          "ivan-cepeda-aida-quilcue": 651839
+        },
+        "code": "23",
+        "geography_id": "scope:23",
+        "internal_margin": 463220,
+        "internal_margin_share_of_own_valid_votes": 0.5452732664013401,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 3901,
+        "name": "NARIÑO",
+        "percent_of_national_margin": -184.6748794003907,
+        "rank_by_absolute_contribution_to_national_margin": 3,
+        "rank_by_internal_margin_rate": 4,
+        "rank_by_signed_contribution_to_national_margin": 33,
+        "share_of_national_valid_votes": 0.032554730002588225,
+        "signed_contribution_to_national_margin": -463220,
+        "valid_votes": 849519
       },
       {
         "candidate_votes": {
@@ -195,11 +236,32 @@
         "mesa_facts": 4079,
         "name": "NORTE DE SAN",
         "percent_of_national_margin": 170.83283498784036,
-        "rank_by_contribution_to_national_margin": 2,
+        "rank_by_absolute_contribution_to_national_margin": 4,
         "rank_by_internal_margin_rate": 5,
+        "rank_by_signed_contribution_to_national_margin": 2,
         "share_of_national_valid_votes": 0.030162556942678363,
         "signed_contribution_to_national_margin": 428500,
         "valid_votes": 787095
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 176901,
+          "ivan-cepeda-aida-quilcue": 585479
+        },
+        "code": "11",
+        "geography_id": "scope:11",
+        "internal_margin": 408578,
+        "internal_margin_share_of_own_valid_votes": 0.527902424528241,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 3427,
+        "name": "CAUCA",
+        "percent_of_national_margin": -162.8904038591875,
+        "rank_by_absolute_contribution_to_national_margin": 5,
+        "rank_by_internal_margin_rate": 6,
+        "rank_by_signed_contribution_to_national_margin": 32,
+        "share_of_national_valid_votes": 0.029659397384229423,
+        "signed_contribution_to_national_margin": -408578,
+        "valid_votes": 773965
       },
       {
         "candidate_votes": {
@@ -214,11 +276,72 @@
         "mesa_facts": 5690,
         "name": "SANTANDER",
         "percent_of_national_margin": 155.89881593110871,
-        "rank_by_contribution_to_national_margin": 3,
+        "rank_by_absolute_contribution_to_national_margin": 6,
         "rank_by_internal_margin_rate": 9,
+        "rank_by_signed_contribution_to_national_margin": 3,
         "share_of_national_valid_votes": 0.04880555745672119,
         "signed_contribution_to_national_margin": 391041,
         "valid_votes": 1273586
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 1933243,
+          "ivan-cepeda-aida-quilcue": 2235514
+        },
+        "code": "16",
+        "geography_id": "scope:16",
+        "internal_margin": 302271,
+        "internal_margin_share_of_own_valid_votes": 0.0709510869373864,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 17164,
+        "name": "BOGOTA D.C.",
+        "percent_of_national_margin": -120.50831240282263,
+        "rank_by_absolute_contribution_to_national_margin": 7,
+        "rank_by_internal_margin_rate": 32,
+        "rank_by_signed_contribution_to_national_margin": 31,
+        "share_of_national_valid_votes": 0.1632594883131708,
+        "signed_contribution_to_national_margin": -302271,
+        "valid_votes": 4260273
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 505091,
+          "ivan-cepeda-aida-quilcue": 732403
+        },
+        "code": "03",
+        "geography_id": "scope:03",
+        "internal_margin": 227312,
+        "internal_margin_share_of_own_valid_votes": 0.18190839279255056,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 6190,
+        "name": "ATLANTICO",
+        "percent_of_national_margin": -90.62392855719013,
+        "rank_by_absolute_contribution_to_national_margin": 8,
+        "rank_by_internal_margin_rate": 22,
+        "rank_by_signed_contribution_to_national_margin": 30,
+        "share_of_national_valid_votes": 0.04788622784459704,
+        "signed_contribution_to_national_margin": -227312,
+        "valid_votes": 1249596
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 391458,
+          "ivan-cepeda-aida-quilcue": 591870
+        },
+        "code": "05",
+        "geography_id": "scope:05",
+        "internal_margin": 200412,
+        "internal_margin_share_of_own_valid_votes": 0.20151651200228451,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 5355,
+        "name": "BOLIVAR",
+        "percent_of_national_margin": -79.89953354861859,
+        "rank_by_absolute_contribution_to_national_margin": 9,
+        "rank_by_internal_margin_rate": 17,
+        "rank_by_signed_contribution_to_national_margin": 29,
+        "share_of_national_valid_votes": 0.03811132832513933,
+        "signed_contribution_to_national_margin": -200412,
+        "valid_votes": 994519
       },
       {
         "candidate_votes": {
@@ -233,8 +356,9 @@
         "mesa_facts": 3670,
         "name": "CONSULADOS",
         "percent_of_national_margin": 70.8882510066579,
-        "rank_by_contribution_to_national_margin": 4,
+        "rank_by_absolute_contribution_to_national_margin": 10,
         "rank_by_internal_margin_rate": 10,
+        "rank_by_signed_contribution_to_national_margin": 4,
         "share_of_national_valid_votes": 0.023492876172700915,
         "signed_contribution_to_national_margin": 177809,
         "valid_votes": 613049
@@ -252,11 +376,32 @@
         "mesa_facts": 3126,
         "name": "BOYACA",
         "percent_of_national_margin": 64.32962564286568,
-        "rank_by_contribution_to_national_margin": 5,
+        "rank_by_absolute_contribution_to_national_margin": 11,
         "rank_by_internal_margin_rate": 15,
+        "rank_by_signed_contribution_to_national_margin": 5,
         "share_of_national_valid_votes": 0.028097686684650628,
         "signed_contribution_to_national_margin": 161358,
         "valid_votes": 733212
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 349190,
+          "ivan-cepeda-aida-quilcue": 499149
+        },
+        "code": "13",
+        "geography_id": "scope:13",
+        "internal_margin": 149959,
+        "internal_margin_share_of_own_valid_votes": 0.17509104304564238,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 4180,
+        "name": "CORDOBA",
+        "percent_of_national_margin": -59.7851134234342,
+        "rank_by_absolute_contribution_to_national_margin": 12,
+        "rank_by_internal_margin_rate": 23,
+        "rank_by_signed_contribution_to_national_margin": 28,
+        "share_of_national_valid_votes": 0.03282083358018681,
+        "signed_contribution_to_national_margin": -149959,
+        "valid_votes": 856463
       },
       {
         "candidate_votes": {
@@ -271,8 +416,9 @@
         "mesa_facts": 2746,
         "name": "HUILA",
         "percent_of_national_margin": 58.20037475581071,
-        "rank_by_contribution_to_national_margin": 6,
+        "rank_by_absolute_contribution_to_national_margin": 13,
         "rank_by_internal_margin_rate": 13,
+        "rank_by_signed_contribution_to_national_margin": 6,
         "share_of_national_valid_votes": 0.023512036856571782,
         "signed_contribution_to_national_margin": 145984,
         "valid_votes": 613549
@@ -290,8 +436,9 @@
         "mesa_facts": 6916,
         "name": "CUNDINAMARCA",
         "percent_of_national_margin": 51.216361679224974,
-        "rank_by_contribution_to_national_margin": 7,
+        "rank_by_absolute_contribution_to_national_margin": 14,
         "rank_by_internal_margin_rate": 31,
+        "rank_by_signed_contribution_to_national_margin": 7,
         "share_of_national_valid_votes": 0.06495782235302242,
         "signed_contribution_to_national_margin": 128466,
         "valid_votes": 1695081
@@ -309,11 +456,32 @@
         "mesa_facts": 3526,
         "name": "TOLIMA",
         "percent_of_national_margin": 50.14671291312841,
-        "rank_by_contribution_to_national_margin": 8,
+        "rank_by_absolute_contribution_to_national_margin": 15,
         "rank_by_internal_margin_rate": 24,
+        "rank_by_signed_contribution_to_national_margin": 8,
         "share_of_national_valid_votes": 0.02817271992268894,
         "signed_contribution_to_national_margin": 125783,
         "valid_votes": 735170
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 33360,
+          "ivan-cepeda-aida-quilcue": 152674
+        },
+        "code": "17",
+        "geography_id": "scope:17",
+        "internal_margin": 119314,
+        "internal_margin_share_of_own_valid_votes": 0.6359784016587867,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 1252,
+        "name": "CHOCO",
+        "percent_of_national_margin": -47.56767531794443,
+        "rank_by_absolute_contribution_to_national_margin": 16,
+        "rank_by_internal_margin_rate": 1,
+        "rank_by_signed_contribution_to_national_margin": 27,
+        "share_of_national_valid_votes": 0.00718935683792307,
+        "signed_contribution_to_national_margin": -119314,
+        "valid_votes": 187607
       },
       {
         "candidate_votes": {
@@ -328,8 +496,9 @@
         "mesa_facts": 2543,
         "name": "META",
         "percent_of_national_margin": 45.47342821831519,
-        "rank_by_contribution_to_national_margin": 9,
+        "rank_by_absolute_contribution_to_national_margin": 17,
         "rank_by_internal_margin_rate": 18,
+        "rank_by_signed_contribution_to_national_margin": 9,
         "share_of_national_valid_votes": 0.022014629412063613,
         "signed_contribution_to_national_margin": 114061,
         "valid_votes": 574474
@@ -347,11 +516,32 @@
         "mesa_facts": 2492,
         "name": "CALDAS",
         "percent_of_national_margin": 41.07602758840649,
-        "rank_by_contribution_to_national_margin": 10,
+        "rank_by_absolute_contribution_to_national_margin": 18,
         "rank_by_internal_margin_rate": 19,
+        "rank_by_signed_contribution_to_national_margin": 10,
         "share_of_national_valid_votes": 0.02000022839535174,
         "signed_contribution_to_national_margin": 103031,
         "valid_votes": 521908
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 33900,
+          "ivan-cepeda-aida-quilcue": 131958
+        },
+        "code": "64",
+        "geography_id": "scope:64",
+        "internal_margin": 98058,
+        "internal_margin_share_of_own_valid_votes": 0.5834910207433325,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 809,
+        "name": "PUTUMAYO",
+        "percent_of_national_margin": -39.093409879201054,
+        "rank_by_absolute_contribution_to_national_margin": 19,
+        "rank_by_internal_margin_rate": 3,
+        "rank_by_signed_contribution_to_national_margin": 26,
+        "share_of_national_valid_votes": 0.0064400591344689895,
+        "signed_contribution_to_national_margin": -98058,
+        "valid_votes": 168054
       },
       {
         "candidate_votes": {
@@ -366,11 +556,72 @@
         "mesa_facts": 1020,
         "name": "CASANARE",
         "percent_of_national_margin": 36.968863373599646,
-        "rank_by_contribution_to_national_margin": 11,
+        "rank_by_absolute_contribution_to_national_margin": 20,
         "rank_by_internal_margin_rate": 7,
+        "rank_by_signed_contribution_to_national_margin": 11,
         "share_of_national_valid_votes": 0.008940451736881504,
         "signed_contribution_to_national_margin": 92729,
         "valid_votes": 233302
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 255098,
+          "ivan-cepeda-aida-quilcue": 347228
+        },
+        "code": "21",
+        "geography_id": "scope:21",
+        "internal_margin": 92130,
+        "internal_margin_share_of_own_valid_votes": 0.15130662707588816,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 3228,
+        "name": "MAGDALENA",
+        "percent_of_national_margin": -36.730056213371604,
+        "rank_by_absolute_contribution_to_national_margin": 21,
+        "rank_by_internal_margin_rate": 26,
+        "rank_by_signed_contribution_to_national_margin": 25,
+        "share_of_national_valid_votes": 0.023333727532469505,
+        "signed_contribution_to_national_margin": -92130,
+        "valid_votes": 608896
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 188380,
+          "ivan-cepeda-aida-quilcue": 279312
+        },
+        "code": "28",
+        "geography_id": "scope:28",
+        "internal_margin": 90932,
+        "internal_margin_share_of_own_valid_votes": 0.19270071755226942,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 2347,
+        "name": "SUCRE",
+        "percent_of_national_margin": -36.25244189291552,
+        "rank_by_absolute_contribution_to_national_margin": 22,
+        "rank_by_internal_margin_rate": 20,
+        "rank_by_signed_contribution_to_national_margin": 24,
+        "share_of_national_valid_votes": 0.018083163652703866,
+        "signed_contribution_to_national_margin": -90932,
+        "valid_votes": 471882
+      },
+      {
+        "candidate_votes": {
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 126501,
+          "ivan-cepeda-aida-quilcue": 198557
+        },
+        "code": "48",
+        "geography_id": "scope:48",
+        "internal_margin": 72056,
+        "internal_margin_share_of_own_valid_votes": 0.21938394931297897,
+        "internal_winner": "ivan-cepeda-aida-quilcue",
+        "mesa_facts": 2095,
+        "name": "LA GUAJIRA",
+        "percent_of_national_margin": -28.72702627277439,
+        "rank_by_absolute_contribution_to_national_margin": 23,
+        "rank_by_internal_margin_rate": 16,
+        "rank_by_signed_contribution_to_national_margin": 23,
+        "share_of_national_valid_votes": 0.012586538270668572,
+        "signed_contribution_to_national_margin": -72056,
+        "valid_votes": 328447
       },
       {
         "candidate_votes": {
@@ -385,8 +636,9 @@
         "mesa_facts": 1471,
         "name": "QUINDIO",
         "percent_of_national_margin": 22.92150061794841,
-        "rank_by_contribution_to_national_margin": 12,
+        "rank_by_absolute_contribution_to_national_margin": 24,
         "rank_by_internal_margin_rate": 21,
+        "rank_by_signed_contribution_to_national_margin": 12,
         "share_of_national_valid_votes": 0.01179673488151148,
         "signed_contribution_to_national_margin": 57494,
         "valid_votes": 307837
@@ -404,8 +656,9 @@
         "mesa_facts": 2551,
         "name": "RISARALDA",
         "percent_of_national_margin": 20.35482199098991,
-        "rank_by_contribution_to_national_margin": 13,
+        "rank_by_absolute_contribution_to_national_margin": 25,
         "rank_by_internal_margin_rate": 29,
+        "rank_by_signed_contribution_to_national_margin": 13,
         "share_of_national_valid_votes": 0.020587809926935714,
         "signed_contribution_to_national_margin": 51056,
         "valid_votes": 537241
@@ -423,144 +676,12 @@
         "mesa_facts": 662,
         "name": "ARAUCA",
         "percent_of_national_margin": 6.8185623729219,
-        "rank_by_contribution_to_national_margin": 14,
+        "rank_by_absolute_contribution_to_national_margin": 26,
         "rank_by_internal_margin_rate": 25,
+        "rank_by_signed_contribution_to_national_margin": 14,
         "share_of_national_valid_votes": 0.004300538852080363,
         "signed_contribution_to_national_margin": 17103,
         "valid_votes": 112223
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 20678,
-          "ivan-cepeda-aida-quilcue": 17504
-        },
-        "code": "54",
-        "geography_id": "scope:54",
-        "internal_margin": 3174,
-        "internal_margin_share_of_own_valid_votes": 0.08102726437251098,
-        "internal_winner": "abelardo-de-la-espriella-jose-manuel-restrepo",
-        "mesa_facts": 221,
-        "name": "GUAVIARE",
-        "percent_of_national_margin": 1.2653988757325678,
-        "rank_by_contribution_to_national_margin": 15,
-        "rank_by_internal_margin_rate": 30,
-        "share_of_national_valid_votes": 0.0015011246171791166,
-        "signed_contribution_to_national_margin": 3174,
-        "valid_votes": 39172
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 101588,
-          "ivan-cepeda-aida-quilcue": 102286
-        },
-        "code": "44",
-        "geography_id": "scope:44",
-        "internal_margin": 698,
-        "internal_margin_share_of_own_valid_votes": 0.00334203155299131,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 983,
-        "name": "CAQUETA",
-        "percent_of_national_margin": -0.27827612327074114,
-        "rank_by_contribution_to_national_margin": 16,
-        "rank_by_internal_margin_rate": 34,
-        "share_of_national_valid_votes": 0.008003609259699387,
-        "signed_contribution_to_national_margin": -698,
-        "valid_votes": 208855
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 10024,
-          "ivan-cepeda-aida-quilcue": 12311
-        },
-        "code": "56",
-        "geography_id": "scope:56",
-        "internal_margin": 2287,
-        "internal_margin_share_of_own_valid_votes": 0.099947557031728,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 156,
-        "name": "SAN ANDRES",
-        "percent_of_national_margin": -0.9117729139257664,
-        "rank_by_contribution_to_national_margin": 17,
-        "rank_by_internal_margin_rate": 27,
-        "share_of_national_valid_votes": 0.0008768695366663062,
-        "signed_contribution_to_national_margin": -2287,
-        "valid_votes": 22882
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 11686,
-          "ivan-cepeda-aida-quilcue": 14274
-        },
-        "code": "72",
-        "geography_id": "scope:72",
-        "internal_margin": 2588,
-        "internal_margin_share_of_own_valid_votes": 0.09869951565539072,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 197,
-        "name": "VICHADA",
-        "percent_of_national_margin": -1.031774508631344,
-        "rank_by_contribution_to_national_margin": 18,
-        "rank_by_internal_margin_rate": 28,
-        "share_of_national_valid_votes": 0.0010048245835559487,
-        "signed_contribution_to_national_margin": -2588,
-        "valid_votes": 26221
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 5388,
-          "ivan-cepeda-aida-quilcue": 9690
-        },
-        "code": "50",
-        "geography_id": "scope:50",
-        "internal_margin": 4302,
-        "internal_margin_share_of_own_valid_votes": 0.28185808818711916,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 117,
-        "name": "GUAINIA",
-        "percent_of_national_margin": -1.7151058485827053,
-        "rank_by_contribution_to_national_margin": 19,
-        "rank_by_internal_margin_rate": 11,
-        "share_of_national_valid_votes": 0.0005848990358420519,
-        "signed_contribution_to_national_margin": -4302,
-        "valid_votes": 15263
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 10584,
-          "ivan-cepeda-aida-quilcue": 17849
-        },
-        "code": "60",
-        "geography_id": "scope:60",
-        "internal_margin": 7265,
-        "internal_margin_share_of_own_valid_votes": 0.2519420169232903,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 176,
-        "name": "AMAZONAS",
-        "percent_of_national_margin": -2.896384005103058,
-        "rank_by_contribution_to_national_margin": 20,
-        "rank_by_internal_margin_rate": 12,
-        "share_of_national_valid_votes": 0.001105034960200577,
-        "signed_contribution_to_national_margin": -7265,
-        "valid_votes": 28836
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 2119,
-          "ivan-cepeda-aida-quilcue": 9481
-        },
-        "code": "68",
-        "geography_id": "scope:68",
-        "internal_margin": 7362,
-        "internal_margin_share_of_own_valid_votes": 0.627942681678608,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 88,
-        "name": "VAUPES",
-        "percent_of_national_margin": -2.935055615357015,
-        "rank_by_contribution_to_national_margin": 21,
-        "rank_by_internal_margin_rate": 2,
-        "share_of_national_valid_votes": 0.00044927971540406316,
-        "signed_contribution_to_national_margin": -7362,
-        "valid_votes": 11724
       },
       {
         "candidate_votes": {
@@ -575,239 +696,152 @@
         "mesa_facts": 2754,
         "name": "CESAR",
         "percent_of_national_margin": -6.412709803452538,
-        "rank_by_contribution_to_national_margin": 22,
+        "rank_by_absolute_contribution_to_national_margin": 27,
         "rank_by_internal_margin_rate": 33,
+        "rank_by_signed_contribution_to_national_margin": 22,
         "share_of_national_valid_votes": 0.021218502997229136,
         "signed_contribution_to_national_margin": -16085,
         "valid_votes": 553699
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 126501,
-          "ivan-cepeda-aida-quilcue": 198557
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 2119,
+          "ivan-cepeda-aida-quilcue": 9481
         },
-        "code": "48",
-        "geography_id": "scope:48",
-        "internal_margin": 72056,
-        "internal_margin_share_of_own_valid_votes": 0.21938394931297897,
+        "code": "68",
+        "geography_id": "scope:68",
+        "internal_margin": 7362,
+        "internal_margin_share_of_own_valid_votes": 0.627942681678608,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 2095,
-        "name": "LA GUAJIRA",
-        "percent_of_national_margin": -28.72702627277439,
-        "rank_by_contribution_to_national_margin": 23,
-        "rank_by_internal_margin_rate": 16,
-        "share_of_national_valid_votes": 0.012586538270668572,
-        "signed_contribution_to_national_margin": -72056,
-        "valid_votes": 328447
+        "mesa_facts": 88,
+        "name": "VAUPES",
+        "percent_of_national_margin": -2.935055615357015,
+        "rank_by_absolute_contribution_to_national_margin": 28,
+        "rank_by_internal_margin_rate": 2,
+        "rank_by_signed_contribution_to_national_margin": 21,
+        "share_of_national_valid_votes": 0.00044927971540406316,
+        "signed_contribution_to_national_margin": -7362,
+        "valid_votes": 11724
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 188380,
-          "ivan-cepeda-aida-quilcue": 279312
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 10584,
+          "ivan-cepeda-aida-quilcue": 17849
         },
-        "code": "28",
-        "geography_id": "scope:28",
-        "internal_margin": 90932,
-        "internal_margin_share_of_own_valid_votes": 0.19270071755226942,
+        "code": "60",
+        "geography_id": "scope:60",
+        "internal_margin": 7265,
+        "internal_margin_share_of_own_valid_votes": 0.2519420169232903,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 2347,
-        "name": "SUCRE",
-        "percent_of_national_margin": -36.25244189291552,
-        "rank_by_contribution_to_national_margin": 24,
-        "rank_by_internal_margin_rate": 20,
-        "share_of_national_valid_votes": 0.018083163652703866,
-        "signed_contribution_to_national_margin": -90932,
-        "valid_votes": 471882
+        "mesa_facts": 176,
+        "name": "AMAZONAS",
+        "percent_of_national_margin": -2.896384005103058,
+        "rank_by_absolute_contribution_to_national_margin": 29,
+        "rank_by_internal_margin_rate": 12,
+        "rank_by_signed_contribution_to_national_margin": 20,
+        "share_of_national_valid_votes": 0.001105034960200577,
+        "signed_contribution_to_national_margin": -7265,
+        "valid_votes": 28836
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 255098,
-          "ivan-cepeda-aida-quilcue": 347228
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 5388,
+          "ivan-cepeda-aida-quilcue": 9690
         },
-        "code": "21",
-        "geography_id": "scope:21",
-        "internal_margin": 92130,
-        "internal_margin_share_of_own_valid_votes": 0.15130662707588816,
+        "code": "50",
+        "geography_id": "scope:50",
+        "internal_margin": 4302,
+        "internal_margin_share_of_own_valid_votes": 0.28185808818711916,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 3228,
-        "name": "MAGDALENA",
-        "percent_of_national_margin": -36.730056213371604,
-        "rank_by_contribution_to_national_margin": 25,
-        "rank_by_internal_margin_rate": 26,
-        "share_of_national_valid_votes": 0.023333727532469505,
-        "signed_contribution_to_national_margin": -92130,
-        "valid_votes": 608896
+        "mesa_facts": 117,
+        "name": "GUAINIA",
+        "percent_of_national_margin": -1.7151058485827053,
+        "rank_by_absolute_contribution_to_national_margin": 30,
+        "rank_by_internal_margin_rate": 11,
+        "rank_by_signed_contribution_to_national_margin": 19,
+        "share_of_national_valid_votes": 0.0005848990358420519,
+        "signed_contribution_to_national_margin": -4302,
+        "valid_votes": 15263
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 33900,
-          "ivan-cepeda-aida-quilcue": 131958
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 20678,
+          "ivan-cepeda-aida-quilcue": 17504
         },
-        "code": "64",
-        "geography_id": "scope:64",
-        "internal_margin": 98058,
-        "internal_margin_share_of_own_valid_votes": 0.5834910207433325,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 809,
-        "name": "PUTUMAYO",
-        "percent_of_national_margin": -39.093409879201054,
-        "rank_by_contribution_to_national_margin": 26,
-        "rank_by_internal_margin_rate": 3,
-        "share_of_national_valid_votes": 0.0064400591344689895,
-        "signed_contribution_to_national_margin": -98058,
-        "valid_votes": 168054
+        "code": "54",
+        "geography_id": "scope:54",
+        "internal_margin": 3174,
+        "internal_margin_share_of_own_valid_votes": 0.08102726437251098,
+        "internal_winner": "abelardo-de-la-espriella-jose-manuel-restrepo",
+        "mesa_facts": 221,
+        "name": "GUAVIARE",
+        "percent_of_national_margin": 1.2653988757325678,
+        "rank_by_absolute_contribution_to_national_margin": 31,
+        "rank_by_internal_margin_rate": 30,
+        "rank_by_signed_contribution_to_national_margin": 15,
+        "share_of_national_valid_votes": 0.0015011246171791166,
+        "signed_contribution_to_national_margin": 3174,
+        "valid_votes": 39172
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 33360,
-          "ivan-cepeda-aida-quilcue": 152674
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 11686,
+          "ivan-cepeda-aida-quilcue": 14274
         },
-        "code": "17",
-        "geography_id": "scope:17",
-        "internal_margin": 119314,
-        "internal_margin_share_of_own_valid_votes": 0.6359784016587867,
+        "code": "72",
+        "geography_id": "scope:72",
+        "internal_margin": 2588,
+        "internal_margin_share_of_own_valid_votes": 0.09869951565539072,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 1252,
-        "name": "CHOCO",
-        "percent_of_national_margin": -47.56767531794443,
-        "rank_by_contribution_to_national_margin": 27,
-        "rank_by_internal_margin_rate": 1,
-        "share_of_national_valid_votes": 0.00718935683792307,
-        "signed_contribution_to_national_margin": -119314,
-        "valid_votes": 187607
+        "mesa_facts": 197,
+        "name": "VICHADA",
+        "percent_of_national_margin": -1.031774508631344,
+        "rank_by_absolute_contribution_to_national_margin": 32,
+        "rank_by_internal_margin_rate": 28,
+        "rank_by_signed_contribution_to_national_margin": 18,
+        "share_of_national_valid_votes": 0.0010048245835559487,
+        "signed_contribution_to_national_margin": -2588,
+        "valid_votes": 26221
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 349190,
-          "ivan-cepeda-aida-quilcue": 499149
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 10024,
+          "ivan-cepeda-aida-quilcue": 12311
         },
-        "code": "13",
-        "geography_id": "scope:13",
-        "internal_margin": 149959,
-        "internal_margin_share_of_own_valid_votes": 0.17509104304564238,
+        "code": "56",
+        "geography_id": "scope:56",
+        "internal_margin": 2287,
+        "internal_margin_share_of_own_valid_votes": 0.099947557031728,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 4180,
-        "name": "CORDOBA",
-        "percent_of_national_margin": -59.7851134234342,
-        "rank_by_contribution_to_national_margin": 28,
-        "rank_by_internal_margin_rate": 23,
-        "share_of_national_valid_votes": 0.03282083358018681,
-        "signed_contribution_to_national_margin": -149959,
-        "valid_votes": 856463
+        "mesa_facts": 156,
+        "name": "SAN ANDRES",
+        "percent_of_national_margin": -0.9117729139257664,
+        "rank_by_absolute_contribution_to_national_margin": 33,
+        "rank_by_internal_margin_rate": 27,
+        "rank_by_signed_contribution_to_national_margin": 17,
+        "share_of_national_valid_votes": 0.0008768695366663062,
+        "signed_contribution_to_national_margin": -2287,
+        "valid_votes": 22882
       },
       {
         "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 391458,
-          "ivan-cepeda-aida-quilcue": 591870
+          "abelardo-de-la-espriella-jose-manuel-restrepo": 101588,
+          "ivan-cepeda-aida-quilcue": 102286
         },
-        "code": "05",
-        "geography_id": "scope:05",
-        "internal_margin": 200412,
-        "internal_margin_share_of_own_valid_votes": 0.20151651200228451,
+        "code": "44",
+        "geography_id": "scope:44",
+        "internal_margin": 698,
+        "internal_margin_share_of_own_valid_votes": 0.00334203155299131,
         "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 5355,
-        "name": "BOLIVAR",
-        "percent_of_national_margin": -79.89953354861859,
-        "rank_by_contribution_to_national_margin": 29,
-        "rank_by_internal_margin_rate": 17,
-        "share_of_national_valid_votes": 0.03811132832513933,
-        "signed_contribution_to_national_margin": -200412,
-        "valid_votes": 994519
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 505091,
-          "ivan-cepeda-aida-quilcue": 732403
-        },
-        "code": "03",
-        "geography_id": "scope:03",
-        "internal_margin": 227312,
-        "internal_margin_share_of_own_valid_votes": 0.18190839279255056,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 6190,
-        "name": "ATLANTICO",
-        "percent_of_national_margin": -90.62392855719013,
-        "rank_by_contribution_to_national_margin": 30,
-        "rank_by_internal_margin_rate": 22,
-        "share_of_national_valid_votes": 0.04788622784459704,
-        "signed_contribution_to_national_margin": -227312,
-        "valid_votes": 1249596
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 1933243,
-          "ivan-cepeda-aida-quilcue": 2235514
-        },
-        "code": "16",
-        "geography_id": "scope:16",
-        "internal_margin": 302271,
-        "internal_margin_share_of_own_valid_votes": 0.0709510869373864,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 17164,
-        "name": "BOGOTA D.C.",
-        "percent_of_national_margin": -120.50831240282263,
-        "rank_by_contribution_to_national_margin": 31,
-        "rank_by_internal_margin_rate": 32,
-        "share_of_national_valid_votes": 0.1632594883131708,
-        "signed_contribution_to_national_margin": -302271,
-        "valid_votes": 4260273
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 176901,
-          "ivan-cepeda-aida-quilcue": 585479
-        },
-        "code": "11",
-        "geography_id": "scope:11",
-        "internal_margin": 408578,
-        "internal_margin_share_of_own_valid_votes": 0.527902424528241,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 3427,
-        "name": "CAUCA",
-        "percent_of_national_margin": -162.8904038591875,
-        "rank_by_contribution_to_national_margin": 32,
-        "rank_by_internal_margin_rate": 6,
-        "share_of_national_valid_votes": 0.029659397384229423,
-        "signed_contribution_to_national_margin": -408578,
-        "valid_votes": 773965
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 188619,
-          "ivan-cepeda-aida-quilcue": 651839
-        },
-        "code": "23",
-        "geography_id": "scope:23",
-        "internal_margin": 463220,
-        "internal_margin_share_of_own_valid_votes": 0.5452732664013401,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 3901,
-        "name": "NARIÑO",
-        "percent_of_national_margin": -184.6748794003907,
-        "rank_by_contribution_to_national_margin": 33,
-        "rank_by_internal_margin_rate": 4,
-        "share_of_national_valid_votes": 0.032554730002588225,
-        "signed_contribution_to_national_margin": -463220,
-        "valid_votes": 849519
-      },
-      {
-        "candidate_votes": {
-          "abelardo-de-la-espriella-jose-manuel-restrepo": 870000,
-          "ivan-cepeda-aida-quilcue": 1404083
-        },
-        "code": "31",
-        "geography_id": "scope:31",
-        "internal_margin": 534083,
-        "internal_margin_share_of_own_valid_votes": 0.23135930190599174,
-        "internal_winner": "ivan-cepeda-aida-quilcue",
-        "mesa_facts": 11087,
-        "name": "VALLE",
-        "percent_of_national_margin": -212.92628473468085,
-        "rank_by_contribution_to_national_margin": 34,
-        "rank_by_internal_margin_rate": 14,
-        "share_of_national_valid_votes": 0.08846322961297488,
-        "signed_contribution_to_national_margin": -534083,
-        "valid_votes": 2308457
+        "mesa_facts": 983,
+        "name": "CAQUETA",
+        "percent_of_national_margin": -0.27827612327074114,
+        "rank_by_absolute_contribution_to_national_margin": 34,
+        "rank_by_internal_margin_rate": 34,
+        "rank_by_signed_contribution_to_national_margin": 16,
+        "share_of_national_valid_votes": 0.008003609259699387,
+        "signed_contribution_to_national_margin": -698,
+        "valid_votes": 208855
       }
     ],
     "departments_covered": 34,
@@ -819,7 +853,9 @@
         "ivan-cepeda-aida-quilcue": 12708712
       },
       "margin": 250830,
-      "margin_delta_vs_published": 0
+      "margin_delta_vs_published": 0,
+      "valid_votes": 26095102,
+      "valid_votes_delta_vs_published": 0
     },
     "national_published": {
       "candidate_votes": {
@@ -838,19 +874,49 @@
         "confirms": true,
         "measured": 419.4685643663039
       },
-      "departments_exceeding_exterior_internal_margin_rate": 9,
-      "exterior_percent_of_national_margin": 70.8882510066579,
-      "exterior_rank_by_contribution_to_national_margin": {
-        "claimed": 10,
-        "confirms": false,
-        "measured": 4
+      "departments_exceeding_exterior_internal_margin_rate": {
+        "claimed": 9,
+        "codes": [
+          "01",
+          "11",
+          "17",
+          "23",
+          "25",
+          "27",
+          "46",
+          "64",
+          "68"
+        ],
+        "confirms": true,
+        "measured": 9
       },
+      "exterior_percent_of_national_margin": 70.8882510066579,
       "exterior_rank_by_internal_margin_rate": {
         "claimed": 10,
         "confirms": true,
         "measured": 10
       },
+      "exterior_rank_by_share_of_national_margin": {
+        "claimed": 10,
+        "confirms": true,
+        "measured_by_absolute_contribution": 10,
+        "measured_by_signed_contribution": 4,
+        "note": "The claim holds when departments are ranked by the size of their contribution regardless of direction. Ranked by signed contribution -- counting only the departments that pushed toward the national winner -- the exterior places 4th. The retraction's conclusion does not turn on which ordering is used; the exterior is mid-pack under one and behind three larger contributors under the other."
+      },
       "exterior_share_of_national_valid_votes_percent": 2.3492876172700914,
+      "of_those_with_valid_votes_at_least_the_exterior": {
+        "claimed": 4,
+        "codes": [
+          "01",
+          "11",
+          "23",
+          "25",
+          "27"
+        ],
+        "confirms": false,
+        "measured": 5,
+        "note": "The retraction says four of the nine have comparable or larger ballot counts. Five of the nine have strictly more valid votes than the exterior. The direction of the retraction's argument is unaffected."
+      },
       "reading": "In a race decided by a margin this small relative to ballots cast, many departments individually exceed the national margin. A single department's share of that margin is therefore not a distinguishing property of that department.",
       "source": "docs/research/method-record.md item 16"
     },
