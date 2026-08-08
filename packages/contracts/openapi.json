@@ -79,10 +79,7 @@
             "title": "Minimum Ballot Edits Reason"
           },
           "minimum_ballot_edits_status": {
-            "enum": [
-              "evaluable",
-              "not_evaluable"
-            ],
+            "enum": ["evaluable", "not_evaluable"],
             "title": "Minimum Ballot Edits Status",
             "type": "string"
           },
@@ -191,11 +188,7 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "report_kind": {
-            "enum": [
-              "model_diagnostics",
-              "validation",
-              "local_sensitivity"
-            ],
+            "enum": ["model_diagnostics", "validation", "local_sensitivity"],
             "title": "Report Kind",
             "type": "string"
           },
@@ -375,11 +368,7 @@
             "$ref": "#/components/schemas/ResultFact"
           }
         },
-        "required": [
-          "bulletin",
-          "result",
-          "provenance"
-        ],
+        "required": ["bulletin", "result", "provenance"],
         "title": "BulletinResult",
         "type": "object"
       },
@@ -409,11 +398,7 @@
             "$ref": "#/components/schemas/LocalizedText"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "short_name"
-        ],
+        "required": ["id", "name", "short_name"],
         "title": "Candidate",
         "type": "object"
       },
@@ -428,10 +413,7 @@
             "$ref": "#/components/schemas/MetricValue"
           }
         },
-        "required": [
-          "candidate_id",
-          "votes"
-        ],
+        "required": ["candidate_id", "votes"],
         "title": "CandidateResult",
         "type": "object"
       },
@@ -458,11 +440,7 @@
             "$ref": "#/components/schemas/MetricValue"
           }
         },
-        "required": [
-          "candidate",
-          "votes",
-          "share"
-        ],
+        "required": ["candidate", "votes", "share"],
         "title": "CandidateSummary",
         "type": "object"
       },
@@ -566,11 +544,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "mesa_id",
-          "items",
-          "data_version"
-        ],
+        "required": ["mesa_id", "items", "data_version"],
         "title": "ComparisonResponse",
         "type": "object"
       },
@@ -592,11 +566,7 @@
             "type": "integer"
           }
         },
-        "required": [
-          "expected",
-          "reported",
-          "percent"
-        ],
+        "required": ["expected", "reported", "percent"],
         "title": "Completion",
         "type": "object"
       },
@@ -654,11 +624,7 @@
             "type": "string"
           },
           "release_status": {
-            "enum": [
-              "candidate",
-              "published",
-              "withdrawn"
-            ],
+            "enum": ["candidate", "published", "withdrawn"],
             "title": "Release Status",
             "type": "string"
           },
@@ -722,10 +688,7 @@
             "type": "number"
           },
           "quality": {
-            "enum": [
-              "authoritative",
-              "approximate"
-            ],
+            "enum": ["authoritative", "approximate"],
             "title": "Quality",
             "type": "string"
           },
@@ -737,12 +700,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "latitude",
-          "longitude",
-          "quality",
-          "source_url"
-        ],
+        "required": ["latitude", "longitude", "quality", "source_url"],
         "title": "Coordinates",
         "type": "object"
       },
@@ -814,11 +772,7 @@
             "title": "Next Cursor"
           }
         },
-        "required": [
-          "next_cursor",
-          "has_more",
-          "limit"
-        ],
+        "required": ["next_cursor", "has_more", "limit"],
         "title": "CursorMeta",
         "type": "object"
       },
@@ -841,11 +795,7 @@
             "type": "object"
           },
           "format": {
-            "enum": [
-              "csv",
-              "parquet",
-              "json"
-            ],
+            "enum": ["csv", "parquet", "json"],
             "title": "Format",
             "type": "string"
           },
@@ -893,10 +843,7 @@
         "additionalProperties": false,
         "properties": {
           "eligibility": {
-            "enum": [
-              "eligible",
-              "ineligible"
-            ],
+            "enum": ["eligible", "ineligible"],
             "title": "Eligibility",
             "type": "string"
           },
@@ -906,10 +853,7 @@
             "type": "string"
           },
           "evidence_artifact_kind": {
-            "enum": [
-              "reconciliation_result",
-              "document_review"
-            ],
+            "enum": ["reconciliation_result", "document_review"],
             "title": "Evidence Artifact Kind",
             "type": "string"
           },
@@ -998,12 +942,7 @@
             "$ref": "#/components/schemas/MetricValue"
           },
           "release_status": {
-            "enum": [
-              "fixture",
-              "candidate",
-              "published",
-              "withdrawn"
-            ],
+            "enum": ["fixture", "candidate", "published", "withdrawn"],
             "title": "Release Status",
             "type": "string"
           },
@@ -1066,10 +1005,7 @@
         "additionalProperties": false,
         "properties": {
           "document_type": {
-            "enum": [
-              "e14_delegate",
-              "e14_transmission"
-            ],
+            "enum": ["e14_delegate", "e14_transmission"],
             "title": "Document Type",
             "type": "string"
           },
@@ -1078,11 +1014,7 @@
             "type": "string"
           },
           "index_status": {
-            "enum": [
-              "indexed",
-              "unavailable",
-              "ambiguous"
-            ],
+            "enum": ["indexed", "unavailable", "ambiguous"],
             "title": "Index Status",
             "type": "string"
           },
@@ -1151,11 +1083,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "mesa_id",
-          "documents",
-          "data_version"
-        ],
+        "required": ["mesa_id", "documents", "data_version"],
         "title": "EvidenceResponse",
         "type": "object"
       },
@@ -1226,11 +1154,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "quantitative_effect",
-          "quantitative_p_value"
-        ],
+        "required": ["status", "quantitative_effect", "quantitative_p_value"],
         "title": "ExplanationMetadata",
         "type": "object"
       },
@@ -1258,11 +1182,7 @@
             "type": "integer"
           },
           "status": {
-            "enum": [
-              "national_only",
-              "sample_limited",
-              "full_scope"
-            ],
+            "enum": ["national_only", "sample_limited", "full_scope"],
             "title": "Status",
             "type": "string"
           }
@@ -1344,6 +1264,18 @@
             "title": "Data Version",
             "type": "string"
           },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/ScopedGeography"
@@ -1353,13 +1285,31 @@
           },
           "page": {
             "$ref": "#/components/schemas/CursorMeta"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "required": [
-          "items",
-          "page",
-          "data_version"
-        ],
+        "required": ["items", "page", "data_version"],
         "title": "GeographyChildPage",
         "type": "object"
       },
@@ -1391,12 +1341,7 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "baseline_status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Baseline Status",
             "type": "string"
           },
@@ -1428,12 +1373,7 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "current_status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Current Status",
             "type": "string"
           },
@@ -1613,10 +1553,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "es",
-          "en"
-        ],
+        "required": ["es", "en"],
         "title": "LocalizedText",
         "type": "object"
       },
@@ -1676,12 +1613,7 @@
         "additionalProperties": false,
         "properties": {
           "status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Status",
             "type": "string"
           },
@@ -1698,10 +1630,7 @@
             "title": "Value"
           }
         },
-        "required": [
-          "value",
-          "status"
-        ],
+        "required": ["value", "status"],
         "title": "MetricValue",
         "type": "object"
       },
@@ -1712,6 +1641,18 @@
             "title": "Data Version",
             "type": "string"
           },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/NormalizedCategoryResult"
@@ -1721,6 +1662,28 @@
           },
           "page": {
             "$ref": "#/components/schemas/CursorMeta"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "sparse_category_semantics": {
             "title": "Sparse Category Semantics",
@@ -1760,12 +1723,7 @@
             "$ref": "#/components/schemas/Provenance"
           },
           "status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Status",
             "type": "string"
           },
@@ -1807,21 +1765,12 @@
             "type": "array"
           },
           "level": {
-            "enum": [
-              "mesa",
-              "place",
-              "municipality",
-              "department",
-              "national"
-            ],
+            "enum": ["mesa", "place", "municipality", "department", "national"],
             "title": "Level",
             "type": "string"
           }
         },
-        "required": [
-          "level",
-          "key"
-        ],
+        "required": ["level", "key"],
         "title": "OutcomeGeographicScope",
         "type": "object"
       },
@@ -2219,10 +2168,7 @@
             "type": "array"
           }
         },
-        "required": [
-          "code",
-          "record_ids"
-        ],
+        "required": ["code", "record_ids"],
         "title": "OutcomeSensitivityIssue",
         "type": "object"
       },
@@ -2230,13 +2176,7 @@
         "additionalProperties": false,
         "properties": {
           "fact_grain": {
-            "enum": [
-              "mesa",
-              "place",
-              "municipality",
-              "department",
-              "national"
-            ],
+            "enum": ["mesa", "place", "municipality", "department", "national"],
             "title": "Fact Grain",
             "type": "string"
           },
@@ -2269,12 +2209,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "source_id",
-          "fact_grain",
-          "source_type",
-          "legal_status"
-        ],
+        "required": ["source_id", "fact_grain", "source_type", "legal_status"],
         "title": "OutcomeSourceScope",
         "type": "object"
       },
@@ -2390,10 +2325,7 @@
             "$ref": "#/components/schemas/SignalNumber"
           },
           "eligibility": {
-            "enum": [
-              "eligible",
-              "ineligible"
-            ],
+            "enum": ["eligible", "ineligible"],
             "title": "Eligibility",
             "type": "string"
           },
@@ -2495,6 +2427,155 @@
           "analyzer_methodology_version"
         ],
         "title": "PeerSignalAnalysis",
+        "type": "object"
+      },
+      "PreliminaryElectionSummary": {
+        "additionalProperties": false,
+        "description": "A real, standard release served through the preliminary exposure.\n\nA deliberate sibling of ``ContextElectionSummary`` rather than a widening of\nit. Widening that model's literals would let a context-only historical\nrelease claim standard status, which is the same class of mislabel the\npreliminary scope exists to prevent \u2014 so each model pins the one class it\ndescribes and neither can impersonate the other.\n\n``completion``, ``coverage`` and ``reconciliation`` are the pipeline's own\nrecorded values. For this release that means completion reports 122,017 of\n122,020 and reconciliation is ``blocked`` with three exceptions; both are\nserved as recorded, because deriving them from the loaded rows would report\na complete count that reconciles.",
+        "properties": {
+          "blank_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateSummary"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/Completion"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "election_date": {
+            "format": "date",
+            "title": "Election Date",
+            "type": "string"
+          },
+          "election_name": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "election_slug": {
+            "title": "Election Slug",
+            "type": "string"
+          },
+          "exposure_class": {
+            "const": "preliminary",
+            "title": "Exposure Class",
+            "type": "string"
+          },
+          "geographic_collection_coverage": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geographic Collection Coverage"
+          },
+          "national_categories": {
+            "items": {
+              "$ref": "#/components/schemas/NormalizedCategoryResult"
+            },
+            "title": "National Categories",
+            "type": "array"
+          },
+          "null_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "preliminary": {
+            "const": true,
+            "title": "Preliminary",
+            "type": "boolean"
+          },
+          "preliminary_caveat": {
+            "$ref": "#/components/schemas/LocalizedText"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/PreviewProvenance"
+          },
+          "reconciliation": {
+            "$ref": "#/components/schemas/Reconciliation"
+          },
+          "registered_electors": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "release_class": {
+            "const": "standard",
+            "title": "Release Class",
+            "type": "string"
+          },
+          "release_status": {
+            "const": "candidate",
+            "title": "Release Status",
+            "type": "string"
+          },
+          "round": {
+            "exclusiveMinimum": 0.0,
+            "title": "Round",
+            "type": "integer"
+          },
+          "synthetic": {
+            "const": false,
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "turnout": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnout"
+          },
+          "unmarked_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "valid_votes": {
+            "$ref": "#/components/schemas/MetricValue"
+          },
+          "voters": {
+            "$ref": "#/components/schemas/MetricValue"
+          }
+        },
+        "required": [
+          "election_slug",
+          "election_name",
+          "round",
+          "election_date",
+          "data_version",
+          "release_status",
+          "release_class",
+          "synthetic",
+          "exposure_class",
+          "preliminary",
+          "preliminary_caveat",
+          "completion",
+          "coverage",
+          "registered_electors",
+          "voters",
+          "valid_votes",
+          "blank_votes",
+          "null_votes",
+          "unmarked_votes",
+          "candidates",
+          "national_categories",
+          "reconciliation",
+          "provenance"
+        ],
+        "title": "PreliminaryElectionSummary",
         "type": "object"
       },
       "PreviewProvenance": {
@@ -2683,20 +2764,12 @@
             "type": "integer"
           },
           "status": {
-            "enum": [
-              "passed",
-              "blocked",
-              "not_run"
-            ],
+            "enum": ["passed", "blocked", "not_run"],
             "title": "Status",
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "checked_facts",
-          "exceptions"
-        ],
+        "required": ["status", "checked_facts", "exceptions"],
         "title": "Reconciliation",
         "type": "object"
       },
@@ -2777,12 +2850,7 @@
             "type": "array"
           },
           "status": {
-            "enum": [
-              "fixture",
-              "candidate",
-              "published",
-              "withdrawn"
-            ],
+            "enum": ["fixture", "candidate", "published", "withdrawn"],
             "title": "Status",
             "type": "string"
           }
@@ -3034,6 +3102,18 @@
             "title": "Data Version",
             "type": "string"
           },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/ResultFact"
@@ -3043,13 +3123,31 @@
           },
           "page": {
             "$ref": "#/components/schemas/CursorMeta"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "required": [
-          "items",
-          "page",
-          "data_version"
-        ],
+        "required": ["items", "page", "data_version"],
         "title": "ResultPage",
         "type": "object"
       },
@@ -3229,13 +3327,7 @@
             "title": "Parent Id"
           }
         },
-        "required": [
-          "id",
-          "level",
-          "code",
-          "name",
-          "parent_id"
-        ],
+        "required": ["id", "level", "code", "name", "parent_id"],
         "title": "ScopedGeography",
         "type": "object"
       },
@@ -3246,18 +3338,49 @@
             "title": "Data Version",
             "type": "string"
           },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/ScopedGeography"
             },
             "title": "Items",
             "type": "array"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "required": [
-          "items",
-          "data_version"
-        ],
+        "required": ["items", "data_version"],
         "title": "ScopedGeographyPathResponse",
         "type": "object"
       },
@@ -3268,14 +3391,45 @@
             "title": "Data Version",
             "type": "string"
           },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
+          },
           "item": {
             "$ref": "#/components/schemas/ScopedGeography"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "required": [
-          "item",
-          "data_version"
-        ],
+        "required": ["item", "data_version"],
         "title": "ScopedGeographyResponse",
         "type": "object"
       },
@@ -3293,6 +3447,18 @@
           "display_number": {
             "title": "Display Number",
             "type": "string"
+          },
+          "exposure_class": {
+            "anyOf": [
+              {
+                "const": "preliminary",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exposure Class"
           },
           "geography_path": {
             "items": {
@@ -3312,6 +3478,28 @@
           "polling_place_id": {
             "title": "Polling Place Id",
             "type": "string"
+          },
+          "preliminary": {
+            "anyOf": [
+              {
+                "const": true,
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preliminary"
+          },
+          "preliminary_caveat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedText"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "results": {
             "items": {
@@ -3468,10 +3656,7 @@
           "coordinate_grain": {
             "anyOf": [
               {
-                "enum": [
-                  "mesa",
-                  "polling_place"
-                ],
+                "enum": ["mesa", "polling_place"],
                 "type": "string"
               },
               {
@@ -3521,10 +3706,7 @@
           "evidence_artifact_kind": {
             "anyOf": [
               {
-                "enum": [
-                  "reconciliation_result",
-                  "document_review"
-                ],
+                "enum": ["reconciliation_result", "document_review"],
                 "type": "string"
               },
               {
@@ -3744,12 +3926,7 @@
         "description": "An integer analytical count with explicit observed/unknown state.",
         "properties": {
           "status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Status",
             "type": "string"
           },
@@ -3766,10 +3943,7 @@
             "title": "Value"
           }
         },
-        "required": [
-          "value",
-          "status"
-        ],
+        "required": ["value", "status"],
         "title": "SignalCount",
         "type": "object"
       },
@@ -3778,12 +3952,7 @@
         "description": "A numeric analytical value whose absence is never silently treated as zero.",
         "properties": {
           "status": {
-            "enum": [
-              "observed",
-              "unknown",
-              "unavailable",
-              "not_applicable"
-            ],
+            "enum": ["observed", "unknown", "unavailable", "not_applicable"],
             "title": "Status",
             "type": "string"
           },
@@ -3799,10 +3968,7 @@
             "title": "Value"
           }
         },
-        "required": [
-          "value",
-          "status"
-        ],
+        "required": ["value", "status"],
         "title": "SignalNumber",
         "type": "object"
       },
@@ -3814,10 +3980,7 @@
             "$ref": "#/components/schemas/SignalNumber"
           },
           "analysis_grain": {
-            "enum": [
-              "mesa",
-              "polling_place"
-            ],
+            "enum": ["mesa", "polling_place"],
             "title": "Analysis Grain",
             "type": "string"
           },
@@ -3852,10 +4015,7 @@
             "type": "number"
           },
           "eligibility": {
-            "enum": [
-              "eligible",
-              "ineligible"
-            ],
+            "enum": ["eligible", "ineligible"],
             "title": "Eligibility",
             "type": "string"
           },
@@ -4051,10 +4211,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "reason"
-        ],
+        "required": ["status", "reason"],
         "title": "UnknownCompletion",
         "type": "object"
       },
@@ -4134,11 +4291,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError",
         "type": "object"
       }
@@ -4534,10 +4687,7 @@
             "required": false,
             "schema": {
               "default": "json",
-              "enum": [
-                "json",
-                "csv"
-              ],
+              "enum": ["json", "csv"],
               "title": "Format",
               "type": "string"
             }
@@ -5151,11 +5301,7 @@
             "name": "report_kind",
             "required": true,
             "schema": {
-              "enum": [
-                "model_diagnostics",
-                "validation",
-                "local_sensitivity"
-              ],
+              "enum": ["model_diagnostics", "validation", "local_sensitivity"],
               "title": "Report Kind",
               "type": "string"
             }
@@ -5488,40 +5634,39 @@
     },
     "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/children-results": {
       "get": {
-        "summary": "Normalized Children Results",
         "description": "Children plus their vote totals in one request.\n\nExists because ``/results`` reaches candidate votes only through a\nper-fact categories call: drilling into one polling place would cost up\nto 228 extra round trips. This is the drill-down read.",
         "operationId": "normalized_children_results_api_v1_releases__release_id__elections__election_slug__geographies__geography_id__children_results_get",
         "parameters": [
           {
+            "in": "path",
             "name": "release_id",
-            "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "title": "Release Id"
+              "title": "Release Id",
+              "type": "string"
             }
           },
           {
+            "in": "path",
             "name": "election_slug",
-            "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "title": "Election Slug"
+              "title": "Election Slug",
+              "type": "string"
             }
           },
           {
+            "in": "path",
             "name": "geography_id",
-            "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "title": "Geography Id"
+              "title": "Geography Id",
+              "type": "string"
             }
           },
           {
-            "name": "cursor",
             "in": "query",
+            "name": "cursor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -5536,20 +5681,20 @@
             }
           },
           {
-            "name": "limit",
             "in": "query",
+            "name": "limit",
             "required": false,
             "schema": {
-              "type": "integer",
+              "default": 50,
               "maximum": 200,
               "minimum": 1,
-              "default": 50,
-              "title": "Limit"
+              "title": "Limit",
+              "type": "integer"
             }
           },
           {
-            "name": "level",
             "in": "query",
+            "name": "level",
             "required": false,
             "schema": {
               "anyOf": [
@@ -5566,24 +5711,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
               }
-            }
+            },
+            "description": "Successful Response"
           },
           "422": {
-            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            }
+            },
+            "description": "Validation Error"
           }
-        }
+        },
+        "summary": "Normalized Children Results"
       }
     },
     "/api/v1/releases/{release_id}/elections/{election_slug}/geographies/{geography_id}/path": {
@@ -6120,10 +6266,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "observed",
-                    "unavailable"
-                  ],
+                  "enum": ["observed", "unavailable"],
                   "type": "string"
                 },
                 {
@@ -6139,10 +6282,7 @@
             "required": false,
             "schema": {
               "default": "json",
-              "enum": [
-                "json",
-                "csv"
-              ],
+              "enum": ["json", "csv"],
               "title": "Format",
               "type": "string"
             }
@@ -6206,7 +6346,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContextElectionSummary"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ContextElectionSummary"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PreliminaryElectionSummary"
+                    }
+                  ],
+                  "title": "Response Normalized Summary Api V1 Releases  Release Id  Elections  Election Slug  Summary Get"
                 }
               }
             },

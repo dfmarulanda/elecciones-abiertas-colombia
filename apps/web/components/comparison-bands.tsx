@@ -72,6 +72,7 @@ export function ComparisonBands({
   return (
     <>
       <div
+        className="eac-two-column"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)",
@@ -80,15 +81,38 @@ export function ComparisonBands({
           marginTop: 34,
         }}
       >
-        <div style={{ background: "#151312", color: "#F4F1EA", padding: "30px 34px 32px" }}>
-          <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5 }}>{thermometerLead}</p>
-          <p style={{ margin: "14px 0 0", fontSize: 16, lineHeight: 1.6, color: "#CFC8BC" }}>
+        <div
+          style={{
+            background: "#151312",
+            color: "#F4F1EA",
+            padding: "30px 34px 32px",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 18, lineHeight: 1.5 }}>
+            {thermometerLead}
+          </p>
+          <p
+            style={{
+              margin: "14px 0 0",
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: "#CFC8BC",
+            }}
+          >
             {thermometerBody}
           </p>
         </div>
         <div style={{ display: "grid", gap: 9 }}>
           {legendItems.map((item, i) => (
-            <p key={i} style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: "#3E3831" }}>
+            <p
+              key={i}
+              style={{
+                margin: 0,
+                fontSize: 15,
+                lineHeight: 1.5,
+                color: "#3E3831",
+              }}
+            >
               {item}
             </p>
           ))}
@@ -120,9 +144,19 @@ export function ComparisonBands({
           return (
             <div
               key={r.key}
-              style={{ padding: "24px 0 26px", borderBottom: "1px solid rgba(33,30,30,.16)" }}
+              style={{
+                padding: "24px 0 26px",
+                borderBottom: "1px solid rgba(33,30,30,.16)",
+              }}
             >
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: 24,
+                }}
+              >
                 <p
                   style={{
                     margin: 0,
@@ -135,7 +169,15 @@ export function ComparisonBands({
                 >
                   {label}
                 </p>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#6B6259", whiteSpace: "nowrap" }}>
+                <p
+                  className="mono"
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#6B6259",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {unit}
                 </p>
               </div>
@@ -152,7 +194,10 @@ export function ComparisonBands({
                 {r.human}
               </p>
 
-              <div style={{ position: "relative", height: 66, marginTop: 16 }}>
+              <div
+                className="eac-comparison-scale"
+                style={{ position: "relative", height: 66, marginTop: 16 }}
+              >
                 <div
                   style={{
                     position: "absolute",
@@ -219,10 +264,29 @@ export function ComparisonBands({
                 {r.layout.marks.map((m) => (
                   <div
                     key={m.year}
-                    style={{ position: "absolute", top: 25, left: m.x, transform: "translateX(-50%)" }}
+                    style={{
+                      position: "absolute",
+                      top: 25,
+                      left: m.x,
+                      transform: "translateX(-50%)",
+                    }}
                   >
-                    <div style={{ width: 13, height: 13, background: "#151312", borderRadius: 999 }} />
-                    <div style={{ width: 1, height: 9, margin: "0 auto", background: "rgba(33,30,30,.4)" }} />
+                    <div
+                      style={{
+                        width: 13,
+                        height: 13,
+                        background: "#151312",
+                        borderRadius: 999,
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 1,
+                        height: 9,
+                        margin: "0 auto",
+                        background: "rgba(33,30,30,.4)",
+                      }}
+                    />
                     <p
                       className="mono"
                       style={{
@@ -241,6 +305,7 @@ export function ComparisonBands({
               </div>
 
               <div
+                className="eac-comparison-result"
                 style={{
                   display: "flex",
                   alignItems: "baseline",
@@ -249,21 +314,49 @@ export function ComparisonBands({
                   marginTop: 8,
                 }}
               >
-                <p style={{ margin: 0, fontSize: 17, fontWeight: 600, letterSpacing: "-.01em" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    letterSpacing: "-.01em",
+                  }}
+                >
                   {verdict}
                 </p>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#6B6259", whiteSpace: "nowrap" }}>
+                <p
+                  className="mono"
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#6B6259",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {r.layout.values}
                 </p>
               </div>
-              <p style={{ margin: "6px 0 0", maxWidth: "44rem", fontSize: 15, lineHeight: 1.55, color: "#3E3831" }}>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  maxWidth: "44rem",
+                  fontSize: 15,
+                  lineHeight: 1.55,
+                  color: "#3E3831",
+                }}
+              >
                 {reading}
               </p>
             </div>
           );
         })}
 
-        <div style={{ padding: "24px 0 26px", borderBottom: "1px solid rgba(33,30,30,.16)" }}>
+        <div
+          style={{
+            padding: "24px 0 26px",
+            borderBottom: "1px solid rgba(33,30,30,.16)",
+          }}
+        >
           <p
             style={{
               margin: 0,
@@ -303,10 +396,21 @@ export function ComparisonBands({
               {benfordBox}
             </p>
           </div>
-          <p style={{ margin: "14px 0 0", maxWidth: "46rem", fontSize: 15, lineHeight: 1.55, color: "#3E3831" }}>
+          <p
+            style={{
+              margin: "14px 0 0",
+              maxWidth: "46rem",
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: "#3E3831",
+            }}
+          >
             {benfordBody}
           </p>
-          <p className="mono" style={{ margin: "12px 0 0", fontSize: 12, color: "#6B6259" }}>
+          <p
+            className="mono"
+            style={{ margin: "12px 0 0", fontSize: 12, color: "#6B6259" }}
+          >
             {benfordFootnote}
           </p>
         </div>

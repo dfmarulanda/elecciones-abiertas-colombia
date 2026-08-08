@@ -259,12 +259,14 @@ test.describe("public election product QA", () => {
     page,
   }) => {
     await page.goto("/es");
-    const candidates = page
-      .locator("ol > li")
-      .filter({ has: page.getByText(/Candidatura (Horizonte|Río)/) });
-    await expect(candidates).toHaveCount(2);
-    await expect(candidates.nth(0)).toContainText("1");
-    await expect(candidates.nth(1)).toContainText("2");
+    await expect(
+      page
+        .locator("p")
+        .filter({ hasText: /^Candidatura Horizonte · tarjetón 1$/ }),
+    ).toBeVisible();
+    await expect(
+      page.locator("p").filter({ hasText: /^Candidatura Río · tarjetón 2$/ }),
+    ).toBeVisible();
   });
 
   test("shell keeps full navigation at 1440px and the compact menu at 320px", async ({
@@ -297,14 +299,14 @@ test.describe("public election product QA", () => {
     {
       locale: "es",
       heading: /presidencia 2026 · segunda vuelta/i,
-      statistics: /comparación de candidaturas/i,
+      statistics: /¿2026 fue una elección rara\?/i,
       skip: /saltar al contenido principal/i,
       results: /^resultados$/i,
     },
     {
       locale: "en",
       heading: /2026 presidential election · second round/i,
-      statistics: /candidate comparison/i,
+      statistics: /was 2026 a strange election\?/i,
       skip: /skip to main content/i,
       results: /^results$/i,
     },

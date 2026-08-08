@@ -65,7 +65,12 @@ _MAX_OUTCOME_ARTIFACT_BYTES = 2 * 1024 * 1024
 _SHA256_HEX = frozenset("0123456789abcdef")
 _CONTEXT_LEVELS = ("national", "department", "municipality", "zone", "polling_place", "mesa")
 _CONTEXT_METRICS = (
-    "registered_electors", "voters", "valid_votes", "blank_votes", "null_votes", "unmarked_votes"
+    "registered_electors",
+    "voters",
+    "valid_votes",
+    "blank_votes",
+    "null_votes",
+    "unmarked_votes",
 )
 _CONTEXT_STATUS = ("observed", "unknown", "unavailable", "not_applicable")
 
@@ -253,7 +258,9 @@ class FixtureRepository:
         # Immutable releases produced before the index-only policy can still
         # be read, but their historical document-processing fields are never
         # re-exposed.  A rematerialized release must use the new index shape.
-        if any("source_index_url" not in item for item in raw_evidence if isinstance(item, Mapping)):
+        if any(
+            "source_index_url" not in item for item in raw_evidence if isinstance(item, Mapping)
+        ):
             return []
         if not isinstance(handling, Mapping) or handling:
             raise RepositoryUnavailableError("The release violates the E-14 index-only policy.")
@@ -405,7 +412,10 @@ class FixtureRepository:
                 "legacy_release_has_no_preregistered_explanation_artifact",
                 "complete_ballot_vector_not_published",
             ]
-            if any(item.component_type in {"peer_distribution", "spatial_cluster"} for item in signal.components):
+            if any(
+                item.component_type in {"peer_distribution", "spatial_cluster"}
+                for item in signal.components
+            ):
                 preview_reasons.append("independent_simulation_validation_artifact_not_published")
             result.append(
                 AnalysisAnomaly.model_validate(
@@ -439,7 +449,9 @@ class FixtureRepository:
         return result
 
     def anomaly(self, slug: str, anomaly_id: str, version: str | None) -> AnalysisAnomaly:
-        value = next((item for item in self.anomalies(slug, version) if item.id == anomaly_id), None)
+        value = next(
+            (item for item in self.anomalies(slug, version) if item.id == anomaly_id), None
+        )
         if value is None:
             raise ResourceNotFoundError(f"Analysis anomaly '{anomaly_id}' was not found.")
         return value
@@ -464,7 +476,10 @@ class FixtureRepository:
                 "data_version": self._version,
                 "methodology_version": self.review_methodology_version(slug, version),
                 "total_records_evaluated": {"value": len(anomalies), "status": "observed"},
-                "anomaly_count": {"value": sum(item.is_anomaly for item in anomalies), "status": "observed"},
+                "anomaly_count": {
+                    "value": sum(item.is_anomaly for item in anomalies),
+                    "status": "observed",
+                },
                 "anomaly_counts": {
                     kind: {"value": value, "status": "observed"} for kind, value in counts.items()
                 },
@@ -484,7 +499,10 @@ class FixtureRepository:
             raise ResourceNotFoundError(f"Analysis report '{report_kind}' was not found.")
         summary = self.summary(slug, version)
         reasons = {
-            "model_diagnostics": ["hierarchical_model_not_implemented", "psis_diagnostics_not_implemented"],
+            "model_diagnostics": [
+                "hierarchical_model_not_implemented",
+                "psis_diagnostics_not_implemented",
+            ],
             "validation": ["independent_simulation_artifacts_not_published"],
             "local_sensitivity": ["complete_ballot_vector_not_published"],
         }[report_kind]
@@ -600,7 +618,16 @@ class PostgresReadRepository:
         if self._normalized(
             """SELECT 1 FROM release_exposures x JOIN releases r ON r.id=x.release_id
             WHERE x.release_id=:r AND x.access_scope='public' AND x.approved_at IS NOT NULL
-            AND r.status='published' LIMIT 1""", {"r": selected}
+            AND r.status='published' LIMIT 1""",
+            {"r": selected},
+        ):
+            return selected
+        if self._normalized(
+            """SELECT 1 FROM release_exposures x JOIN releases r ON r.id=x.release_id
+            WHERE x.release_id=:r AND x.access_scope='preliminary'
+            AND x.preliminary_approved_at IS NOT NULL AND r.status='candidate'
+            AND r.synthetic=false LIMIT 1""",
+            {"r": selected},
         ):
             return selected
         return self._snapshot(None).data_version
@@ -743,8 +770,9 @@ class PostgresReadRepository:
         return cast(list[dict[str, object]], datasets)
 
     def public_elections(self) -> list[dict[str, object]]:
-        return self._normalized(
-            """SELECT e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,
+        return (
+            self._normalized(
+                """SELECT e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,
           x.manifest_hash AS release_manifest_hash,x.approved_at AS exposure_approved_at,
           COALESCE(json_agg(json_build_object('id',s.id,'source_type',s.source_type,'legal_status',s.legal_status,'source_url',s.source_url,'content_hash',s.content_hash)) FILTER (WHERE s.id IS NOT NULL), '[]'::json) AS sources
           FROM release_elections e JOIN release_exposures x USING (release_id,election_slug)
@@ -752,8 +780,10 @@ class PostgresReadRepository:
           WHERE x.access_scope='public' AND x.approved_at IS NOT NULL AND r.status='published'
           GROUP BY e.release_id,e.election_slug,e.name_es,e.name_en,e.round,e.election_date,r.status,r.methodology_version,x.manifest_hash,x.approved_at
           ORDER BY e.election_date,e.election_slug""",
-            {},
-        ) + self._preliminary_elections()
+                {},
+            )
+            + self._preliminary_elections()
+        )
 
     def _preliminary_elections(self) -> list[dict[str, object]]:
         """Catalogue entries for preliminary grants.
@@ -796,9 +826,7 @@ class PostgresReadRepository:
         if not rows:
             raise ReleaseNotFoundError("The requested release/election is not publicly exposed.")
 
-    def _preliminary_grant(
-        self, release_id: str, election_slug: str
-    ) -> dict[str, object] | None:
+    def _preliminary_grant(self, release_id: str, election_slug: str) -> dict[str, object] | None:
         """The second, disjoint door: a reviewed grant over a candidate release.
 
         Deliberately narrower than it looks. ``r.status='candidate'`` means a
@@ -840,6 +868,16 @@ class PostgresReadRepository:
             return grant
         self._authorized(release_id, election_slug)
         return {"class": "certified", "caveat": None}
+
+    def normalized_disclosure(self, release_id: str, election_slug: str) -> dict[str, object]:
+        grant = self._authorized_any(release_id, election_slug)
+        if grant["class"] != "preliminary":
+            return {}
+        return {
+            "exposure_class": "preliminary",
+            "preliminary": True,
+            "preliminary_caveat": grant["caveat"],
+        }
 
     def _legacy_public(self, election_slug: str, version: str | None) -> None:
         """Do not let the legacy snapshot adapter bypass release exposure.
@@ -949,7 +987,11 @@ class PostgresReadRepository:
         return self._normalized(sql, values)
 
     def _context_results(
-        self, scope_id: int, filters: Mapping[str, object], after: tuple[str, ...] | None, limit: int | None
+        self,
+        scope_id: int,
+        filters: Mapping[str, object],
+        after: tuple[str, ...] | None,
+        limit: int | None,
     ) -> list[dict[str, object]]:
         clauses = ["f.scope_id=:scope"]
         values: dict[str, object] = {"scope": scope_id}
@@ -974,20 +1016,29 @@ class PostgresReadRepository:
             clauses.append("g.tree_left>=:tree_left AND g.tree_right<=:tree_right")
             values.update({"tree_left": leaf["tree_left"], "tree_right": leaf["tree_right"]})
         if filters.get("category_key") is not None:
-            clauses.append("EXISTS (SELECT 1 FROM context_category_facts cf JOIN context_categories c ON (c.scope_id=cf.scope_id AND c.id=cf.category_id) WHERE cf.scope_id=f.scope_id AND cf.geography_id=f.geography_id AND cf.source_ordinal=f.source_ordinal AND c.category_key=:category_key)")
+            clauses.append(
+                "EXISTS (SELECT 1 FROM context_category_facts cf JOIN context_categories c ON (c.scope_id=cf.scope_id AND c.id=cf.category_id) WHERE cf.scope_id=f.scope_id AND cf.geography_id=f.geography_id AND cf.source_ordinal=f.source_ordinal AND c.category_key=:category_key)"
+            )
             values["category_key"] = filters["category_key"]
         if filters.get("status") is not None:
             status = 0 if filters["status"] == "observed" else 2
-            clauses.append("EXISTS (SELECT 1 FROM context_category_facts cf WHERE cf.scope_id=f.scope_id AND cf.geography_id=f.geography_id AND cf.source_ordinal=f.source_ordinal AND cf.status=:category_status)")
+            clauses.append(
+                "EXISTS (SELECT 1 FROM context_category_facts cf WHERE cf.scope_id=f.scope_id AND cf.geography_id=f.geography_id AND cf.source_ordinal=f.source_ordinal AND cf.status=:category_status)"
+            )
             values["category_status"] = status
         if after:
-            clauses.append("(g.level,g.external_id,s.source_id,(g.external_id || ':' || s.source_id)) > (:a,:b,:c,:d)")
+            clauses.append(
+                "(g.level,g.external_id,s.source_id,(g.external_id || ':' || s.source_id)) > (:a,:b,:c,:d)"
+            )
             try:
                 cursor_level = _CONTEXT_LEVELS.index(after[0])
             except ValueError as exc:
-                raise ResourceNotFoundError("The results cursor has an unknown geography level.") from exc
+                raise ResourceNotFoundError(
+                    "The results cursor has an unknown geography level."
+                ) from exc
             values.update({"a": cursor_level, "b": after[1], "c": after[2], "d": after[3]})
-        sql = """SELECT (g.external_id || ':' || s.source_id) AS id,g.external_id AS geography_id,
+        sql = (
+            """SELECT (g.external_id || ':' || s.source_id) AS id,g.external_id AS geography_id,
           CASE g.level WHEN 0 THEN 'national' WHEN 1 THEN 'department' WHEN 2 THEN 'municipality' WHEN 3 THEN 'zone' WHEN 4 THEN 'polling_place' ELSE 'mesa' END AS geography_level,
           CASE WHEN g.level=5 THEN g.external_id ELSE NULL END AS mesa_id,s.source_id,f.metrics_status,
           f.registered_electors,f.voters,f.valid_votes,f.blank_votes,f.null_votes,f.unmarked_votes,
@@ -996,7 +1047,10 @@ class PostgresReadRepository:
           JOIN context_sources s ON (s.scope_id=f.scope_id AND s.ordinal=f.source_ordinal)
           JOIN context_release_scopes cs ON cs.id=f.scope_id
           JOIN release_sources rs ON (rs.release_id=cs.release_id AND rs.election_slug=cs.election_slug AND rs.id=s.source_id)
-          WHERE """ + " AND ".join(clauses) + " ORDER BY g.level,g.external_id,s.source_id,(g.external_id || ':' || s.source_id)"
+          WHERE """
+            + " AND ".join(clauses)
+            + " ORDER BY g.level,g.external_id,s.source_id,(g.external_id || ':' || s.source_id)"
+        )
         if limit is not None:
             sql += " LIMIT :n"
             values["n"] = limit
@@ -1337,25 +1391,38 @@ class PostgresReadRepository:
                 raise ResourceNotFoundError(f"Geography '{geography_id}' was not found.")
             parent = parent_rows[-1]
             clauses = ["g.scope_id=:scope", "g.parent_id=:parent"]
-            compact_values: dict[str, object] = {"scope": scope_id, "parent": parent["id"], "n": limit + 1}
+            compact_values: dict[str, object] = {
+                "scope": scope_id,
+                "parent": parent["id"],
+                "n": limit + 1,
+            }
             if child_level is not None:
                 if child_level not in _CONTEXT_LEVELS:
                     return []
                 clauses.append("g.level=:level")
                 compact_values["level"] = _CONTEXT_LEVELS.index(child_level)
             if after is not None:
-                clauses.append("(g.level,g.code,g.external_id) > (:after_level,:after_code,:after_id)")
+                clauses.append(
+                    "(g.level,g.code,g.external_id) > (:after_level,:after_code,:after_id)"
+                )
                 try:
                     cursor_level = _CONTEXT_LEVELS.index(after[0])
                 except ValueError as exc:
-                    raise ResourceNotFoundError("The geography cursor has an unknown level.") from exc
-                compact_values.update({"after_level": cursor_level, "after_code": after[1], "after_id": after[2]})
+                    raise ResourceNotFoundError(
+                        "The geography cursor has an unknown level."
+                    ) from exc
+                compact_values.update(
+                    {"after_level": cursor_level, "after_code": after[1], "after_id": after[2]}
+                )
             children = self._normalized(
                 """SELECT g.external_id AS id,CASE g.level WHEN 0 THEN 'national' WHEN 1 THEN 'department' WHEN 2 THEN 'municipality' WHEN 3 THEN 'zone' WHEN 4 THEN 'polling_place' ELSE 'mesa' END AS level,g.code,g.name,
                 p.external_id AS parent_id,NULL::text AS canonical_path,
                 EXISTS (SELECT 1 FROM context_result_facts f WHERE f.scope_id=g.scope_id AND f.geography_id=g.id) AS has_published_facts
                 FROM context_geographies g JOIN context_geographies p ON (p.scope_id=g.scope_id AND p.id=g.parent_id)
-                WHERE """ + " AND ".join(clauses) + " ORDER BY g.level,g.code,g.external_id LIMIT :n", compact_values
+                WHERE """
+                + " AND ".join(clauses)
+                + " ORDER BY g.level,g.code,g.external_id LIMIT :n",
+                compact_values,
             )
             parent_path = "/".join(str(row["external_id"]) for row in parent_rows)
             for child in children:
@@ -1409,11 +1476,21 @@ class PostgresReadRepository:
             if any(level not in by_level for level in required):
                 raise RepositoryUnavailableError("The mesa context hierarchy is incomplete.")
             mesa = by_level[5]
-            facts = self.normalized_results(release_id, election_slug, {"geography_id": mesa_id, "source_id": source_id, "source_type": source_type}, None, 200)
+            facts = self.normalized_results(
+                release_id,
+                election_slug,
+                {"geography_id": mesa_id, "source_id": source_id, "source_type": source_type},
+                None,
+                200,
+            )
             return {
-                "id": mesa_id, "display_number": mesa["code"],
-                "polling_place_id": by_level[4]["external_id"], "municipality_id": by_level[2]["external_id"], "department_id": by_level[1]["external_id"],
-                "geography_path": self._context_public_path(path), "results": facts,
+                "id": mesa_id,
+                "display_number": mesa["code"],
+                "polling_place_id": by_level[4]["external_id"],
+                "municipality_id": by_level[2]["external_id"],
+                "department_id": by_level[1]["external_id"],
+                "geography_path": self._context_public_path(path),
+                "results": facts,
             }
         rows = self._normalized(
             """SELECT id,display_number,polling_place_id,municipality_id,department_id
@@ -1463,7 +1540,13 @@ class PostgresReadRepository:
                 JOIN context_release_scopes cs ON cs.id=cf.scope_id JOIN release_sources rs ON (rs.release_id=cs.release_id AND rs.election_slug=cs.election_slug AND rs.id=s.source_id)
                 WHERE cf.scope_id=:scope AND g.external_id=:geo AND s.source_id=:source
                 AND (CAST(:after AS text) IS NULL OR c.category_key>CAST(:after AS text)) ORDER BY c.category_key LIMIT :n""",
-                {"scope": scope_id, "geo": geography_id, "source": source_id, "after": after, "n": limit + 1},
+                {
+                    "scope": scope_id,
+                    "geo": geography_id,
+                    "source": source_id,
+                    "after": after,
+                    "n": limit + 1,
+                },
             )
         return self._normalized(
             """SELECT cf.category_key,cf.category_code,cf.category_name,cf.category_kind,cf.votes,cf.status,
@@ -1501,14 +1584,44 @@ class PostgresReadRepository:
             release_id, election_slug, str(fact["id"]), None, 500
         )
         return {
-            "election_slug": election_slug, "election_name": {"es": election["name_es"], "en": election["name_en"]},
-            "round": election["round"], "election_date": election["election_date"], "data_version": release_id,
-            "release_status": election["status"], "release_class": "context_only", "synthetic": False,
-            "completion": {"status": "unknown", "reason": "The historical context artifact does not declare an expected reporting universe."},
-            **cast(dict[str, object], fact["metrics"]), "national_categories": national_categories,
-            "coverage": {"status": "unknown", "observed_geographies": counts["geographies"], "observed_result_facts": counts["facts"], "observed_category_facts": counts["category_facts"], "reason": "Observed rows are not an expected coverage denominator."},
+            "election_slug": election_slug,
+            "election_name": {"es": election["name_es"], "en": election["name_en"]},
+            "round": election["round"],
+            "election_date": election["election_date"],
+            "data_version": release_id,
+            "release_status": election["status"],
+            "release_class": "context_only",
+            "synthetic": False,
+            "completion": {
+                "status": "unknown",
+                "reason": "The historical context artifact does not declare an expected reporting universe.",
+            },
+            **cast(dict[str, object], fact["metrics"]),
+            "national_categories": national_categories,
+            "coverage": {
+                "status": "unknown",
+                "observed_geographies": counts["geographies"],
+                "observed_result_facts": counts["facts"],
+                "observed_category_facts": counts["category_facts"],
+                "reason": "Observed rows are not an expected coverage denominator.",
+            },
             "reconciliation": {"status": "not_run", "checked_facts": 0, "exceptions": 0},
-            "provenance": {"data_version": release_id, **{key: fact[key] for key in ("source_type", "legal_status", "source_url", "retrieved_at", "content_hash", "parser_version", "transform_version")}, "methodology_version": None},
+            "provenance": {
+                "data_version": release_id,
+                **{
+                    key: fact[key]
+                    for key in (
+                        "source_type",
+                        "legal_status",
+                        "source_url",
+                        "retrieved_at",
+                        "content_hash",
+                        "parser_version",
+                        "transform_version",
+                    )
+                },
+                "methodology_version": None,
+            },
         }
 
     def normalized_children_results(
@@ -1599,9 +1712,10 @@ class PostgresReadRepository:
                 position = index.get(str(entry["k"]))
                 if position is not None:
                     votes[position] = entry["v"]
-            number = lambda key: (  # noqa: E731 - local projection helper
-                None if row[key] is None else int(cast(Any, row[key]))
-            )
+
+            def number(key: str) -> int | None:
+                return None if row[key] is None else int(cast(Any, row[key]))
+
             return {
                 "i": row["id"],
                 "l": row["level"],
@@ -1721,9 +1835,7 @@ class PostgresReadRepository:
                         "value": value,
                         "status": "observed" if value is not None else "unavailable",
                     },
-                    "share": (
-                        (value / valid) if value is not None and valid else None
-                    ),
+                    "share": ((value / valid) if value is not None and valid else None),
                 }
             )
 
@@ -1769,7 +1881,9 @@ class PostgresReadRepository:
             },
         }
 
-    def normalized_geography(self, release_id: str, election_slug: str, geography_id: str) -> dict[str, object]:
+    def normalized_geography(
+        self, release_id: str, election_slug: str, geography_id: str
+    ) -> dict[str, object]:
         self._authorized_any(release_id, election_slug)
         scope_id = self._context_scope(release_id, election_slug)
         if scope_id is None:
@@ -1800,7 +1914,15 @@ class PostgresReadRepository:
             raise ResourceNotFoundError(f"Geography '{geography_id}' was not found.")
         row = path[-1]
         parent_id = None if row["parent_id"] is None else path[-2]["external_id"]
-        return {"id": row["external_id"], "level": _CONTEXT_LEVELS[int(cast(Any, row["level"]))], "code": row["code"], "name": row["name"], "parent_id": parent_id, "canonical_path": "/".join(str(item["external_id"]) for item in path), "authoritative_coordinates": None}
+        return {
+            "id": row["external_id"],
+            "level": _CONTEXT_LEVELS[int(cast(Any, row["level"]))],
+            "code": row["code"],
+            "name": row["name"],
+            "parent_id": parent_id,
+            "canonical_path": "/".join(str(item["external_id"]) for item in path),
+            "authoritative_coordinates": None,
+        }
 
     def normalized_comparison(
         self,
@@ -1820,7 +1942,12 @@ class PostgresReadRepository:
             # The compact historical model deliberately has no approved stable
             # crosswalk. Matching identifiers alone is insufficient evidence of
             # comparability, even when their strings happen to be equal.
-            return {"comparison_status": "descriptive_context_only", "reason": "missing_approved_context_crosswalk", "eligible_for_integrity_analysis": False, "items": []}
+            return {
+                "comparison_status": "descriptive_context_only",
+                "reason": "missing_approved_context_crosswalk",
+                "eligible_for_integrity_analysis": False,
+                "items": [],
+            }
         rows = self._normalized(
             """SELECT c.comparison_key,c.version,c.baseline_geography_id,c.approved_at FROM comparison_crosswalks c
           WHERE c.current_release_id=:r AND c.current_election_slug=:e AND c.baseline_release_id=:br AND c.baseline_election_slug=:be AND c.current_geography_id=:g AND c.grain=:grain""",

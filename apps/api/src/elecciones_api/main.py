@@ -185,9 +185,7 @@ def _cached_json(
     return JSONResponse(_jsonable(payload), headers=headers)
 
 
-def _validated_public[M: BaseModel](
-    model: type[M], payload: object
-) -> dict[str, object]:
+def _validated_public[M: BaseModel](model: type[M], payload: object) -> dict[str, object]:
     """Validate concrete Response payloads before FastAPI's serializer is bypassed."""
     try:
         return cast(
@@ -531,22 +529,16 @@ def _normalized_category(row: dict[str, object], release_id: str) -> dict[str, o
     }
 
 
-def _normalized_summary_payload(
-    row: dict[str, object], release_id: str
-) -> dict[str, object]:
+def _normalized_summary_payload(row: dict[str, object], release_id: str) -> dict[str, object]:
     raw_categories = row.get("national_categories")
     if not isinstance(raw_categories, list) or not all(
         isinstance(item, dict) for item in raw_categories
     ):
-        raise RepositoryUnavailableError(
-            "A context summary has malformed national category facts."
-        )
+        raise RepositoryUnavailableError("A context summary has malformed national category facts.")
     categories = cast(list[dict[str, object]], raw_categories)
     return {
         **row,
-        "national_categories": [
-            _normalized_category(item, release_id) for item in categories
-        ],
+        "national_categories": [_normalized_category(item, release_id) for item in categories],
     }
 
 
@@ -641,6 +633,7 @@ def create_app(
             send_default_pii=False,
             before_send=_scrub_sentry_event,
         )
+
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         try:
@@ -757,6 +750,15 @@ def create_app(
         except RepositoryUnavailableError as exc:
             raise APIProblem(503, "Read model unavailable", str(exc)) from exc
 
+    def normalized_disclosure(
+        repository: AppRepository, release_id: str, election_slug: str
+    ) -> dict[str, object]:
+        if isinstance(repository, HistoricalDuckDBRepository):
+            return {}
+        if isinstance(repository, (PostgresReadRepository, FederatedRepository)):
+            return translate(lambda: repository.normalized_disclosure(release_id, election_slug))
+        return {}
+
     @app.get("/healthz", include_in_schema=False)
     async def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -776,7 +778,9 @@ def create_app(
     @app.get("/api/v1/release-elections", response_model=list[ReleaseElectionRef])
     async def release_elections(request: Request) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             return _cached_json(request, [])
         values = translate(lambda: repository.public_elections())
 
@@ -814,7 +818,9 @@ def create_app(
         format: Literal["json", "csv"] = "json",
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -840,12 +846,14 @@ def create_app(
                 raise APIProblem(
                     400, "Invalid cursor", "CSV exports do not accept cursor pagination."
                 )
+            disclosure = normalized_disclosure(repository, release_id, election_slug)
             tag = _etag(
                 {
                     "release": release_id,
                     "election": election_slug,
                     "filters": filters,
                     "format": "csv-v2",
+                    **disclosure,
                 }
             )
             headers = {
@@ -854,6 +862,9 @@ def create_app(
                 "Vary": "Origin",
                 "Content-Disposition": 'attachment; filename="filtered-results.csv"',
             }
+            if disclosure.get("exposure_class") == "preliminary":
+                headers[DATA_CLASS_HEADER] = "preliminary"
+                headers["Cache-Control"] = PreliminaryCache
             if _if_none_match(request.headers.get("if-none-match"), tag):
                 return Response(status_code=304, headers=headers)
 
@@ -891,24 +902,26 @@ def create_app(
             else None
         )
         payload = {
-                "items": [_normalized_fact(row, release_id, election_slug) for row in items],
-                "page": {"next_cursor": next_cursor, "has_more": has_more, "limit": limit},
-                "data_version": release_id,
-            }
-        return _cached_json(
-            request, translate(lambda: _validated_public(ResultPage, payload))
-        )
+            "items": [_normalized_fact(row, release_id, election_slug) for row in items],
+            "page": {"next_cursor": next_cursor, "has_more": has_more, "limit": limit},
+            "data_version": release_id,
+            **normalized_disclosure(repository, release_id, election_slug),
+        }
+        return _cached_json(request, translate(lambda: _validated_public(ResultPage, payload)))
 
     @app.get(
         "/api/v1/releases/{release_id}/elections/{election_slug}/summary",
-        response_model=ContextElectionSummary,
+        response_model=ContextElectionSummary | PreliminaryElectionSummary,
     )
     async def normalized_summary(request: Request, release_id: str, election_slug: str) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
+
         def summary_payload() -> dict[str, object]:
             raw = repository.normalized_summary(release_id, election_slug)
             payload = _normalized_summary_payload(raw, release_id)
@@ -937,7 +950,9 @@ def create_app(
         request: Request, release_id: str, election_slug: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -949,9 +964,7 @@ def create_app(
                 value = item if isinstance(item, dict) else item.model_dump(mode="json")
                 dataset_id = value.get("id")
                 if not isinstance(dataset_id, str):
-                    raise RepositoryUnavailableError(
-                        "A packaged dataset has no stable identifier."
-                    )
+                    raise RepositoryUnavailableError("A packaged dataset has no stable identifier.")
                 normalized = {
                     **value,
                     "url": (
@@ -1038,9 +1051,7 @@ def create_app(
                 return _validated_public(PackagedDataset, value)
 
             validated = translate(validate_selected_dataset)
-            location = _allowlisted_artifact_url(
-                str(selected.url), settings.allowed_artifact_hosts
-            )
+            location = _allowlisted_artifact_url(str(selected.url), settings.allowed_artifact_hosts)
             return RedirectResponse(
                 location,
                 status_code=307,
@@ -1060,7 +1071,9 @@ def create_app(
     ) -> Response:
         """A bounded documentary sensitivity artifact at one public release scope."""
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1167,18 +1180,21 @@ def create_app(
         request: Request, release_id: str, election_slug: str, geography_id: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
         payload = {
-                "items": translate(
-                    lambda: repository.normalized_geography_path(
-                        release_id, election_slug, geography_id
-                    )
-                ),
-                "data_version": release_id,
-            }
+            "items": translate(
+                lambda: repository.normalized_geography_path(
+                    release_id, election_slug, geography_id
+                )
+            ),
+            "data_version": release_id,
+            **normalized_disclosure(repository, release_id, election_slug),
+        }
         return _cached_json(
             request,
             translate(lambda: _validated_public(ScopedGeographyPathResponse, payload)),
@@ -1198,7 +1214,9 @@ def create_app(
         level: str | None = None,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1238,10 +1256,11 @@ def create_app(
             else None
         )
         payload = {
-                "items": items,
-                "page": {"next_cursor": next_cursor, "has_more": more, "limit": limit},
-                "data_version": release_id,
-            }
+            "items": items,
+            "page": {"next_cursor": next_cursor, "has_more": more, "limit": limit},
+            "data_version": release_id,
+            **normalized_disclosure(repository, release_id, election_slug),
+        }
         return _cached_json(
             request, translate(lambda: _validated_public(GeographyChildPage, payload))
         )
@@ -1319,16 +1338,19 @@ def create_app(
         request: Request, release_id: str, election_slug: str, geography_id: str
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
         payload = {
-                "item": translate(
-                    lambda: repository.normalized_geography(release_id, election_slug, geography_id)
-                ),
-                "data_version": release_id,
-            }
+            "item": translate(
+                lambda: repository.normalized_geography(release_id, election_slug, geography_id)
+            ),
+            "data_version": release_id,
+            **normalized_disclosure(repository, release_id, election_slug),
+        }
         return _cached_json(
             request, translate(lambda: _validated_public(ScopedGeographyResponse, payload))
         )
@@ -1346,7 +1368,9 @@ def create_app(
         source_type: str | None = None,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1360,6 +1384,7 @@ def create_app(
             **value,
             "results": [_normalized_fact(row, release_id, election_slug) for row in raw_results],
             "data_version": release_id,
+            **normalized_disclosure(repository, release_id, election_slug),
         }
         return _cached_json(request, translate(lambda: _validated_public(ScopedMesa, payload)))
 
@@ -1376,7 +1401,9 @@ def create_app(
         limit: Annotated[int, Query(ge=1, le=200)] = 50,
     ) -> Response:
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )
@@ -1412,11 +1439,12 @@ def create_app(
             else None
         )
         payload = {
-                "items": [_normalized_category(item, release_id) for item in items],
-                "page": {"next_cursor": next_cursor, "has_more": more, "limit": limit},
-                "data_version": release_id,
-                "sparse_category_semantics": "absent categories are unavailable; they are never inferred as zero",
-            }
+            "items": [_normalized_category(item, release_id) for item in items],
+            "page": {"next_cursor": next_cursor, "has_more": more, "limit": limit},
+            "data_version": release_id,
+            "sparse_category_semantics": "absent categories are unavailable; they are never inferred as zero",
+            **normalized_disclosure(repository, release_id, election_slug),
+        }
         return _cached_json(
             request, translate(lambda: _validated_public(NormalizedCategoryPage, payload))
         )
@@ -1437,7 +1465,9 @@ def create_app(
     ) -> Response:
         """Comparison authorization is an explicit code crosswalk, never a name match."""
         repository = repo(request)
-        if not isinstance(repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)):
+        if not isinstance(
+            repository, (PostgresReadRepository, HistoricalDuckDBRepository, FederatedRepository)
+        ):
             raise APIProblem(
                 404, "Resource not found", "Normalized release reads require PostgreSQL."
             )

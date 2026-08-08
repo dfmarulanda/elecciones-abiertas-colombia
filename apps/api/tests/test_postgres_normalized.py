@@ -156,7 +156,7 @@ def _seed(url: str) -> None:
             ("baseline", "src-base", "contextual_baseline", "context_only"),
             ("ordinary", "src-ordinary", "scrutiny", "official_scrutiny"),
             ("unapproved", "src-unapproved", "scrutiny", "official_scrutiny"),
-            ("candidate", "src-secret", "scrutiny", "official_scrutiny"),
+            ("candidate", "src-secret", "pre_count", "preliminary"),
         ):
             c.execute(
                 text(
@@ -347,6 +347,72 @@ def test_normalized_public_read_path(postgres_url: str) -> None:
         ).json()
         assert missing["reason"] == "missing_geography_crosswalk"
         assert api.get("/api/v1/releases/candidate/elections/election/results").status_code == 404
+
+    caveat = {
+        "es": "Resultados preliminares del preconteo; no son resultados certificados.",
+        "en": "Preliminary pre-count results; these are not certified results.",
+    }
+    with create_engine(postgres_url).begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO release_exposures VALUES('candidate','election','internal',NULL,:hash,NULL,NULL,NULL)"
+            ),
+            {"hash": "c" * 64},
+        )
+        connection.execute(
+            text(
+                """UPDATE release_exposures
+                SET access_scope='preliminary', preliminary_approved_at=:now,
+                    preliminary_caveat_es=:es, preliminary_caveat_en=:en
+                WHERE release_id='candidate' AND election_slug='election'"""
+            ),
+            {"now": datetime.now(UTC), **caveat},
+        )
+
+    preliminary_repository = PostgresReadRepository(postgres_url, "candidate")
+    preliminary_app = create_app(
+        settings=Settings(
+            database_url=postgres_url,
+            active_release="candidate",
+            cursor_secret="integration-secret",
+        ),
+        repository=preliminary_repository,
+    )
+    with TestClient(preliminary_app) as preliminary_api:
+        assert preliminary_api.get("/readyz").status_code == 200
+        releases = preliminary_api.get("/api/v1/release-elections").json()
+        assert "candidate" in {item["release_id"] for item in releases}
+
+        base = "/api/v1/releases/candidate/elections/election"
+        responses = [
+            preliminary_api.get(f"{base}/results"),
+            preliminary_api.get(f"{base}/geographies/MESA/path"),
+            preliminary_api.get(f"{base}/geographies/MUN/children"),
+            preliminary_api.get(f"{base}/geographies/CO"),
+            preliminary_api.get(f"{base}/mesas/MESA"),
+            preliminary_api.get(f"{base}/result-facts/fact-candidate-src-secret/categories"),
+        ]
+        for response in responses:
+            assert response.status_code == 200
+            assert response.headers["x-election-data-class"] == "preliminary"
+            assert response.headers["cache-control"] == "public, max-age=60"
+            assert (
+                response.json()
+                | {
+                    "exposure_class": "preliminary",
+                    "preliminary": True,
+                    "preliminary_caveat": caveat,
+                }
+                == response.json()
+            )
+
+        csv_response = preliminary_api.get(f"{base}/results?format=csv")
+        assert csv_response.status_code == 200
+        assert csv_response.headers["x-election-data-class"] == "preliminary"
+        assert csv_response.headers["cache-control"] == "public, max-age=60"
+        assert list(csv.DictReader(io.StringIO(csv_response.text)))[0]["legal_status"] == (
+            "preliminary"
+        )
 
 
 def test_exposure_serializes_with_a_concurrent_writer(postgres_url: str) -> None:
@@ -611,11 +677,35 @@ def _seed_compact_context(url: str) -> None:
         }
     )
     with engine.begin() as c:
-        c.execute(text("INSERT INTO releases(id,status,synthetic,created_at,manifest) VALUES('compact','published',false,:now,CAST(:manifest AS jsonb))"), {"now": now, "manifest": manifest})
-        c.execute(text("INSERT INTO release_elections VALUES('compact','historical','Histórica','Historical',1,:day)"), {"day": date(2022, 5, 29)})
-        c.execute(text("INSERT INTO release_sources VALUES('compact','historical','historical-source','contextual_baseline','context_only','https://official.example/source',:now,:hash,'p1','t1')"), {"now": now, "hash": "d" * 64})
-        scope = int(c.execute(text("INSERT INTO context_release_scopes(release_id,election_slug) VALUES('compact','historical') RETURNING id")).scalar_one())
-        c.execute(text("INSERT INTO context_sources VALUES(:scope,1,'historical-source')"), {"scope": scope})
+        c.execute(
+            text(
+                "INSERT INTO releases(id,status,synthetic,created_at,manifest) VALUES('compact','published',false,:now,CAST(:manifest AS jsonb))"
+            ),
+            {"now": now, "manifest": manifest},
+        )
+        c.execute(
+            text(
+                "INSERT INTO release_elections VALUES('compact','historical','Histórica','Historical',1,:day)"
+            ),
+            {"day": date(2022, 5, 29)},
+        )
+        c.execute(
+            text(
+                "INSERT INTO release_sources VALUES('compact','historical','historical-source','contextual_baseline','context_only','https://official.example/source',:now,:hash,'p1','t1')"
+            ),
+            {"now": now, "hash": "d" * 64},
+        )
+        scope = int(
+            c.execute(
+                text(
+                    "INSERT INTO context_release_scopes(release_id,election_slug) VALUES('compact','historical') RETURNING id"
+                )
+            ).scalar_one()
+        )
+        c.execute(
+            text("INSERT INTO context_sources VALUES(:scope,1,'historical-source')"),
+            {"scope": scope},
+        )
         geographies = [
             (1, "r:co", 0, "CO", "Colombia", None, 1, 12),
             (2, "r:dep:01", 1, "01", "Departamento", 1, 2, 11),
@@ -625,15 +715,49 @@ def _seed_compact_context(url: str) -> None:
             (6, "r:mesa:01:001:01:01:001", 5, "001", "Mesa", 5, 6, 7),
         ]
         for item in geographies:
-            c.execute(text("INSERT INTO context_geographies(scope_id,id,external_id,level,code,name,parent_id,tree_left,tree_right) VALUES(:scope,:id,:external,:level,:code,:name,:parent,:left,:right)"), {"scope": scope, "id": item[0], "external": item[1], "level": item[2], "code": item[3], "name": item[4], "parent": item[5], "left": item[6], "right": item[7]})
+            c.execute(
+                text(
+                    "INSERT INTO context_geographies(scope_id,id,external_id,level,code,name,parent_id,tree_left,tree_right) VALUES(:scope,:id,:external,:level,:code,:name,:parent,:left,:right)"
+                ),
+                {
+                    "scope": scope,
+                    "id": item[0],
+                    "external": item[1],
+                    "level": item[2],
+                    "code": item[3],
+                    "name": item[4],
+                    "parent": item[5],
+                    "left": item[6],
+                    "right": item[7],
+                },
+            )
         # registered_electors is observed zero; voters unknown; remaining metrics unavailable.
         mask = (1 << 2) + sum(2 << (offset * 2) for offset in range(2, 6))
         for geography_id in range(1, 7):
-            c.execute(text("INSERT INTO context_result_facts(scope_id,geography_id,source_ordinal,metrics_status,registered_electors,voters,valid_votes,blank_votes,null_votes,unmarked_votes) VALUES(:scope,:geo,1,:mask,0,NULL,NULL,NULL,NULL,NULL)"), {"scope": scope, "geo": geography_id, "mask": mask})
-        c.execute(text("INSERT INTO context_categories VALUES(:scope,1,'candidate:a','A','Candidata A','published_mmv_category')"), {"scope": scope})
-        c.execute(text("INSERT INTO context_categories VALUES(:scope,2,'ballot:unknown','UNK','Desconocido','published_mmv_category')"), {"scope": scope})
-        c.execute(text("INSERT INTO context_category_facts VALUES(:scope,1,1,1,0,0)"), {"scope": scope})
-        c.execute(text("INSERT INTO context_category_facts VALUES(:scope,1,1,2,NULL,1)"), {"scope": scope})
+            c.execute(
+                text(
+                    "INSERT INTO context_result_facts(scope_id,geography_id,source_ordinal,metrics_status,registered_electors,voters,valid_votes,blank_votes,null_votes,unmarked_votes) VALUES(:scope,:geo,1,:mask,0,NULL,NULL,NULL,NULL,NULL)"
+                ),
+                {"scope": scope, "geo": geography_id, "mask": mask},
+            )
+        c.execute(
+            text(
+                "INSERT INTO context_categories VALUES(:scope,1,'candidate:a','A','Candidata A','published_mmv_category')"
+            ),
+            {"scope": scope},
+        )
+        c.execute(
+            text(
+                "INSERT INTO context_categories VALUES(:scope,2,'ballot:unknown','UNK','Desconocido','published_mmv_category')"
+            ),
+            {"scope": scope},
+        )
+        c.execute(
+            text("INSERT INTO context_category_facts VALUES(:scope,1,1,1,0,0)"), {"scope": scope}
+        )
+        c.execute(
+            text("INSERT INTO context_category_facts VALUES(:scope,1,1,2,NULL,1)"), {"scope": scope}
+        )
         c.execute(
             text(
                 "UPDATE context_release_scopes SET geography_count=6,result_fact_count=6,"
@@ -642,13 +766,31 @@ def _seed_compact_context(url: str) -> None:
             ),
             {"scope": scope, "semantic": "a" * 64, "content": "b" * 64},
         )
-        c.execute(text("INSERT INTO release_exposures VALUES('compact','historical','internal',NULL,:hash)"), {"hash": "e" * 64})
-        c.execute(text("UPDATE release_exposures SET access_scope='public',approved_at=:now WHERE release_id='compact' AND election_slug='historical'"), {"now": now})
+        c.execute(
+            text(
+                "INSERT INTO release_exposures VALUES('compact','historical','internal',NULL,:hash)"
+            ),
+            {"hash": "e" * 64},
+        )
+        c.execute(
+            text(
+                "UPDATE release_exposures SET access_scope='public',approved_at=:now WHERE release_id='compact' AND election_slug='historical'"
+            ),
+            {"now": now},
+        )
 
 
 def test_compact_context_public_api(postgres_url: str) -> None:
     _seed_compact_context(postgres_url)
-    app = create_app(settings=Settings(database_url=postgres_url, active_release="compact", cursor_secret="context-secret", artifact_hosts="official.example"), repository=PostgresReadRepository(postgres_url, "compact"))
+    app = create_app(
+        settings=Settings(
+            database_url=postgres_url,
+            active_release="compact",
+            cursor_secret="context-secret",
+            artifact_hosts="official.example",
+        ),
+        repository=PostgresReadRepository(postgres_url, "compact"),
+    )
     base = "/api/v1/releases/compact/elections/historical"
     with TestClient(app) as api:
         summary = api.get(f"{base}/summary")
@@ -668,7 +810,10 @@ def test_compact_context_public_api(postgres_url: str) -> None:
         first = api.get(f"{base}/results?limit=2")
         assert first.status_code == 200 and first.json()["page"]["has_more"]
         second = api.get(f"{base}/results?limit=2&cursor={first.json()['page']['next_cursor']}")
-        assert second.status_code == 200 and second.json()["items"][0]["geography_level"] == "municipality"
+        assert (
+            second.status_code == 200
+            and second.json()["items"][0]["geography_level"] == "municipality"
+        )
         mesa = "r:mesa:01:001:01:01:001"
         mesa_payload = api.get(f"{base}/mesas/{mesa}").json()
         assert mesa_payload["municipality_id"] == "r:mun:01:001"
@@ -684,7 +829,9 @@ def test_compact_context_public_api(postgres_url: str) -> None:
         assert candidate["votes"] == 0 and candidate["provenance"]["content_hash"] == "d" * 64
         assert api.get(f"{base}/result-facts/not-a-fact/categories").status_code == 404
         assert api.get(f"{base}/analysis/summary").status_code == 404
-        comparison = api.get(f"{base}/historical-comparison?baseline_release_id=compact&baseline_election_slug=historical&geography_id=r:co&grain=national").json()
+        comparison = api.get(
+            f"{base}/historical-comparison?baseline_release_id=compact&baseline_election_slug=historical&geography_id=r:co&grain=national"
+        ).json()
         assert comparison["comparison_status"] == "descriptive_context_only"
         comparison_text = json.dumps(comparison).lower()
         assert "audit_priority_score" not in comparison_text
@@ -692,11 +839,34 @@ def test_compact_context_public_api(postgres_url: str) -> None:
         assert "fraud" not in comparison_text
     engine = create_engine(postgres_url)
     with pytest.raises(DBAPIError, match="immutable"), engine.begin() as c:
-        c.execute(text("UPDATE context_result_facts SET registered_electors=1 WHERE scope_id=(SELECT id FROM context_release_scopes WHERE release_id='compact') AND geography_id=1"))
+        c.execute(
+            text(
+                "UPDATE context_result_facts SET registered_electors=1 WHERE scope_id=(SELECT id FROM context_release_scopes WHERE release_id='compact') AND geography_id=1"
+            )
+        )
     now = datetime.now(UTC)
     with engine.begin() as c:
-        c.execute(text("INSERT INTO releases(id,status,synthetic,created_at,manifest) VALUES('bad-compact','published',false,:now,'{}')"), {"now": now})
-        c.execute(text("INSERT INTO release_elections VALUES('bad-compact','historical','Mala','Bad',1,:day)"), {"day": date(2022, 1, 1)})
-        c.execute(text("INSERT INTO context_release_scopes(release_id,election_slug) VALUES('bad-compact','historical')"))
+        c.execute(
+            text(
+                "INSERT INTO releases(id,status,synthetic,created_at,manifest) VALUES('bad-compact','published',false,:now,'{}')"
+            ),
+            {"now": now},
+        )
+        c.execute(
+            text(
+                "INSERT INTO release_elections VALUES('bad-compact','historical','Mala','Bad',1,:day)"
+            ),
+            {"day": date(2022, 1, 1)},
+        )
+        c.execute(
+            text(
+                "INSERT INTO context_release_scopes(release_id,election_slug) VALUES('bad-compact','historical')"
+            )
+        )
     with pytest.raises(DBAPIError, match="context_only"), engine.begin() as c:
-        c.execute(text("INSERT INTO release_exposures VALUES('bad-compact','historical','internal',NULL,:hash)"), {"hash": "f" * 64})
+        c.execute(
+            text(
+                "INSERT INTO release_exposures VALUES('bad-compact','historical','internal',NULL,:hash)"
+            ),
+            {"hash": "f" * 64},
+        )

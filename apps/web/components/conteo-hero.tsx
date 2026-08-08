@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import type { components } from "@elecciones/contracts";
 import { build, buildBallots } from "@/lib/hexes";
 import { MESAS, TERRITORIES, type TerritoryKey } from "@/lib/dc-fixture";
@@ -93,7 +94,8 @@ export function ConteoHero({
   const { h: layerH, r: layerR } = layerCounts(layer);
   const total = layerH + layerR;
   const visual = LAYER_VISUAL[layer];
-  const dispFill = visual === "full" ? PAPER : visual === "flag" ? NEON : "none";
+  const dispFill =
+    visual === "full" ? PAPER : visual === "flag" ? NEON : "none";
   const dispStroke = visual === "out" ? HOLLOW : "none";
   const dotOp = visual === "out" ? 1 : 0;
   const delta =
@@ -129,11 +131,18 @@ export function ConteoHero({
         data-theme="dark"
         data-screen-label="El conteo"
         lang={locale}
-        style={{ background: "#151312", color: "#F4F1EA", padding: "60px 0 54px" }}
+        style={{
+          background: "#151312",
+          color: "#F4F1EA",
+          padding: "60px 0 54px",
+        }}
       >
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+        <div
+          className="eac-gutter"
+          style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}
+        >
           <div
-            className="rise"
+            className="eac-hero-summary rise"
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0,1fr) auto",
@@ -142,10 +151,15 @@ export function ConteoHero({
             }}
           >
             <div>
-              <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+              <p
+                className="mono"
+                style={{ margin: 0, fontSize: 12, color: "#928979" }}
+              >
                 {t("conteo.eyebrow")}
               </p>
               <h1
+                aria-label={t("conteo.eyebrow")}
+                className="eac-hero-heading"
                 style={{
                   margin: "18px 0 0",
                   display: "flex",
@@ -155,48 +169,97 @@ export function ConteoHero({
                   color: "#F4F1EA",
                 }}
               >
-                <span className="fig" style={{ fontSize: 118, lineHeight: 0.84 }}>
+                <span
+                  className="fig eac-hero-total"
+                  style={{ fontSize: 118, lineHeight: 0.84 }}
+                >
                   {formatInt(total, locale)}
                 </span>
-                <span className="mark" style={{ fontSize: 18, color: "#F4F1EA" }}>
+                <span
+                  className="mark"
+                  style={{ fontSize: 18, color: "#F4F1EA" }}
+                >
                   {t("conteo.totalLabel")}
                 </span>
               </h1>
               <p
                 className="mono"
-                style={{ margin: "14px 0 0", fontSize: 13, color: delta.on ? NEON : "#928979" }}
+                style={{
+                  margin: "14px 0 0",
+                  fontSize: 13,
+                  color: delta.on ? NEON : "#928979",
+                }}
               >
                 {delta.text}
               </p>
             </div>
-            <div style={{ display: "flex", gap: 52, alignItems: "flex-end", flex: "none" }}>
+            <div
+              className="eac-candidate-totals"
+              style={{
+                display: "flex",
+                gap: 52,
+                alignItems: "flex-end",
+                flex: "none",
+              }}
+            >
               <div style={{ textAlign: "right" }}>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+                <p
+                  className="mono"
+                  style={{ margin: 0, fontSize: 12, color: "#928979" }}
+                >
                   {t("conteo.horizonteLabel")}
                 </p>
-                <p className="fig" style={{ margin: "9px 0 0", fontSize: 56, lineHeight: 0.88, color: "#F4F1EA" }}>
+                <p
+                  className="fig"
+                  style={{
+                    margin: "9px 0 0",
+                    fontSize: 56,
+                    lineHeight: 0.88,
+                    color: "#F4F1EA",
+                  }}
+                >
                   {formatPct(layerH, total, locale)} %
                 </p>
-                <p className="mono" style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}>
+                <p
+                  className="mono"
+                  style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}
+                >
                   {formatInt(layerH, locale)} {t("territories.unit.votes")}
                 </p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+                <p
+                  className="mono"
+                  style={{ margin: 0, fontSize: 12, color: "#928979" }}
+                >
                   {t("conteo.rioLabel")}
                 </p>
-                <p className="fig" style={{ margin: "9px 0 0", fontSize: 56, lineHeight: 0.88, color: "#B5B72E" }}>
+                <p
+                  className="fig"
+                  style={{
+                    margin: "9px 0 0",
+                    fontSize: 56,
+                    lineHeight: 0.88,
+                    color: "#B5B72E",
+                  }}
+                >
                   {formatPct(layerR, total, locale)} %
                 </p>
-                <p className="mono" style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}>
+                <p
+                  className="mono"
+                  style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}
+                >
                   {formatInt(layerR, locale)} {t("territories.unit.votes")}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="field fade" style={{ marginTop: 44, animationDelay: "140ms" }}>
-            <div style={{ display: "flex", gap: 70, alignItems: "flex-start" }}>
+          <div className="field" style={{ marginTop: 44 }}>
+            <div
+              className="eac-territory-fields"
+              style={{ display: "flex", gap: 70, alignItems: "flex-start" }}
+            >
               {groups.map((group) => (
                 <div key={group.key} style={{ flex: group.flex, minWidth: 0 }}>
                   <div
@@ -213,11 +276,21 @@ export function ConteoHero({
                     <p className="mark" style={{ margin: 0, color: "#F4F1EA" }}>
                       {group.name}
                     </p>
-                    <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+                    <p
+                      className="mono"
+                      style={{ margin: 0, fontSize: 12, color: "#928979" }}
+                    >
                       {group.meta}
                     </p>
                   </div>
-                  <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+                  <div
+                    className="eac-mesa-fields"
+                    style={{
+                      display: "flex",
+                      gap: 24,
+                      alignItems: "flex-start",
+                    }}
+                  >
                     {group.mesas.map((mesa) => {
                       const g = build(mesa, step, CELL_COLS);
                       const opacity = !hover || hover === mesa.id ? 1 : 0.2;
@@ -228,7 +301,8 @@ export function ConteoHero({
                             ? t("conteo.mesaDiscounted", { id: mesa.id })
                             : t("conteo.mesaPlain", { id: mesa.id })
                         : t("conteo.mesaPlain", { id: mesa.id });
-                      const labelFg = mesa.disp && layer !== "pre" ? NEON : "#928979";
+                      const labelFg =
+                        mesa.disp && layer !== "pre" ? NEON : "#928979";
                       return (
                         <div
                           key={mesa.id}
@@ -243,15 +317,35 @@ export function ConteoHero({
                           <svg
                             viewBox={g.vb}
                             role="img"
-                            aria-label={t("conteo.mesaAlt", { id: mesa.id, h: mesa.h, r: mesa.r })}
-                            style={{ display: "block", width: "100%", height: "auto" }}
+                            aria-label={t("conteo.mesaAlt", {
+                              id: mesa.id,
+                              h: mesa.h,
+                              r: mesa.r,
+                            })}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              height: "auto",
+                            }}
                           >
                             <path d={g.dH} fill="#F4F1EA" />
                             <path d={g.dR} fill={RIO} />
-                            <path d={g.dD} fill={dispFill} stroke={dispStroke} strokeWidth={1.4} />
+                            <path
+                              d={g.dD}
+                              fill={dispFill}
+                              stroke={dispStroke}
+                              strokeWidth={1.4}
+                            />
                             <path d={g.dDot} fill={NEON} opacity={dotOp} />
                           </svg>
-                          <p className="mono" style={{ margin: "13px 0 0", fontSize: 12, color: labelFg }}>
+                          <p
+                            className="mono"
+                            style={{
+                              margin: "13px 0 0",
+                              fontSize: 12,
+                              color: labelFg,
+                            }}
+                          >
                             {label}
                           </p>
                         </div>
@@ -264,6 +358,7 @@ export function ConteoHero({
           </div>
 
           <div
+            className="eac-layer-panel"
             style={{
               display: "grid",
               gridTemplateColumns: "auto minmax(0,1fr)",
@@ -275,13 +370,19 @@ export function ConteoHero({
             }}
           >
             <div style={{ flex: "none" }}>
-              <p className="mono" style={{ margin: "0 0 12px", fontSize: 12, color: "#928979" }}>
+              <p
+                className="mono"
+                style={{ margin: "0 0 12px", fontSize: 12, color: "#928979" }}
+              >
                 {t("conteo.layerControlLabel")}
               </p>
               <div
                 role="tablist"
                 aria-label={t("conteo.layerControlLabel")}
-                style={{ display: "inline-flex", border: "1px solid rgba(244,241,234,.4)" }}
+                style={{
+                  display: "inline-flex",
+                  border: "1px solid rgba(244,241,234,.4)",
+                }}
               >
                 {LAYER_ORDER.map((key) => {
                   const selected = layer === key;
@@ -295,7 +396,10 @@ export function ConteoHero({
                       className="mono"
                       style={{
                         border: 0,
-                        borderLeft: key === "pre" ? "none" : "1px solid rgba(244,241,234,.4)",
+                        borderLeft:
+                          key === "pre"
+                            ? "none"
+                            : "1px solid rgba(244,241,234,.4)",
                         background: selected ? NEON : "transparent",
                         color: selected ? "#151312" : "#F4F1EA",
                         fontSize: 12,
@@ -310,7 +414,15 @@ export function ConteoHero({
               </div>
             </div>
             <div>
-              <p style={{ margin: 0, maxWidth: "48rem", fontSize: 18, lineHeight: 1.55, color: "#F4F1EA" }}>
+              <p
+                style={{
+                  margin: 0,
+                  maxWidth: "48rem",
+                  fontSize: 18,
+                  lineHeight: 1.55,
+                  color: "#F4F1EA",
+                }}
+              >
                 {t(`conteo.layers.${layer}.note`)}
               </p>
               <Legend t={t} />
@@ -319,7 +431,13 @@ export function ConteoHero({
 
           <p
             className="mono"
-            style={{ margin: "28px 0 0", fontSize: 12, lineHeight: 1.7, color: "#928979", maxWidth: "58rem" }}
+            style={{
+              margin: "28px 0 0",
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: "#928979",
+              maxWidth: "58rem",
+            }}
           >
             {hoverLine}
           </p>
@@ -338,7 +456,13 @@ const FIELD_ROWS = 16;
  * Single-source pre-count, so no layer switcher — that device only made sense
  * over the illustrative multi-source fixture.
  */
-function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSummary }) {
+function RealConteo({
+  locale,
+  summary,
+}: {
+  locale: Locale;
+  summary: ElectionSummary;
+}) {
   const t = useTranslations();
   const total = summary.valid_votes.value ?? 0;
   const ranked = [...summary.candidates]
@@ -358,11 +482,20 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
   const blankCells = Math.max(0, cells - wCells - rCells);
   const g = buildBallots(wCells, rCells, blankCells, CELL_SIZE, FIELD_COLS);
 
-  const nameOf = (c?: ElectionSummary["candidates"][number]) =>
-    c ? c.candidate.name[locale] : "";
+  const nameOf = (c?: ElectionSummary["candidates"][number]) => {
+    if (!c) return "";
+    return t("conteo.candidateLabel", {
+      name: c.candidate.name[locale],
+      number: c.candidate.ballot_number ?? "—",
+    });
+  };
 
   const turnout = summary.turnout;
   const completion = summary.completion;
+  const turnoutText =
+    turnout !== null && turnout !== undefined
+      ? `${new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(turnout * 100)} %`
+      : t("common.metricUnavailable");
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -371,11 +504,18 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
         data-theme="dark"
         data-screen-label="El conteo"
         lang={locale}
-        style={{ background: "#151312", color: "#F4F1EA", padding: "60px 0 54px" }}
+        style={{
+          background: "#151312",
+          color: "#F4F1EA",
+          padding: "60px 0 54px",
+        }}
       >
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+        <div
+          className="eac-gutter"
+          style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}
+        >
           <div
-            className="rise"
+            className="eac-hero-summary rise"
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0,1fr) auto",
@@ -384,10 +524,15 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
             }}
           >
             <div>
-              <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+              <p
+                className="mono"
+                style={{ margin: 0, fontSize: 12, color: "#928979" }}
+              >
                 {t("conteo.eyebrow")}
               </p>
               <h1
+                aria-label={t("conteo.eyebrow")}
+                className="eac-hero-heading"
                 style={{
                   margin: "18px 0 0",
                   display: "flex",
@@ -397,52 +542,114 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
                   color: "#F4F1EA",
                 }}
               >
-                <span className="fig" style={{ fontSize: 118, lineHeight: 0.84 }}>
+                <span
+                  className="fig eac-hero-total"
+                  style={{ fontSize: 118, lineHeight: 0.84 }}
+                >
                   {formatInt(total, locale)}
                 </span>
-                <span className="mark" style={{ fontSize: 18, color: "#F4F1EA" }}>
+                <span
+                  className="mark"
+                  style={{ fontSize: 18, color: "#F4F1EA" }}
+                >
                   {t("conteo.totalLabel")}
                 </span>
               </h1>
-              <p className="mono" style={{ margin: "14px 0 0", fontSize: 13, color: "#928979" }}>
+              <p
+                aria-label={t("conteo.turnoutAccessible", {
+                  turnout: turnoutText,
+                })}
+                className="mono"
+                style={{ margin: "14px 0 0", fontSize: 13, color: "#CFC8BC" }}
+              >
                 {t("conteo.preconteoNote", {
-                  turnout:
-                    turnout !== null && turnout !== undefined
-                      ? `${new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(turnout * 100)} %`
-                      : t("common.metricUnavailable"),
+                  turnout: turnoutText,
                   reported: formatInt(completion.reported, locale),
                   expected: formatInt(completion.expected, locale),
                 })}
               </p>
+              <Link
+                href={`/${locale}/resultados`}
+                className="mono eac-results-link"
+              >
+                {t("home.openResults")}
+              </Link>
             </div>
-            <div style={{ display: "flex", gap: 52, alignItems: "flex-end", flex: "none" }}>
+            <div
+              className="eac-candidate-totals"
+              style={{
+                display: "flex",
+                gap: 52,
+                alignItems: "flex-end",
+                flex: "none",
+              }}
+            >
               <div style={{ textAlign: "right" }}>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979", maxWidth: 220 }}>
+                <p
+                  className="mono"
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#928979",
+                    maxWidth: 220,
+                  }}
+                >
                   {nameOf(winner)}
                 </p>
-                <p className="fig" style={{ margin: "9px 0 0", fontSize: 56, lineHeight: 0.88, color: "#F4F1EA" }}>
+                <p
+                  className="fig"
+                  style={{
+                    margin: "9px 0 0",
+                    fontSize: 56,
+                    lineHeight: 0.88,
+                    color: "#F4F1EA",
+                  }}
+                >
                   {formatPct(wVotes, total, locale)} %
                 </p>
-                <p className="mono" style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}>
+                <p
+                  className="mono"
+                  style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}
+                >
                   {formatInt(wVotes, locale)} {t("territories.unit.votes")}
                 </p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979", maxWidth: 220 }}>
+                <p
+                  className="mono"
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#928979",
+                    maxWidth: 220,
+                  }}
+                >
                   {nameOf(runner)}
                 </p>
-                <p className="fig" style={{ margin: "9px 0 0", fontSize: 56, lineHeight: 0.88, color: "#B5B72E" }}>
+                <p
+                  className="fig"
+                  style={{
+                    margin: "9px 0 0",
+                    fontSize: 56,
+                    lineHeight: 0.88,
+                    color: "#B5B72E",
+                  }}
+                >
                   {formatPct(rVotes, total, locale)} %
                 </p>
-                <p className="mono" style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}>
+                <p
+                  className="mono"
+                  style={{ margin: "8px 0 0", fontSize: 13, color: "#CFC8BC" }}
+                >
                   {formatInt(rVotes, locale)} {t("territories.unit.votes")}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="field fade" style={{ marginTop: 44, animationDelay: "140ms" }}>
+          <div className="field" style={{ marginTop: 44 }}>
             <svg
+              className="fade"
               viewBox={g.vb}
               role="img"
               aria-label={t("conteo.fieldAlt", {
@@ -456,9 +663,17 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
               <path d={g.dB} fill={RIO} />
               {/* Blank ballots: counted in valid_votes, cast for no candidate.
                   Hollow so they are never read as votes for either ticket. */}
-              <path d={g.dBlank} fill="none" stroke={HOLLOW} strokeWidth={1.2} />
+              <path
+                d={g.dBlank}
+                fill="none"
+                stroke={HOLLOW}
+                strokeWidth={1.2}
+              />
             </svg>
-            <p className="mono" style={{ margin: "16px 0 0", fontSize: 12, color: "#928979" }}>
+            <p
+              className="mono"
+              style={{ margin: "16px 0 0", fontSize: 12, color: "#CFC8BC" }}
+            >
               {t("conteo.perHex", { n: formatInt(perHex, locale) })}
             </p>
           </div>
@@ -470,7 +685,12 @@ function RealConteo({ locale, summary }: { locale: Locale; summary: ElectionSumm
               borderTop: "1px solid rgba(244,241,234,.26)",
             }}
           >
-            <Legend t={t} winner={nameOf(winner)} runner={nameOf(runner)} blank />
+            <Legend
+              t={t}
+              winner={nameOf(winner)}
+              runner={nameOf(runner)}
+              blank
+            />
           </div>
         </div>
       </section>
@@ -493,10 +713,19 @@ function Legend({
   const items = [
     { t: winner || t("conteo.legend.horizonte"), bg: "#F4F1EA", bd: "#F4F1EA" },
     { t: runner || t("conteo.legend.rio"), bg: RIO, bd: RIO },
-    ...(blank ? [{ t: t("conteo.legend.blank"), bg: "transparent", bd: HOLLOW }] : []),
+    ...(blank
+      ? [{ t: t("conteo.legend.blank"), bg: "transparent", bd: HOLLOW }]
+      : []),
   ];
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 22px", marginTop: 4 }}>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px 22px",
+        marginTop: 4,
+      }}
+    >
       {items.map((k) => (
         <span
           key={k.t}
@@ -509,7 +738,15 @@ function Legend({
             whiteSpace: "nowrap",
           }}
         >
-          <span style={{ width: 10, height: 10, flex: "none", background: k.bg, border: `1px solid ${k.bd}` }} />
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              flex: "none",
+              background: k.bg,
+              border: `1px solid ${k.bd}`,
+            }}
+          />
           {k.t}
         </span>
       ))}
@@ -517,7 +754,13 @@ function Legend({
   );
 }
 
-function UnavailableHero({ locale, t }: { locale: Locale; t: ReturnType<typeof useTranslations> }) {
+function UnavailableHero({
+  locale,
+  t,
+}: {
+  locale: Locale;
+  t: ReturnType<typeof useTranslations>;
+}) {
   return (
     <main id="main-content" tabIndex={-1}>
       <section
@@ -525,12 +768,24 @@ function UnavailableHero({ locale, t }: { locale: Locale; t: ReturnType<typeof u
         data-theme="dark"
         data-screen-label="El conteo"
         lang={locale}
-        style={{ background: "#151312", color: "#F4F1EA", padding: "60px 0 54px" }}
+        style={{
+          background: "#151312",
+          color: "#F4F1EA",
+          padding: "60px 0 54px",
+        }}
       >
-        <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+        <div
+          className="eac-gutter"
+          style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}
+        >
           <div
-            className="rise"
-            style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr)", gap: 44, alignItems: "center" }}
+            className="eac-unavailable-grid rise"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "auto minmax(0,1fr)",
+              gap: 44,
+              alignItems: "center",
+            }}
           >
             <svg
               viewBox="0 0 240 210"
@@ -538,19 +793,46 @@ function UnavailableHero({ locale, t }: { locale: Locale; t: ReturnType<typeof u
               aria-label={t("territories.uncovered.name")}
               style={{ display: "block", width: 120, height: "auto" }}
             >
-              <path d="M225 105L180 183L90 183L45 105L90 27L180 27Z" fill="none" stroke="#928979" strokeWidth={2} strokeDasharray="9 9" />
-              <text x={135} y={114} textAnchor="middle" fontFamily="JetBrains Mono,ui-monospace,monospace" fontSize={15} fill="#928979">
+              <path
+                d="M225 105L180 183L90 183L45 105L90 27L180 27Z"
+                fill="none"
+                stroke="#928979"
+                strokeWidth={2}
+                strokeDasharray="9 9"
+              />
+              <text
+                x={135}
+                y={114}
+                textAnchor="middle"
+                fontFamily="JetBrains Mono,ui-monospace,monospace"
+                fontSize={15}
+                fill="#928979"
+              >
                 {t("common.metricUnavailable").toLowerCase()}
               </text>
             </svg>
             <div>
-              <p className="mono" style={{ margin: 0, fontSize: 12, color: "#928979" }}>
+              <p
+                className="mono"
+                style={{ margin: 0, fontSize: 12, color: "#928979" }}
+              >
                 {t("conteo.unavailableEyebrow")}
               </p>
-              <h1 style={{ margin: "12px 0 0", color: "#F4F1EA" }} className="head">
+              <h1
+                style={{ margin: "12px 0 0", color: "#F4F1EA" }}
+                className="head"
+              >
                 {t("releaseUnavailable.title")}
               </h1>
-              <p style={{ margin: "16px 0 0", maxWidth: "44rem", fontSize: 17, lineHeight: 1.6, color: "#CFC8BC" }}>
+              <p
+                style={{
+                  margin: "16px 0 0",
+                  maxWidth: "44rem",
+                  fontSize: 17,
+                  lineHeight: 1.6,
+                  color: "#CFC8BC",
+                }}
+              >
                 {t("releaseUnavailable.body")}
               </p>
             </div>

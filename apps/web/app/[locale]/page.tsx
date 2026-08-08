@@ -1,4 +1,9 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
 import "./design.css";
 import { ConteoHero } from "@/components/conteo-hero";
 import { ClaimsRegister } from "@/components/claims-register";
@@ -58,6 +63,7 @@ export default async function LocaleHome({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
+  const messages = await getMessages();
   // Most of the narrative reads no release and renders in both branches. The
   // data-backed sections (#territorios) take the real release when one loaded
   // and degrade to their unavailable state otherwise.
@@ -103,10 +109,12 @@ export default async function LocaleHome({
     // and let #conteo itself degrade to its unavailable state rather than
     // disappear — it is the hero, so something must still render first.
     return (
-      <div className="eac-design">
-        <ConteoHero locale={locale} available={false} />
-        {narrative()}
-      </div>
+      <NextIntlClientProvider messages={messages}>
+        <div className="eac-design">
+          <ConteoHero locale={locale} available={false} />
+          {narrative()}
+        </div>
+      </NextIntlClientProvider>
     );
   }
   // The design's 8 sections (conteo, reclamos, comparación, mesa,
@@ -115,15 +123,17 @@ export default async function LocaleHome({
   // fixture-adapter call that fed it is dropped rather than left unused.
   const indexable = isIndexablePage(release, "national");
   return (
-    <div className="eac-design">
-      {indexable ? (
-        <>
-          <SeoStructuredData value={websiteJsonLd(locale)} />
-          <SeoStructuredData value={dataCatalogJsonLd(locale, release)} />
-        </>
-      ) : null}
-      <ConteoHero locale={locale} available summary={release.summary} />
-      {narrative(release)}
-    </div>
+    <NextIntlClientProvider messages={messages}>
+      <div className="eac-design">
+        {indexable ? (
+          <>
+            <SeoStructuredData value={websiteJsonLd(locale)} />
+            <SeoStructuredData value={dataCatalogJsonLd(locale, release)} />
+          </>
+        ) : null}
+        <ConteoHero locale={locale} available summary={release.summary} />
+        {narrative(release)}
+      </div>
+    </NextIntlClientProvider>
   );
 }

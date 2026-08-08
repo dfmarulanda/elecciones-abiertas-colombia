@@ -981,9 +981,14 @@ export interface components {
         GeographyChildPage: {
             /** Data Version */
             data_version: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             /** Items */
             items: components["schemas"]["ScopedGeography"][];
             page: components["schemas"]["CursorMeta"];
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1089,9 +1094,14 @@ export interface components {
         NormalizedCategoryPage: {
             /** Data Version */
             data_version: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             /** Items */
             items: components["schemas"]["NormalizedCategoryResult"][];
             page: components["schemas"]["CursorMeta"];
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
             /** Sparse Category Semantics */
             sparse_category_semantics: string;
         };
@@ -1313,6 +1323,82 @@ export interface components {
             standardized_residual: components["schemas"]["SignalNumber"];
         };
         /**
+         * PreliminaryElectionSummary
+         * @description A real, standard release served through the preliminary exposure.
+         *
+         *     A deliberate sibling of ``ContextElectionSummary`` rather than a widening of
+         *     it. Widening that model's literals would let a context-only historical
+         *     release claim standard status, which is the same class of mislabel the
+         *     preliminary scope exists to prevent — so each model pins the one class it
+         *     describes and neither can impersonate the other.
+         *
+         *     ``completion``, ``coverage`` and ``reconciliation`` are the pipeline's own
+         *     recorded values. For this release that means completion reports 122,017 of
+         *     122,020 and reconciliation is ``blocked`` with three exceptions; both are
+         *     served as recorded, because deriving them from the loaded rows would report
+         *     a complete count that reconciles.
+         */
+        PreliminaryElectionSummary: {
+            blank_votes: components["schemas"]["MetricValue"];
+            /** Candidates */
+            candidates: components["schemas"]["CandidateSummary"][];
+            completion: components["schemas"]["Completion"];
+            coverage: components["schemas"]["Coverage"];
+            /** Data Version */
+            data_version: string;
+            /**
+             * Election Date
+             * Format: date
+             */
+            election_date: string;
+            election_name: components["schemas"]["LocalizedText"];
+            /** Election Slug */
+            election_slug: string;
+            /**
+             * Exposure Class
+             * @constant
+             */
+            exposure_class: "preliminary";
+            /** Geographic Collection Coverage */
+            geographic_collection_coverage?: {
+                [key: string]: unknown;
+            } | null;
+            /** National Categories */
+            national_categories: components["schemas"]["NormalizedCategoryResult"][];
+            null_votes: components["schemas"]["MetricValue"];
+            /**
+             * Preliminary
+             * @constant
+             */
+            preliminary: true;
+            preliminary_caveat: components["schemas"]["LocalizedText"];
+            provenance: components["schemas"]["PreviewProvenance"];
+            reconciliation: components["schemas"]["Reconciliation"];
+            registered_electors: components["schemas"]["MetricValue"];
+            /**
+             * Release Class
+             * @constant
+             */
+            release_class: "standard";
+            /**
+             * Release Status
+             * @constant
+             */
+            release_status: "candidate";
+            /** Round */
+            round: number;
+            /**
+             * Synthetic
+             * @constant
+             */
+            synthetic: false;
+            /** Turnout */
+            turnout?: number | null;
+            unmarked_votes: components["schemas"]["MetricValue"];
+            valid_votes: components["schemas"]["MetricValue"];
+            voters: components["schemas"]["MetricValue"];
+        };
+        /**
          * PreviewProvenance
          * @description Provenance for a candidate release that must advertise its limitations.
          */
@@ -1499,9 +1585,14 @@ export interface components {
         ResultPage: {
             /** Data Version */
             data_version: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             /** Items */
             items: components["schemas"]["ResultFact"][];
             page: components["schemas"]["CursorMeta"];
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
         };
         /** ReviewSignal */
         ReviewSignal: {
@@ -1561,14 +1652,24 @@ export interface components {
         ScopedGeographyPathResponse: {
             /** Data Version */
             data_version: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             /** Items */
             items: components["schemas"]["ScopedGeography"][];
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
         };
         /** ScopedGeographyResponse */
         ScopedGeographyResponse: {
             /** Data Version */
             data_version: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             item: components["schemas"]["ScopedGeography"];
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
         };
         /** ScopedMesa */
         ScopedMesa: {
@@ -1578,6 +1679,8 @@ export interface components {
             department_id: string;
             /** Display Number */
             display_number: string;
+            /** Exposure Class */
+            exposure_class?: "preliminary" | null;
             /** Geography Path */
             geography_path: components["schemas"]["ScopedGeography"][];
             /** Id */
@@ -1586,6 +1689,9 @@ export interface components {
             municipality_id: string;
             /** Polling Place Id */
             polling_place_id: string;
+            /** Preliminary */
+            preliminary?: true | null;
+            preliminary_caveat?: components["schemas"]["LocalizedText"] | null;
             /** Results */
             results: components["schemas"]["ResultFact"][];
         };
@@ -2748,7 +2854,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ContextElectionSummary"];
+                    "application/json": components["schemas"]["ContextElectionSummary"] | components["schemas"]["PreliminaryElectionSummary"];
                 };
             };
             /** @description Validation Error */

@@ -85,6 +85,12 @@ class FederatedRepository:
     def normalized_results(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_results(release_id, *args, **kwargs)
 
+    def normalized_disclosure(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
+        backend = self._for(release_id)
+        if isinstance(backend, HistoricalDuckDBRepository):
+            return {}
+        return backend.normalized_disclosure(release_id, *args, **kwargs)
+
     def iter_normalized_results(
         self, release_id: str, *args: Any, **kwargs: Any
     ) -> Iterator[dict[str, object]]:
@@ -96,12 +102,8 @@ class FederatedRepository:
     def normalized_geography_path(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_geography_path(release_id, *args, **kwargs)
 
-    def normalized_geography_children(
-        self, release_id: str, *args: Any, **kwargs: Any
-    ) -> Any:
-        return self._for(release_id).normalized_geography_children(
-            release_id, *args, **kwargs
-        )
+    def normalized_geography_children(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
+        return self._for(release_id).normalized_geography_children(release_id, *args, **kwargs)
 
     def normalized_geography(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_geography(release_id, *args, **kwargs)
@@ -124,9 +126,7 @@ class FederatedRepository:
         return self._postgres.normalized_children_results(release_id, *args, **kwargs)
 
     def normalized_outcome_sensitivity(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
-        return self._for(release_id).normalized_outcome_sensitivity(
-            release_id, *args, **kwargs
-        )
+        return self._for(release_id).normalized_outcome_sensitivity(release_id, *args, **kwargs)
 
     def normalized_comparison(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_comparison(release_id, *args, **kwargs)
@@ -135,9 +135,7 @@ class FederatedRepository:
         return self._for(release_id).normalized_datasets(release_id, *args, **kwargs)
 
     def normalized_dataset_artifact(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
-        return self._for(release_id).normalized_dataset_artifact(
-            release_id, *args, **kwargs
-        )
+        return self._for(release_id).normalized_dataset_artifact(release_id, *args, **kwargs)
 
     def analysis_summary_for(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).analysis_summary_for(release_id, *args, **kwargs)
@@ -152,7 +150,9 @@ class FederatedRepository:
     def datasets(self, slug: str, version: str | None = None, *args: Any, **kwargs: Any) -> Any:
         return self._for(version or "").datasets(slug, version, *args, **kwargs)
 
-    def dataset(self, dataset_id: str, version: str | None = None, *args: Any, **kwargs: Any) -> Any:
+    def dataset(
+        self, dataset_id: str, version: str | None = None, *args: Any, **kwargs: Any
+    ) -> Any:
         return self._for(version or "").dataset(dataset_id, version, *args, **kwargs)
 
     def raw_dataset_rows(

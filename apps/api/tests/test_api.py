@@ -389,9 +389,8 @@ def test_self_consistent_forged_outcome_bounds_fail_without_typed_replay() -> No
     manifest_hash = hashlib.sha256(
         json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    def normalized_forged(
-        _statement: str, _values: dict[str, object]
-    ) -> list[dict[str, object]]:
+
+    def normalized_forged(_statement: str, _values: dict[str, object]) -> list[dict[str, object]]:
         return [{"manifest": manifest, "manifest_hash": manifest_hash}]
 
     repository._normalized = normalized_forged  # type: ignore[method-assign,assignment]
@@ -475,6 +474,27 @@ def test_public_openapi_is_the_frozen_document_and_paths_match() -> None:
     frozen = json.loads((ROOT / "packages/contracts/openapi.json").read_text())
     assert response.json() == frozen
     assert set(response.json()["paths"]) == runtime_paths
+    schemas = frozen["components"]["schemas"]
+    for name in (
+        "ResultPage",
+        "NormalizedCategoryPage",
+        "ScopedGeographyResponse",
+        "ScopedGeographyPathResponse",
+        "GeographyChildPage",
+        "ScopedMesa",
+    ):
+        assert {
+            "exposure_class",
+            "preliminary",
+            "preliminary_caveat",
+        } <= schemas[name]["properties"].keys()
+    summary_schema = frozen["paths"][
+        "/api/v1/releases/{release_id}/elections/{election_slug}/summary"
+    ]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+    assert {item["$ref"] for item in summary_schema["anyOf"]} == {
+        "#/components/schemas/ContextElectionSummary",
+        "#/components/schemas/PreliminaryElectionSummary",
+    }
 
 
 def test_results_filters_csv_and_cursor_tampering() -> None:
@@ -528,9 +548,7 @@ def test_cache_provenance_and_unknown_vs_zero_are_preserved() -> None:
         )
         weak_not_modified = api.get(
             f"/api/v1/elections/{SLUG}/summary",
-            headers={
-                "If-None-Match": f'"unrelated,tag", W/{summary.headers["etag"]}'
-            },
+            headers={"If-None-Match": f'"unrelated,tag", W/{summary.headers["etag"]}'},
         )
         wildcard_not_modified = api.get(
             f"/api/v1/elections/{SLUG}/summary", headers={"If-None-Match": "*"}

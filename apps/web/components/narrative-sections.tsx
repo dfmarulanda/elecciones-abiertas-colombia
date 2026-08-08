@@ -11,7 +11,10 @@ import { AppButton } from "@/components/app-button";
 import { BitacoraTrack } from "@/components/bitacora-track";
 import { buildBallots } from "@/lib/hexes";
 import { CMP, computeCmpRow } from "@/lib/cmp-fixture";
-import { ComparisonBands, type CmpRowContent } from "@/components/comparison-bands";
+import {
+  ComparisonBands,
+  type CmpRowContent,
+} from "@/components/comparison-bands";
 
 type Locale = "es" | "en";
 type Text = (key: string, values?: Record<string, string | number>) => string;
@@ -84,10 +87,14 @@ export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
       human: t(`${base}.human`),
       plainReading: t(`${base}.plainReading`),
       techReading: t(`${base}.techReading`),
-      plainCritLabel: metric.crit != null ? t(`${base}.plainCritLabel`) : undefined,
-      techCritLabel: metric.crit != null ? t(`${base}.techCritLabel`) : undefined,
+      plainCritLabel:
+        metric.crit != null ? t(`${base}.plainCritLabel`) : undefined,
+      techCritLabel:
+        metric.crit != null ? t(`${base}.techCritLabel`) : undefined,
     };
-  }).sort((a, b) => CMP_METRIC_ORDER.indexOf(a.key) - CMP_METRIC_ORDER.indexOf(b.key));
+  }).sort(
+    (a, b) => CMP_METRIC_ORDER.indexOf(a.key) - CMP_METRIC_ORDER.indexOf(b.key),
+  );
 
   return (
     <section
@@ -95,11 +102,12 @@ export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
       aria-label={t("comparison.eyebrow")}
       data-screen-label={t("comparison.eyebrow")}
       lang={locale}
-      className="scroll-mt-24"
+      className="eac-section scroll-mt-24"
       style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
     >
       <div style={{ paddingTop: 34, borderTop: `1px solid ${INK}` }}>
         <div
+          className="eac-section-header"
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
@@ -117,7 +125,15 @@ export function ComparisonSection({ locale, t }: { locale: Locale; t: Text }) {
               {t("comparison.titleLine2")}
             </h2>
           </div>
-          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: INK_2 }}>
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "42rem",
+              fontSize: 17,
+              lineHeight: 1.62,
+              color: INK_2,
+            }}
+          >
             {t("comparison.introA")}
           </p>
         </div>
@@ -185,7 +201,10 @@ export function MesaSection({
       <p className="mono" style={{ margin: 0, fontSize: 12, color: ON_DARK_3 }}>
         {name}
       </p>
-      <p className="fig" style={{ margin: "14px 0 0", fontSize: 52, lineHeight: 0.86, color }}>
+      <p
+        className="fig"
+        style={{ margin: "14px 0 0", fontSize: 52, lineHeight: 0.86, color }}
+      >
         {nf.format(votes)}
       </p>
     </div>
@@ -198,10 +217,26 @@ export function MesaSection({
       aria-label={t("mesa.eyebrow")}
       lang={locale}
       className="scroll-mt-24"
-      style={{ background: DARK_BG, color: DARK_FG, marginTop: 80, padding: "60px 0 58px" }}
+      style={{
+        background: DARK_BG,
+        color: DARK_FG,
+        marginTop: 80,
+        padding: "60px 0 58px",
+      }}
     >
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)", gap: 64, alignItems: "baseline" }}>
+      <div
+        className="eac-gutter"
+        style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}
+      >
+        <div
+          className="eac-section-header"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
+            gap: 64,
+            alignItems: "baseline",
+          }}
+        >
           <div>
             <p className="mark" style={{ margin: 0, color: ON_DARK_3 }}>
               {t("mesa.eyebrow")}
@@ -210,25 +245,61 @@ export function MesaSection({
               {t("mesa.realTitle")}
             </h2>
           </div>
-          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: ON_DARK_2 }}>
-            {t("mesa.realIntro", { mesa: mesa.mesa_id, department: mesa.department ?? "" })}
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "42rem",
+              fontSize: 17,
+              lineHeight: 1.62,
+              color: ON_DARK_2,
+            }}
+          >
+            {t("mesa.realIntro", {
+              mesa: mesa.mesa_id,
+              department: mesa.department ?? "",
+            })}
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.15fr)", gap: 72, alignItems: "start", marginTop: 40 }}>
+        <div
+          className="eac-two-column"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.15fr)",
+            gap: 72,
+            alignItems: "start",
+            marginTop: 40,
+          }}
+        >
           <div>
             <svg
               viewBox={fig.vb}
               role="img"
-              aria-label={t("mesa.realFigureAlt", { a: a?.name[locale] ?? "", av, b: b?.name[locale] ?? "", bv })}
+              aria-label={t("mesa.realFigureAlt", {
+                a: a?.name[locale] ?? "",
+                av,
+                b: b?.name[locale] ?? "",
+                bv,
+              })}
               style={{ display: "block", width: "100%", height: "auto" }}
             >
               <path d={fig.dA} fill={PAPER} />
               <path d={fig.dB} fill={RIO} />
-              <path d={fig.dBlank} fill="none" stroke="rgba(196,255,0,.55)" strokeWidth={1.2} />
+              <path
+                d={fig.dBlank}
+                fill="none"
+                stroke="rgba(196,255,0,.55)"
+                strokeWidth={1.2}
+              />
             </svg>
-            <p className="mono" style={{ margin: "16px 0 0", fontSize: 12, color: ON_DARK_3 }}>
-              {t("mesa.realFigureCaption", { total: nf.format(mesa.valid_votes), mesa: mesa.mesa_id })}
+            <p
+              className="mono"
+              style={{ margin: "16px 0 0", fontSize: 12, color: ON_DARK_3 }}
+            >
+              {t("mesa.realFigureCaption", {
+                total: nf.format(mesa.valid_votes),
+                mesa: mesa.mesa_id,
+              })}
             </p>
           </div>
           <div>
@@ -245,7 +316,15 @@ export function MesaSection({
               {stat(a?.name[locale] ?? "", av, PAPER)}
               {stat(b?.name[locale] ?? "", bv, "#B5B72E")}
             </div>
-            <p style={{ margin: "24px 0 0", maxWidth: "38rem", fontSize: 16, lineHeight: 1.62, color: ON_DARK_2 }}>
+            <p
+              style={{
+                margin: "24px 0 0",
+                maxWidth: "38rem",
+                fontSize: 16,
+                lineHeight: 1.62,
+                color: ON_DARK_2,
+              }}
+            >
               {t("mesa.realFootnote")}
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
@@ -290,7 +369,12 @@ export function TerritoriesSection({
 
   // Real preconteo: render every department with observed results. Falls back
   // to the illustrative territories only when no release loaded.
-  if (departments && departments.length && candidates && candidates.length >= 2) {
+  if (
+    departments &&
+    departments.length &&
+    candidates &&
+    candidates.length >= 2
+  ) {
     return (
       <RealTerritories
         locale={locale}
@@ -326,10 +410,11 @@ export function TerritoriesSection({
       id="territorios"
       aria-label={t("territories.eyebrow")}
       lang={locale}
-      className="scroll-mt-24"
+      className="eac-section scroll-mt-24"
       style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
     >
       <div
+        className="eac-territories-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1fr) 400px",
@@ -337,7 +422,10 @@ export function TerritoriesSection({
           alignItems: "start",
         }}
       >
-        <div style={{ height: 470, border: `1px solid ${INK}` }}>
+        <div
+          className="eac-map-frame"
+          style={{ height: 470, border: `1px solid ${INK}` }}
+        >
           <CoverageMap locale={locale} labels={mapLabels} />
         </div>
         <div>
@@ -347,7 +435,14 @@ export function TerritoriesSection({
           <h2 className="head" style={{ margin: "14px 0 0", fontSize: 34 }}>
             {t("territories.title")}
           </h2>
-          <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
+          <p
+            style={{
+              margin: "16px 0 0",
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: INK_2,
+            }}
+          >
             {t("territories.intro")}
           </p>
           {/* The source renders this as an `<ol>` of bar rows (`t.wH`/`t.wR`
@@ -358,27 +453,104 @@ export function TerritoriesSection({
               reader/no-JS equivalent to the map that #territorios itself asks
               for, and every column's value is still exactly what
               `territoryRows`/`terr` computes in the source. */}
-          <div style={{ marginTop: 26, overflowX: "auto", borderTop: `1px solid ${INK}` }}>
-            <table style={{ width: "100%", minWidth: "22rem", borderCollapse: "collapse", textAlign: "left" }}>
-              <caption className="sr-only">{t("territories.table.caption")}</caption>
+          <div
+            role="region"
+            aria-label={t("territories.table.caption")}
+            tabIndex={0}
+            className="eac-table-scroll"
+            style={{
+              marginTop: 26,
+              overflowX: "auto",
+              borderTop: `1px solid ${INK}`,
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                minWidth: "22rem",
+                borderCollapse: "collapse",
+                textAlign: "left",
+              }}
+            >
+              <caption className="sr-only">
+                {t("territories.table.caption")}
+              </caption>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${INK}` }}>
-                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4 }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                    }}
+                  >
                     {t("territories.table.territory")}
                   </th>
-                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                      textAlign: "right",
+                    }}
+                  >
                     {t("territories.table.mesas")}
                   </th>
-                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                      textAlign: "right",
+                    }}
+                  >
                     {t("territories.table.horizonte")}
                   </th>
-                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                      textAlign: "right",
+                    }}
+                  >
                     {t("territories.table.rio")}
                   </th>
-                  <th scope="col" className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, fontWeight: 700, color: INK_4, textAlign: "right" }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                      textAlign: "right",
+                    }}
+                  >
                     {t("territories.table.total")}
                   </th>
-                  <th scope="col" className="mono" style={{ padding: "12px 0", fontSize: 11, fontWeight: 700, color: INK_4 }}>
+                  <th
+                    scope="col"
+                    className="mono"
+                    style={{
+                      padding: "12px 0",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: INK_4,
+                    }}
+                  >
                     {t("territories.table.status")}
                   </th>
                 </tr>
@@ -387,31 +559,81 @@ export function TerritoriesSection({
                 {TERRITORIES.map((territory) => {
                   const totals = territoryTotals(territory.key);
                   return (
-                    <tr key={territory.key} style={{ borderBottom: RULE_FAINT_LIGHT }}>
-                      <th scope="row" style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}>
-                        <p className="mark" style={{ margin: 0, fontSize: 12, color: INK_4 }}>
+                    <tr
+                      key={territory.key}
+                      style={{ borderBottom: RULE_FAINT_LIGHT }}
+                    >
+                      <th
+                        scope="row"
+                        style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}
+                      >
+                        <p
+                          className="mark"
+                          style={{ margin: 0, fontSize: 12, color: INK_4 }}
+                        >
                           {t(`territories.covered.${territory.key}.name`)}
                         </p>
-                        <p className="mono" style={{ margin: "4px 0 0", fontSize: 11, color: INK_3 }}>
+                        <p
+                          className="mono"
+                          style={{
+                            margin: "4px 0 0",
+                            fontSize: 11,
+                            color: INK_3,
+                          }}
+                        >
                           {t(`territories.covered.${territory.key}.place`)}
                         </p>
                       </th>
-                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "12px 12px 12px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {totals.mesas}
                       </td>
-                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "12px 12px 12px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {nf.format(totals.horizonte)}
                       </td>
-                      <td className="mono" style={{ padding: "12px 12px 12px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "12px 12px 12px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {nf.format(totals.rio)}
                       </td>
-                      <td className="fig" style={{ padding: "12px 12px 12px 0", textAlign: "right", fontSize: 16 }}>
+                      <td
+                        className="fig"
+                        style={{
+                          padding: "12px 12px 12px 0",
+                          textAlign: "right",
+                          fontSize: 16,
+                        }}
+                      >
                         {nf.format(totals.total)}
                       </td>
                       <td style={{ padding: "12px 0" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
                           <StateMark state="observed" />
-                          <span className="mono" style={{ fontSize: 11, color: INK_3 }}>
+                          <span
+                            className="mono"
+                            style={{ fontSize: 11, color: INK_3 }}
+                          >
                             {t("territories.table.statusReporting")}
                           </span>
                         </span>
@@ -420,32 +642,80 @@ export function TerritoriesSection({
                   );
                 })}
                 <tr>
-                  <th scope="row" style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}>
-                    <p className="mark" style={{ margin: 0, fontSize: 12, color: INK_4 }}>
+                  <th
+                    scope="row"
+                    style={{ padding: "12px 12px 12px 0", fontWeight: 400 }}
+                  >
+                    <p
+                      className="mark"
+                      style={{ margin: 0, fontSize: 12, color: INK_4 }}
+                    >
                       {t("territories.uncovered.name")}
                     </p>
                   </th>
-                  <td colSpan={4} className="mono" style={{ padding: "12px 12px 12px 0", fontSize: 11, color: INK_3 }}>
+                  <td
+                    colSpan={4}
+                    className="mono"
+                    style={{
+                      padding: "12px 12px 12px 0",
+                      fontSize: 11,
+                      color: INK_3,
+                    }}
+                  >
                     {t("territories.uncovered.meta")}
                   </td>
                   <td style={{ padding: "12px 0" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
                       <StateMark state="unavailable" />
-                      <span className="sr-only">{t("territories.uncovered.stateLabel")}</span>
+                      <span className="sr-only">
+                        {t("territories.uncovered.stateLabel")}
+                      </span>
                     </span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p style={{ margin: "9px 0 0", maxWidth: "28rem", fontSize: 14, lineHeight: 1.5, color: INK_2 }}>
+          <p
+            style={{
+              margin: "9px 0 0",
+              maxWidth: "28rem",
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: INK_2,
+            }}
+          >
             {t("territories.uncovered.note")}
           </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 22 }}>
-            <p className="fig" style={{ margin: 0, fontSize: 38, color: INK_4 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 14,
+              marginTop: 22,
+            }}
+          >
+            <p
+              className="fig"
+              style={{ margin: 0, fontSize: 38, color: INK_4 }}
+            >
               {UNCOVERED_DEPARTMENTS_COUNT}
             </p>
-            <p style={{ margin: 0, maxWidth: "22rem", fontSize: 14, lineHeight: 1.5, color: INK_3 }}>
+            <p
+              style={{
+                margin: 0,
+                maxWidth: "22rem",
+                fontSize: 14,
+                lineHeight: 1.5,
+                color: INK_3,
+              }}
+            >
               {t("territories.uncoveredStat")}
             </p>
           </div>
@@ -494,11 +764,22 @@ function RealTerritories({
       id="territorios"
       aria-label={t("territories.eyebrow")}
       lang={locale}
-      className="scroll-mt-24"
+      className="eac-section scroll-mt-24"
       style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 400px", gap: 64, alignItems: "start" }}>
-        <div style={{ height: 470, border: `1px solid ${INK}` }}>
+      <div
+        className="eac-territories-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0,1fr) 400px",
+          gap: 64,
+          alignItems: "start",
+        }}
+      >
+        <div
+          className="eac-map-frame"
+          style={{ height: 470, border: `1px solid ${INK}` }}
+        >
           <CoverageMap locale={locale} labels={mapLabels} fullCoverage />
         </div>
         <div>
@@ -508,15 +789,41 @@ function RealTerritories({
           <h2 className="head" style={{ margin: "14px 0 0", fontSize: 34 }}>
             {t("territories.realTitle")}
           </h2>
-          <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
+          <p
+            style={{
+              margin: "16px 0 0",
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: INK_2,
+            }}
+          >
             {t("territories.realIntro", {
               departments: departments.length,
               mesas: nf.format(totalMesas),
             })}
           </p>
-          <div style={{ marginTop: 26, overflowX: "auto", borderTop: `1px solid ${INK}` }}>
-            <table style={{ width: "100%", minWidth: "24rem", borderCollapse: "collapse", textAlign: "left" }}>
-              <caption className="sr-only">{t("territories.table.caption")}</caption>
+          <div
+            role="region"
+            aria-label={t("territories.table.caption")}
+            tabIndex={0}
+            className="eac-table-scroll"
+            style={{
+              marginTop: 26,
+              overflowX: "auto",
+              borderTop: `1px solid ${INK}`,
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                minWidth: "24rem",
+                borderCollapse: "collapse",
+                textAlign: "left",
+              }}
+            >
+              <caption className="sr-only">
+                {t("territories.table.caption")}
+              </caption>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${INK}` }}>
                   {[
@@ -550,21 +857,52 @@ function RealTerritories({
                   const bv = d.candidates[b?.id ?? ""] ?? 0;
                   return (
                     <tr key={d.id} style={{ borderBottom: RULE_FAINT_LIGHT }}>
-                      <th scope="row" style={{ padding: "10px 12px 10px 0", fontWeight: 400 }}>
-                        <span className="mark" style={{ fontSize: 12, color: INK_4 }}>
+                      <th
+                        scope="row"
+                        style={{ padding: "10px 12px 10px 0", fontWeight: 400 }}
+                      >
+                        <span
+                          className="mark"
+                          style={{ fontSize: 12, color: INK_4 }}
+                        >
                           {d.name}
                         </span>
                       </th>
-                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "10px 12px 10px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {nf.format(d.mesas_reported)}
                       </td>
-                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "10px 12px 10px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {nf.format(av)}
                       </td>
-                      <td className="mono" style={{ padding: "10px 12px 10px 0", textAlign: "right" }}>
+                      <td
+                        className="mono"
+                        style={{
+                          padding: "10px 12px 10px 0",
+                          textAlign: "right",
+                        }}
+                      >
                         {nf.format(bv)}
                       </td>
-                      <td className="fig" style={{ padding: "10px 0", textAlign: "right", fontSize: 15 }}>
+                      <td
+                        className="fig"
+                        style={{
+                          padding: "10px 0",
+                          textAlign: "right",
+                          fontSize: 15,
+                        }}
+                      >
                         {nf.format(d.valid_votes)}
                       </td>
                     </tr>
@@ -573,11 +911,29 @@ function RealTerritories({
               </tbody>
             </table>
           </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginTop: 22 }}>
-            <p className="fig" style={{ margin: 0, fontSize: 38, color: INK_4 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 14,
+              marginTop: 22,
+            }}
+          >
+            <p
+              className="fig"
+              style={{ margin: 0, fontSize: 38, color: INK_4 }}
+            >
               {departments.length}
             </p>
-            <p style={{ margin: 0, maxWidth: "22rem", fontSize: 14, lineHeight: 1.5, color: INK_3 }}>
+            <p
+              style={{
+                margin: 0,
+                maxWidth: "22rem",
+                fontSize: 14,
+                lineHeight: 1.5,
+                color: INK_3,
+              }}
+            >
               {t("territories.realCoverageStat")}
             </p>
           </div>
@@ -622,8 +978,12 @@ export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
         padding: "60px 0 58px",
       }}
     >
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}>
+      <div
+        className="eac-gutter"
+        style={{ maxWidth: 1440, margin: "0 auto", padding: "0 46px" }}
+      >
         <div
+          className="eac-section-header"
           style={{
             display: "grid",
             gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
@@ -640,37 +1000,67 @@ export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
             </h2>
           </div>
           <div>
-            <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: ON_DARK_2 }}>
+            <p
+              style={{
+                margin: 0,
+                maxWidth: "42rem",
+                fontSize: 17,
+                lineHeight: 1.62,
+                color: ON_DARK_2,
+              }}
+            >
               {t("process.intro")}
             </p>
-            <p className="mono" style={{ margin: "16px 0 0", fontSize: 12, color: NEON }}>
+            <p
+              className="mono"
+              style={{ margin: "16px 0 0", fontSize: 12, color: NEON }}
+            >
               {t("process.gateCount")}
             </p>
           </div>
         </div>
 
-        <div style={{ marginTop: 40, borderTop: "1px solid rgba(244,241,234,.26)" }}>
+        <div
+          style={{
+            marginTop: 40,
+            borderTop: "1px solid rgba(244,241,234,.26)",
+          }}
+        >
           {STEPS.map((s, i) => {
             const gate = "gate" in s && s.gate;
             const nodeBg = gate ? NEON : PAPER;
             const artFg = gate ? NEON : ON_DARK_3;
-            const artLabel = gate ? t("process.gateLabel") : t("process.artLabel");
+            const artLabel = gate
+              ? t("process.gateLabel")
+              : t("process.artLabel");
             const lineTop = i === 0 ? "22px" : "0";
             const lineH =
-              i === 0 ? "calc(100% - 22px)" : i === STEPS.length - 1 ? "22px" : "100%";
+              i === 0
+                ? "calc(100% - 22px)"
+                : i === STEPS.length - 1
+                  ? "22px"
+                  : "100%";
             return (
               <div
                 key={s.n}
+                className="eac-process-step"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "40px minmax(0,.85fr) minmax(0,1.75fr) minmax(0,1fr)",
+                  gridTemplateColumns:
+                    "40px minmax(0,.85fr) minmax(0,1.75fr) minmax(0,1fr)",
                   gap: 26,
                   alignItems: "start",
                   padding: "22px 0 24px",
                   borderBottom: "1px solid rgba(244,241,234,.14)",
                 }}
               >
-                <div style={{ position: "relative", height: "100%", minHeight: 40 }}>
+                <div
+                  style={{
+                    position: "relative",
+                    height: "100%",
+                    minHeight: 40,
+                  }}
+                >
                   <div
                     aria-hidden="true"
                     style={{
@@ -690,12 +1080,16 @@ export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
                       height: 15,
                       marginTop: 5,
                       background: nodeBg,
-                      clipPath: "polygon(0 50%,25% 0,75% 0,100% 50%,75% 100%,25% 100%)",
+                      clipPath:
+                        "polygon(0 50%,25% 0,75% 0,100% 50%,75% 100%,25% 100%)",
                     }}
                   />
                 </div>
                 <div>
-                  <p className="mono" style={{ margin: 0, fontSize: 12, color: ON_DARK_3 }}>
+                  <p
+                    className="mono"
+                    style={{ margin: 0, fontSize: 12, color: ON_DARK_3 }}
+                  >
                     {s.n}
                   </p>
                   <p
@@ -711,11 +1105,21 @@ export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
                     {t(`process.step.${s.n}.title`)}
                   </p>
                 </div>
-                <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: ON_DARK_2 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    color: ON_DARK_2,
+                  }}
+                >
                   {t(`process.step.${s.n}.body`)}
                 </p>
                 <div>
-                  <p className="mono" style={{ margin: 0, fontSize: 11, color: artFg }}>
+                  <p
+                    className="mono"
+                    style={{ margin: 0, fontSize: 11, color: artFg }}
+                  >
                     {artLabel}
                   </p>
                   <p
@@ -736,7 +1140,15 @@ export function ProcessSection({ locale, t }: { locale: Locale; t: Text }) {
           })}
         </div>
 
-        <p style={{ margin: "26px 0 0", maxWidth: "46rem", fontSize: 15, lineHeight: 1.6, color: ON_DARK_3 }}>
+        <p
+          style={{
+            margin: "26px 0 0",
+            maxWidth: "46rem",
+            fontSize: 15,
+            lineHeight: 1.6,
+            color: ON_DARK_3,
+          }}
+        >
           {t("process.footnote")}
         </p>
       </div>
@@ -771,7 +1183,12 @@ export function LogSection({ locale, t }: { locale: Locale; t: Text }) {
     })),
   );
   return (
-    <section id="bitacora" aria-label={t("log.eyebrow")} lang={locale} className="scroll-mt-24">
+    <section
+      id="bitacora"
+      aria-label={t("log.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+    >
       <Gutter className="pt-20">
         <div className="grid items-baseline gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
           <div>
@@ -827,9 +1244,18 @@ const ROUTES = [
 
 export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
   return (
-    <section id="datos" aria-label={t("data.eyebrow")} lang={locale} className="scroll-mt-24">
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "72px 46px 88px" }}>
+    <section
+      id="datos"
+      aria-label={t("data.eyebrow")}
+      lang={locale}
+      className="scroll-mt-24"
+    >
+      <div
+        className="eac-data-section eac-gutter"
+        style={{ maxWidth: 1440, margin: "0 auto", padding: "72px 46px 88px" }}
+      >
         <div
+          className="eac-data-header"
           style={{
             display: "flex",
             alignItems: "baseline",
@@ -843,7 +1269,15 @@ export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
           <h2 className="mark" style={{ margin: 0, color: INK_4 }}>
             {t("data.eyebrow")}
           </h2>
-          <p style={{ margin: 0, maxWidth: "44rem", fontSize: 16, lineHeight: 1.6, color: INK_2 }}>
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "44rem",
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: INK_2,
+            }}
+          >
             {t("data.intro")}
           </p>
           <AppButton variant="outline" size="sm" href={`/${locale}/api`}>
@@ -852,6 +1286,7 @@ export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
         </div>
 
         <div
+          className="eac-three-up"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3,minmax(0,1fr))",
@@ -871,15 +1306,32 @@ export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
                 flexWrap: "wrap",
               }}
             >
-              <p className="mono" style={{ margin: 0, fontSize: 13, fontWeight: 700, flex: "none" }}>
+              <p
+                className="mono"
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  flex: "none",
+                }}
+              >
                 {t(`data.file.${d}.format`)}
               </p>
-              <p className="mono" style={{ margin: 0, fontSize: 12, color: INK_4, flex: "none" }}>
+              <p
+                className="mono"
+                style={{ margin: 0, fontSize: 12, color: INK_4, flex: "none" }}
+              >
                 {t(`data.file.${d}.size`)}
               </p>
               <p
                 className="mono"
-                style={{ margin: 0, fontSize: 11, color: INK_4, overflowWrap: "anywhere", minWidth: 0 }}
+                style={{
+                  margin: 0,
+                  fontSize: 11,
+                  color: INK_4,
+                  overflowWrap: "anywhere",
+                  minWidth: 0,
+                }}
               >
                 {t(`data.file.${d}.hash`)}
               </p>
@@ -888,6 +1340,7 @@ export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
         </div>
 
         <ul
+          className="eac-three-up"
           style={{
             margin: "36px 0 0",
             padding: 0,
@@ -908,10 +1361,21 @@ export function DataSection({ locale, t }: { locale: Locale; t: Text }) {
                 borderBottom: "1px solid rgba(33,30,30,.12)",
               }}
             >
-              <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: INK_4, flex: "none" }}>
+              <span
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: INK_4,
+                  flex: "none",
+                }}
+              >
                 GET
               </span>
-              <span className="mono" style={{ fontSize: 12, overflowWrap: "anywhere" }}>
+              <span
+                className="mono"
+                style={{ fontSize: 12, overflowWrap: "anywhere" }}
+              >
                 {r}
               </span>
             </li>

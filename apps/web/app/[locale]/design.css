@@ -40,12 +40,7 @@
 
 .eac-design {
   background: #f4f1ea;
-  font-family:
-    "Tamil Sangam MN",
-    "Inter Tight",
-    Inter,
-    system-ui,
-    sans-serif;
+  font-family: "Tamil Sangam MN", "Inter Tight", Inter, system-ui, sans-serif;
   color: #211e1e;
   font-size: 17px;
   line-height: 1.6;
@@ -70,12 +65,7 @@
   line-height: 1.4;
 }
 .eac-design .head {
-  font-family:
-    "Tamil Sangam MN",
-    "Inter Tight",
-    Inter,
-    system-ui,
-    sans-serif;
+  font-family: "Tamil Sangam MN", "Inter Tight", Inter, system-ui, sans-serif;
   font-weight: 400;
   font-size: 42px;
   letter-spacing: -0.022em;
@@ -83,12 +73,7 @@
   text-transform: none;
 }
 .eac-design .claim {
-  font-family:
-    "Tamil Sangam MN",
-    "Inter Tight",
-    Inter,
-    system-ui,
-    sans-serif;
+  font-family: "Tamil Sangam MN", "Inter Tight", Inter, system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: -0.015em;
   line-height: 1.25;
@@ -192,6 +177,118 @@
 }
 .eac-design .eac-index-link {
   transition: color 140ms;
+}
+.eac-design .eac-gutter,
+.eac-design .eac-section {
+  padding-right: var(--gutter) !important;
+  padding-left: var(--gutter) !important;
+}
+.eac-design .eac-hero-total {
+  font-size: clamp(3.25rem, 8vw, 7.375rem) !important;
+}
+.eac-design .eac-results-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  margin-top: 1.25rem;
+  border: 1px solid rgba(244, 241, 234, 0.4);
+  padding: 0.5rem 0.875rem;
+  color: #f4f1ea;
+  font-size: 0.8125rem;
+}
+.eac-design .eac-results-link:hover,
+.eac-design .eac-results-link:focus-visible {
+  border-color: #c4ff00;
+  color: #c4ff00;
+}
+
+@media (max-width: 48rem) {
+  .eac-design .head {
+    font-size: clamp(1.75rem, 9vw, 2.625rem) !important;
+  }
+  .eac-design .eac-section-header,
+  .eac-design .eac-two-column,
+  .eac-design .eac-hero-summary,
+  .eac-design .eac-layer-panel,
+  .eac-design .eac-territories-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 2rem !important;
+  }
+  .eac-design .eac-two-up,
+  .eac-design .eac-three-up {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+  .eac-design .eac-hero-summary {
+    align-items: start !important;
+  }
+  .eac-design .eac-candidate-totals {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 1.5rem !important;
+  }
+  .eac-design .eac-candidate-totals > div {
+    min-width: 0;
+    text-align: left !important;
+  }
+  .eac-design .eac-candidate-totals p {
+    overflow-wrap: anywhere;
+  }
+  .eac-design .eac-territory-fields {
+    flex-direction: column;
+    gap: 2rem !important;
+  }
+  .eac-design .eac-mesa-fields {
+    gap: 1rem !important;
+  }
+  .eac-design .eac-map-frame {
+    height: min(28rem, 110vw) !important;
+    min-height: 20rem;
+  }
+  .eac-design .eac-table-scroll {
+    contain: layout paint;
+    max-width: 100%;
+    overscroll-behavior-inline: contain;
+  }
+  .eac-design .eac-process-step {
+    grid-template-columns: 1.5rem minmax(0, 1fr) !important;
+    gap: 0.75rem 1rem !important;
+  }
+  .eac-design .eac-process-step > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+  .eac-design .eac-comparison-result {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  .eac-design .eac-comparison-result .mono {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+  .eac-design .eac-unavailable-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1.5rem !important;
+  }
+  .eac-design .eac-data-section {
+    padding-top: 3.5rem !important;
+    padding-bottom: 4rem !important;
+  }
+  .eac-design .eac-data-header {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 24rem) {
+  .eac-design .eac-hero-total {
+    font-size: clamp(3rem, 17vw, 4rem) !important;
+  }
+  .eac-design .eac-candidate-totals .fig {
+    font-size: clamp(2rem, 12vw, 3.5rem) !important;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .eac-design .rise,

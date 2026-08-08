@@ -37,12 +37,8 @@ def upgrade() -> None:
         "release_exposures",
         sa.Column("preliminary_approved_at", sa.DateTime(timezone=True), nullable=True),
     )
-    op.add_column(
-        "release_exposures", sa.Column("preliminary_caveat_es", sa.Text(), nullable=True)
-    )
-    op.add_column(
-        "release_exposures", sa.Column("preliminary_caveat_en", sa.Text(), nullable=True)
-    )
+    op.add_column("release_exposures", sa.Column("preliminary_caveat_es", sa.Text(), nullable=True))
+    op.add_column("release_exposures", sa.Column("preliminary_caveat_en", sa.Text(), nullable=True))
 
     op.create_check_constraint(
         "ck_exposure_scope",
@@ -107,7 +103,8 @@ def upgrade() -> None:
                AND NEW.preliminary_approved_at IS NOT NULL
                AND NEW.approved_at IS NULL
              ) THEN
-            RAISE EXCEPTION 'release exposure scope may only transition internal to public or internal to preliminary';
+            RAISE EXCEPTION 'release exposure scope may only transition '
+              'internal to public or internal to preliminary';
           END IF;
           IF OLD.access_scope IS NOT DISTINCT FROM NEW.access_scope
              AND OLD.approved_at IS DISTINCT FROM NEW.approved_at THEN

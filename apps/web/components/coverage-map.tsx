@@ -113,7 +113,10 @@ export function CoverageMap({
   );
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const gradientId = useId();
-  const nf = useMemo(() => new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US"), [locale]);
+  const nf = useMemo(
+    () => new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US"),
+    [locale],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -124,7 +127,10 @@ export function CoverageMap({
       })
       .then((topo) => {
         if (!alive) return;
-        const collection = feature(topo, topo.objects.countries) as FeatureCollection<Geometry>;
+        const collection = feature(
+          topo,
+          topo.objects.countries,
+        ) as FeatureCollection<Geometry>;
         const co =
           collection.features.find((f) => f.properties?.name === "Colombia") ??
           null;
@@ -214,7 +220,7 @@ export function CoverageMap({
       style={{ background: PAPER, color: INK }}
     >
       <svg
-        role="img"
+        role="group"
         aria-label={labels.mapTitle}
         viewBox={`0 0 ${w || 1} ${h || 1}`}
         className="block h-full w-full"
@@ -236,7 +242,13 @@ export function CoverageMap({
               strokeOpacity={0.8}
             />
             {geometry.otherLand.map((f) => (
-              <path key={f.key} d={f.d} fill={ST100} stroke={PAPER} strokeWidth={1} />
+              <path
+                key={f.key}
+                d={f.d}
+                fill={ST100}
+                stroke={PAPER}
+                strokeWidth={1}
+              />
             ))}
             <path
               d={geometry.colombiaD}
@@ -394,7 +406,10 @@ export function CoverageMap({
       </p>
 
       <noscript>
-        <p className="absolute inset-4 m-0 text-[13px] leading-relaxed" style={{ color: INK }}>
+        <p
+          className="absolute inset-4 m-0 text-[13px] leading-relaxed"
+          style={{ color: INK }}
+        >
           {labels.noscript}
         </p>
       </noscript>

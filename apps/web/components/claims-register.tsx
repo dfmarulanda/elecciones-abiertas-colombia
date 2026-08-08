@@ -106,10 +106,11 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
       aria-label={t("claims.eyebrow")}
       data-screen-label={t("claims.eyebrow")}
       lang={locale}
-      className="scroll-mt-24"
+      className="eac-section scroll-mt-24"
       style={{ maxWidth: 1440, margin: "0 auto", padding: "80px 46px 0" }}
     >
       <div
+        className="eac-section-header"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
@@ -125,13 +126,22 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
             {t("claims.title")}
           </h2>
         </div>
-        <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: "#3E3831" }}>
+        <p
+          style={{
+            margin: 0,
+            maxWidth: "42rem",
+            fontSize: 17,
+            lineHeight: 1.62,
+            color: "#3E3831",
+          }}
+        >
           {t("claims.intro")}
         </p>
       </div>
 
       {/* Lead claim — the verifiable one, with the six-vote figure. */}
       <article
+        className="eac-two-column"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1.1fr) minmax(0,1fr)",
@@ -143,20 +153,41 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
         }}
       >
         <div>
-          <p className="mono" style={{ margin: 0, fontSize: 12, color: "#5F6300" }}>
+          <p
+            className="mono"
+            style={{ margin: 0, fontSize: 12, color: "#5F6300" }}
+          >
             {t("claims.lead.verdict")}
           </p>
           <h3 className="claim" style={{ margin: "14px 0 0", fontSize: 32 }}>
             {t("claims.lead.claim")}
           </h3>
-          <p style={{ margin: "20px 0 0", maxWidth: "34rem", fontSize: 17, lineHeight: 1.6, color: "#3E3831" }}>
+          <p
+            style={{
+              margin: "20px 0 0",
+              maxWidth: "34rem",
+              fontSize: 17,
+              lineHeight: 1.6,
+              color: "#3E3831",
+            }}
+          >
             {t("claims.lead.answer")}
           </p>
           <details style={{ marginTop: 16 }}>
-            <summary style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}>
+            <summary
+              style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}
+            >
               <span className="ul">{t("claims.methodLabel")}</span>
             </summary>
-            <p style={{ margin: "14px 0 0", maxWidth: "34rem", fontSize: 14, lineHeight: 1.65, color: "#5A5148" }}>
+            <p
+              style={{
+                margin: "14px 0 0",
+                maxWidth: "34rem",
+                fontSize: 14,
+                lineHeight: 1.65,
+                color: "#5A5148",
+              }}
+            >
               {t("claims.lead.method")}
             </p>
           </details>
@@ -170,7 +201,14 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
           >
             <path d={SIX_VOTES_D} fill="#C4FF00" />
           </svg>
-          <p style={{ margin: "28px 0 0", fontSize: 15, lineHeight: 1.55, color: "#CFC8BC" }}>
+          <p
+            style={{
+              margin: "28px 0 0",
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: "#CFC8BC",
+            }}
+          >
             {t("claims.lead.figureNote")}
           </p>
         </div>
@@ -178,6 +216,7 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
 
       {/* Four mid claims, two per row. */}
       <div
+        className="eac-two-up"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(2,minmax(0,1fr))",
@@ -186,21 +225,50 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
         }}
       >
         {MID_CLAIMS.map((c) => (
-          <article key={c.key} style={{ padding: "30px 0 32px", borderTop: "1px solid rgba(33,30,30,.16)" }}>
-            <p className="mono" style={{ margin: 0, fontSize: 12, color: c.fg }}>
+          <article
+            key={c.key}
+            style={{
+              padding: "30px 0 32px",
+              borderTop: "1px solid rgba(33,30,30,.16)",
+            }}
+          >
+            <p
+              className="mono"
+              style={{ margin: 0, fontSize: 12, color: c.fg }}
+            >
               {t(`claims.${c.key}.verdict`)}
             </p>
             <h3 className="claim" style={{ margin: "14px 0 0", fontSize: 24 }}>
               {t(`claims.${c.key}.claim`)}
             </h3>
-            <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: "#3E3831" }}>
+            <p
+              style={{
+                margin: "16px 0 0",
+                fontSize: 16,
+                lineHeight: 1.6,
+                color: "#3E3831",
+              }}
+            >
               {t(`claims.${c.key}.answer`)}
             </p>
             <details style={{ marginTop: 14 }}>
-              <summary style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}>
+              <summary
+                style={{
+                  display: "inline-block",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
                 <span className="ul">{t("claims.methodLabel")}</span>
               </summary>
-              <p style={{ margin: "13px 0 0", fontSize: 14, lineHeight: 1.65, color: "#5A5148" }}>
+              <p
+                style={{
+                  margin: "13px 0 0",
+                  fontSize: 14,
+                  lineHeight: 1.65,
+                  color: "#5A5148",
+                }}
+              >
                 {t(`claims.${c.key}.detail`)}
               </p>
             </details>
@@ -210,6 +278,7 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
 
       {/* Final claim — no data to answer it, marked as such rather than forced into a verdict. */}
       <article
+        className="eac-two-column"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1fr) minmax(0,1.1fr)",
@@ -244,25 +313,53 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
               {t("common.metricUnavailable").toLowerCase()}
             </text>
           </svg>
-          <p style={{ margin: "26px 0 0", fontSize: 15, lineHeight: 1.55, color: "#CFC8BC" }}>
+          <p
+            style={{
+              margin: "26px 0 0",
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: "#CFC8BC",
+            }}
+          >
             {t("claims.unavailable.figureNote")}
           </p>
         </div>
         <div>
-          <p className="mono" style={{ margin: 0, fontSize: 12, color: "#8A4B1E" }}>
+          <p
+            className="mono"
+            style={{ margin: 0, fontSize: 12, color: "#8A4B1E" }}
+          >
             {t("claims.unavailable.verdict")}
           </p>
           <h3 className="claim" style={{ margin: "14px 0 0", fontSize: 32 }}>
             {t("claims.unavailable.claim")}
           </h3>
-          <p style={{ margin: "20px 0 0", maxWidth: "36rem", fontSize: 17, lineHeight: 1.6, color: "#3E3831" }}>
+          <p
+            style={{
+              margin: "20px 0 0",
+              maxWidth: "36rem",
+              fontSize: 17,
+              lineHeight: 1.6,
+              color: "#3E3831",
+            }}
+          >
             {t("claims.unavailable.answer")}
           </p>
           <details style={{ marginTop: 16 }}>
-            <summary style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}>
+            <summary
+              style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}
+            >
               <span className="ul">{t("claims.methodLabelAlt")}</span>
             </summary>
-            <p style={{ margin: "14px 0 0", maxWidth: "36rem", fontSize: 14, lineHeight: 1.65, color: "#5A5148" }}>
+            <p
+              style={{
+                margin: "14px 0 0",
+                maxWidth: "36rem",
+                fontSize: 14,
+                lineHeight: 1.65,
+                color: "#5A5148",
+              }}
+            >
               {t("claims.unavailable.detail")}
             </p>
           </details>
@@ -271,6 +368,7 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
 
       {/* Independent cross-check — their verdicts, linked out, never ours. */}
       <div
+        className="eac-section-header"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0,1fr) minmax(0,1.25fr)",
@@ -290,16 +388,33 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
           </h3>
         </div>
         <div>
-          <p style={{ margin: 0, maxWidth: "42rem", fontSize: 17, lineHeight: 1.62, color: "#3E3831" }}>
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "42rem",
+              fontSize: 17,
+              lineHeight: 1.62,
+              color: "#3E3831",
+            }}
+          >
             {t("claims.crossChecked.intro")}
           </p>
-          <p style={{ margin: "14px 0 0", maxWidth: "42rem", fontSize: 14, lineHeight: 1.6, color: "#6B6259" }}>
+          <p
+            style={{
+              margin: "14px 0 0",
+              maxWidth: "42rem",
+              fontSize: 14,
+              lineHeight: 1.6,
+              color: "#6B6259",
+            }}
+          >
             {t("claims.crossChecked.linkNote")}
           </p>
         </div>
       </div>
 
       <div
+        className="eac-two-up"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(2,minmax(0,1fr))",
@@ -308,25 +423,57 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
         }}
       >
         {CROSS_CHECKED.map((c) => (
-          <article key={c.key} style={{ padding: "30px 0 32px", borderTop: "1px solid rgba(33,30,30,.16)" }}>
-            <p className="mono" style={{ margin: 0, fontSize: 12, color: c.fg }}>
+          <article
+            key={c.key}
+            style={{
+              padding: "30px 0 32px",
+              borderTop: "1px solid rgba(33,30,30,.16)",
+            }}
+          >
+            <p
+              className="mono"
+              style={{ margin: 0, fontSize: 12, color: c.fg }}
+            >
               {t("claims.crossChecked.verdict")}
             </p>
             <h4 className="claim" style={{ margin: "14px 0 0", fontSize: 24 }}>
               {t(`claims.crossChecked.${c.key}.claim`)}
             </h4>
-            <p style={{ margin: "16px 0 0", fontSize: 16, lineHeight: 1.6, color: "#3E3831" }}>
+            <p
+              style={{
+                margin: "16px 0 0",
+                fontSize: 16,
+                lineHeight: 1.6,
+                color: "#3E3831",
+              }}
+            >
               {t(`claims.crossChecked.${c.key}.answer`)}
             </p>
             <details style={{ marginTop: 14 }}>
-              <summary style={{ display: "inline-block", fontSize: 13, fontWeight: 600 }}>
+              <summary
+                style={{
+                  display: "inline-block",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
                 <span className="ul">{t("claims.methodLabel")}</span>
               </summary>
-              <p style={{ margin: "13px 0 0", fontSize: 14, lineHeight: 1.65, color: "#5A5148" }}>
+              <p
+                style={{
+                  margin: "13px 0 0",
+                  fontSize: 14,
+                  lineHeight: 1.65,
+                  color: "#5A5148",
+                }}
+              >
                 {t(`claims.crossChecked.${c.key}.method`)}
               </p>
             </details>
-            <p className="mono" style={{ margin: "20px 0 0", fontSize: 12, color: "#6B6259" }}>
+            <p
+              className="mono"
+              style={{ margin: "20px 0 0", fontSize: 12, color: "#6B6259" }}
+            >
               {t("claims.crossChecked.sourceLabel")}
             </p>
             <p style={{ margin: "8px 0 0", fontSize: 15, lineHeight: 1.5 }}>
@@ -341,7 +488,10 @@ export function ClaimsRegister({ locale, t }: { locale: Locale; t: Text }) {
                 {t(`claims.crossChecked.${c.key}.linkTitle`)}
               </a>
             </p>
-            <p className="mono" style={{ margin: "10px 0 0", fontSize: 12, color: c.fg }}>
+            <p
+              className="mono"
+              style={{ margin: "10px 0 0", fontSize: 12, color: c.fg }}
+            >
               {`${t("claims.crossChecked.verdictPrefix")} · ${t(`claims.crossChecked.${c.key}.verdictTag`)}`}
             </p>
           </article>

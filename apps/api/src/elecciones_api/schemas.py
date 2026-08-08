@@ -81,6 +81,31 @@ class LocalizedText(StrictModel):
     en: str
 
 
+class PreliminaryDisclosure(StrictModel):
+    exposure_class: Literal["preliminary"] | None = None
+    preliminary: Literal[True] | None = None
+    preliminary_caveat: LocalizedText | None = None
+
+    @model_validator(mode="after")
+    def preliminary_fields_are_atomic(self) -> "PreliminaryDisclosure":
+        fields = (
+            self.exposure_class,
+            self.preliminary,
+            self.preliminary_caveat,
+        )
+        if all(field is None for field in fields):
+            return self
+        if (
+            self.exposure_class != "preliminary"
+            or self.preliminary is not True
+            or self.preliminary_caveat is None
+            or not self.preliminary_caveat.es
+            or not self.preliminary_caveat.en
+        ):
+            raise ValueError("Preliminary disclosure requires its class, flag and bilingual caveat")
+        return self
+
+
 class MetricValue(StrictModel):
     value: int | None = Field(ge=0)
     status: MetricStatus
@@ -152,7 +177,7 @@ class CursorMeta(StrictModel):
     limit: int
 
 
-class ResultPage(StrictModel):
+class ResultPage(PreliminaryDisclosure):
     items: list[ResultFact]
     page: CursorMeta
     data_version: str
@@ -176,9 +201,9 @@ class ReleaseSourceRef(StrictModel):
     byte_size: int | None = Field(default=None, ge=0)
     parser_version: str | None = None
     transform_version: str | None = None
-    published_grain: (
-        Literal["mesa", "place", "municipality", "department", "national"] | None
-    ) = None
+    published_grain: Literal["mesa", "place", "municipality", "department", "national"] | None = (
+        None
+    )
     coverage: "Coverage | None" = None
 
 
@@ -227,7 +252,7 @@ class NormalizedCategoryResult(StrictModel):
         return self
 
 
-class NormalizedCategoryPage(StrictModel):
+class NormalizedCategoryPage(PreliminaryDisclosure):
     items: list[NormalizedCategoryResult]
     page: CursorMeta
     data_version: str
@@ -245,23 +270,23 @@ class ScopedGeography(StrictModel):
     authoritative_coordinates: "Coordinates | None" = None
 
 
-class ScopedGeographyResponse(StrictModel):
+class ScopedGeographyResponse(PreliminaryDisclosure):
     item: ScopedGeography
     data_version: str
 
 
-class ScopedGeographyPathResponse(StrictModel):
+class ScopedGeographyPathResponse(PreliminaryDisclosure):
     items: list[ScopedGeography]
     data_version: str
 
 
-class GeographyChildPage(StrictModel):
+class GeographyChildPage(PreliminaryDisclosure):
     items: list[ScopedGeography]
     page: CursorMeta
     data_version: str
 
 
-class ScopedMesa(StrictModel):
+class ScopedMesa(PreliminaryDisclosure):
     id: str
     display_number: str
     polling_place_id: str
@@ -338,9 +363,7 @@ class PreliminaryElectionSummary(StrictModel):
         if self.provenance.data_version != self.data_version:
             raise ValueError("Summary provenance must match the requested data version")
         if self.provenance.legal_status != "preliminary":
-            raise ValueError(
-                "A preliminary summary cannot claim a controlling legal status"
-            )
+            raise ValueError("A preliminary summary cannot claim a controlling legal status")
         return self
 
 
@@ -550,15 +573,18 @@ class HistoricalComparisonItem(StrictModel):
 
 class HistoricalComparisonResponse(StrictModel):
     comparison_status: Literal["not_comparable", "comparable", "descriptive_context_only"]
-    reason: Literal[
-        "missing_geography_crosswalk",
-        "geography_crosswalk_unapproved",
-        "missing_semantic_crosswalk",
-        "semantic_crosswalk_unapproved",
-        "no_compatible_facts",
-        "no_approved_longitudinal_crosswalk",
-        "missing_approved_context_crosswalk",
-    ] | None = None
+    reason: (
+        Literal[
+            "missing_geography_crosswalk",
+            "geography_crosswalk_unapproved",
+            "missing_semantic_crosswalk",
+            "semantic_crosswalk_unapproved",
+            "no_compatible_facts",
+            "no_approved_longitudinal_crosswalk",
+            "missing_approved_context_crosswalk",
+        ]
+        | None
+    ) = None
     eligible_for_integrity_analysis: bool | None = None
     comparison_key: str | None = None
     geography_crosswalk_version: str | None = None
@@ -574,9 +600,7 @@ class HistoricalComparisonResponse(StrictModel):
     def crosswalk_and_integrity_claims_are_consistent(self) -> "HistoricalComparisonResponse":
         if self.comparison_status == "descriptive_context_only":
             if self.eligible_for_integrity_analysis is not False:
-                raise ValueError(
-                    "Descriptive context must be explicitly ineligible"
-                )
+                raise ValueError("Descriptive context must be explicitly ineligible")
             crosswalk = (
                 self.comparison_key,
                 self.geography_crosswalk_version,
