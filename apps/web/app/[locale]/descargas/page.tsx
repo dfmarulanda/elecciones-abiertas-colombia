@@ -17,6 +17,10 @@ export default async function DownloadsPage({
   if (guard.fallback) return guard.fallback;
   const release = guard.release;
   const es = locale === "es";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  const preliminaryCsvUrl = apiBase
+    ? `${apiBase}/api/v1/releases/${release.release.release_id}/elections/${release.election.slug}/results?format=csv`
+    : undefined;
   return (
     <Page
       locale={locale}
@@ -103,6 +107,36 @@ export default async function DownloadsPage({
             )}
           </article>
         ))}
+        {!release.datasets.length && !release.release.synthetic && (
+          <article className="bg-paper p-5 sm:p-6">
+            <p className="font-mono text-xs font-bold tracking-[.14em] text-muted uppercase">
+              01 CSV
+            </p>
+            <h2 className="mt-2 font-display text-xl font-bold tracking-[-0.035em] uppercase">
+              {es
+                ? "Resultados normalizados del preconteo"
+                : "Normalized pre-count results"}
+            </h2>
+            <p className="mt-5 text-sm">
+              {es
+                ? "Exportación completa del endpoint de resultados, vinculada al identificador inmutable del release. Los datos son preliminares y no corresponden al escrutinio certificado."
+                : "Full export from the results endpoint, bound to the immutable release identifier. The data are preliminary and are not certified scrutiny."}
+            </p>
+            {preliminaryCsvUrl ? (
+              <a
+                className="mt-6 inline-flex min-h-11 items-center border border-ink bg-ink px-4 text-sm font-bold text-paper hover:bg-neon hover:text-ink"
+                href={preliminaryCsvUrl}
+                rel="noreferrer"
+              >
+                {es ? "Descargar CSV" : "Download CSV"}
+              </a>
+            ) : (
+              <span className="mt-6 inline-flex min-h-11 items-center text-sm font-bold text-muted">
+                {es ? "API no configurada" : "API not configured"}
+              </span>
+            )}
+          </article>
+        )}
       </div>
       <Section title={es ? "Manifiesto" : "Manifest"}>
         <p>

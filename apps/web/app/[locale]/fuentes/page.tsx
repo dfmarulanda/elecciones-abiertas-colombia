@@ -36,10 +36,14 @@ export default async function SourcesPage({
         <p>
           {es
             ? awaitingFinal
-              ? "El catálogo registra puntos de entrada verificados, no resultados incorporados automáticamente. La declaración final de segunda vuelta todavía figura como pendiente de verificación; por eso este repositorio no publica un release electoral real."
+              ? release.release.synthetic
+                ? "El catálogo registra puntos de entrada verificados, no resultados incorporados automáticamente. La declaración final de segunda vuelta todavía figura como pendiente de verificación y esta fijación sigue siendo sintética."
+                : "Este visor publica un release real del preconteo preliminar, separado de cualquier declaración final. El catálogo todavía registra la declaración final de segunda vuelta como pendiente de verificación; por eso estos datos no se presentan como escrutinio certificado."
               : "El catálogo contiene una declaración final verificada como fuente candidata. Eso no publica el release automáticamente: todavía deben superar todos los gates de conciliación, cobertura, método, redacción y producto."
             : awaitingFinal
-              ? "The catalogue records verified entry points, not results incorporated automatically. The second-round final declaration is still awaiting verification, so this repository does not publish a real election release."
+              ? release.release.synthetic
+                ? "The catalogue records verified entry points, not results incorporated automatically. The second-round final declaration is still awaiting verification and this fixture remains synthetic."
+                : "This viewer publishes a real preliminary pre-count release, kept separate from any final declaration. The catalogue still records the second-round final declaration as awaiting verification, so these data are not presented as certified scrutiny."
               : "The catalogue contains a verified final declaration as a candidate source. That does not publish a release automatically: every reconciliation, coverage, methodology, wording, and product gate must still pass."}
         </p>
         <p className="mt-3">

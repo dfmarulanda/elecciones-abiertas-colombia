@@ -100,6 +100,139 @@ describe("fixture release adapter", () => {
     );
   });
 
+  it("hydrates a preliminary summary with normalized department results instead of a fixture fallback", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:9999");
+    vi.stubEnv("NEXT_PUBLIC_ACTIVE_RELEASE", "candidate-live");
+    const requested: string[] = [];
+    const preliminarySummary = {
+      ...fixture.summary,
+      data_version: "candidate-live",
+      release_status: "candidate",
+      synthetic: false,
+      preliminary: true,
+      preliminary_caveat: {
+        es: "Resultados preliminares; no certificados.",
+        en: "Preliminary results; not certified.",
+      },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        requested.push(url);
+        if (url.includes("/api/v1/elections/") && url.includes("/summary?")) {
+          return new Response(JSON.stringify({ detail: "Not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        if (url.endsWith("/api/v1/release-elections")) {
+          return new Response(
+            JSON.stringify([
+              {
+                release_id: "candidate-live",
+                election_slug: fixture.election.slug,
+                name_es: fixture.election.name.es,
+                name_en: fixture.election.name.en,
+                round: fixture.election.round,
+                election_date: fixture.election.election_date,
+                status: "candidate",
+                exposure_class: "preliminary",
+                methodology_version: fixture.release.methodology_version,
+                release_manifest_hash: "a".repeat(64),
+                exposure_approved_at: null,
+                sources: [],
+              },
+            ]),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        if (url.endsWith("/summary")) {
+          return new Response(JSON.stringify(preliminarySummary), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        if (url.includes("/geographies/CO/children-results?")) {
+          return new Response(
+            JSON.stringify({
+              items: [
+                {
+                  i: "scope:01",
+                  l: "department",
+                  c: "01",
+                  n: "ANTIOQUIA",
+                  t: 120,
+                  v: 117,
+                  b: 3,
+                  x: 0,
+                  u: 0,
+                  k: [70, 44],
+                },
+                {
+                  i: "scope:16",
+                  l: "department",
+                  c: "16",
+                  n: "BOGOTA D.C.",
+                  t: 230,
+                  v: 225,
+                  b: 5,
+                  x: 0,
+                  u: 0,
+                  k: [90, 130],
+                },
+              ],
+              candidates: [
+                `candidate:${preliminarySummary.candidates[0]!.candidate.id}`,
+                `candidate:${preliminarySummary.candidates[1]!.candidate.id}`,
+              ],
+              page: { next_cursor: null, has_more: false, limit: 50 },
+              data_version: "candidate-live",
+              exposure_class: "preliminary",
+              preliminary: true,
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        throw new Error(`Unexpected request: ${url}`);
+      }),
+    );
+    const { dataAdapter } = await import("./fixture-adapter");
+
+    const release = await dataAdapter.getRelease({ include: "review" });
+
+    expect(release.department_rollup).toEqual([
+      {
+        id: "scope:01",
+        code: "01",
+        name: "ANTIOQUIA",
+        valid_votes: 117,
+        candidates: {
+          [preliminarySummary.candidates[0]!.candidate.id]: 70,
+          [preliminarySummary.candidates[1]!.candidate.id]: 44,
+        },
+        mesas_reported: null,
+      },
+      {
+        id: "scope:16",
+        code: "16",
+        name: "BOGOTA D.C.",
+        valid_votes: 225,
+        candidates: {
+          [preliminarySummary.candidates[0]!.candidate.id]: 90,
+          [preliminarySummary.candidates[1]!.candidate.id]: 130,
+        },
+        mesas_reported: null,
+      },
+    ]);
+    expect(
+      requested.some((url) =>
+        url.includes("/geographies/CO/children-results?level=department"),
+      ),
+    ).toBe(true);
+  });
+
   it("projects unexpected live evidence fields through the same index-only allowlist", async () => {
     vi.resetModules();
     vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:9999");

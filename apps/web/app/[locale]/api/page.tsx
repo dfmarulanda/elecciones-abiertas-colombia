@@ -1,5 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
+import { dataAdapter } from "@/data/fixture-adapter";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { Page, Section } from "@/components/page-primitives";
+
+export const dynamic = "force-dynamic";
+
 export default async function ApiPage({
   params,
 }: {
@@ -7,25 +12,29 @@ export default async function ApiPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const guard = await loadReleaseOrUnavailable(locale, () =>
+    dataAdapter.getNationalSummary(),
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
   const es = locale === "es";
   const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
   const routes = [
-    "GET /api/v1/elections/{slug}/summary",
-    "GET /api/v1/elections/{slug}/results",
-    "GET /api/v1/geographies/{id}",
-    "GET /api/v1/mesas/{id}",
-    "GET /api/v1/mesas/{id}/evidence",
-    "GET /api/v1/mesas/{id}/comparisons",
-    "GET /api/v1/bulletins",
-    "GET /api/v1/bulletins/{id}/results",
-    "GET /api/v1/review-signals",
-    "GET /api/v1/datasets",
-    "GET /api/v1/datasets/{id}/download",
+    "GET /api/v1/release-elections",
+    "GET /api/v1/releases/{release}/elections/{election}/summary",
+    "GET /api/v1/releases/{release}/elections/{election}/results",
+    "GET /api/v1/releases/{release}/elections/{election}/geographies/{id}",
+    "GET /api/v1/releases/{release}/elections/{election}/geographies/{id}/children",
+    "GET /api/v1/releases/{release}/elections/{election}/geographies/{id}/children-results",
+    "GET /api/v1/releases/{release}/elections/{election}/mesas/{id}",
+    "GET /api/v1/releases/{release}/elections/{election}/historical-comparison",
     "GET /api/v1/openapi.json",
   ];
   return (
     <Page
       locale={locale}
+      synthetic={release.release.synthetic}
+      releaseStatus={release.release.status}
       eyebrow="OpenAPI"
       title={es ? "API pública" : "Public API"}
     >
@@ -64,9 +73,13 @@ export default async function ApiPage({
       </Section>
       <Section title={es ? "Uso responsable" : "Responsible use"}>
         <p>
-          {es
-            ? "Compruebe data_version, estado jurídico, URL oficial y huella en cada respuesta. Cuando se use la fijación sintética, sus endpoints y valores siguen siendo solo demostrativos."
-            : "Check data_version, legal status, official URL, and digest in every response. When synthetic fixture mode is used, its endpoints and values remain demonstrations only."}
+          {release.release.synthetic
+            ? es
+              ? "Compruebe data_version, estado jurídico, URL oficial y huella en cada respuesta. Los endpoints y valores de esta fijación sintética son solo demostrativos."
+              : "Check data_version, legal status, official URL, and digest in every response. The endpoints and values in this synthetic fixture are demonstrations only."
+            : es
+              ? "Compruebe data_version, estado jurídico, URL oficial, huella y X-Election-Data-Class en cada respuesta. El release activo es un preconteo preliminar: no lo trate como escrutinio certificado."
+              : "Check data_version, legal status, official URL, digest, and X-Election-Data-Class in every response. The active release is a preliminary pre-count: do not treat it as certified scrutiny."}
         </p>
       </Section>
     </Page>

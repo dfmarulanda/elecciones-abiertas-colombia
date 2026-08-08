@@ -493,7 +493,7 @@
     "titleLine1": "Cómo se",
     "titleLine2": "construyó",
     "intro": "El orden en que se tomaron las decisiones importa tanto como el resultado. Varias de las que aparecen aquí — separar las capas, no rellenar los vacíos, excluir Benford — se tomaron antes de mirar los datos de 2026, y por eso se pueden sostener después.",
-    "note": "Entradas de ejemplo · pendiente reemplazar con el registro real",
+    "note": "Registro del proyecto · fechas verificables en el historial de versiones",
     "trackLabel": "Recorrido de los hitos del proyecto",
     "trackHint": "La línea de tiempo avanza al desplazarse por la página; cada hito aparece sobre la curva a medida que se alcanza.",
     "milestone": "Hito",
@@ -501,7 +501,7 @@
     "phase": {
       "p1": {
         "name": "Investigación",
-        "when": "fecha por definir",
+        "when": "4 ago 2026",
         "e1": {
           "title": "Qué publica realmente cada entidad",
           "body": "Inventario de lo que la Registraduría y el CNE hacen público, en qué formato y con qué granularidad."
@@ -517,7 +517,7 @@
       },
       "p2": {
         "name": "Fuentes y datos",
-        "when": "fecha por definir",
+        "when": "4–5 ago 2026",
         "e1": {
           "title": "Catálogo de fuentes",
           "body": "Cada fuente declarada con su condición jurídica antes de descargar un solo archivo."
@@ -533,7 +533,7 @@
       },
       "p3": {
         "name": "Método",
-        "when": "fecha por definir",
+        "when": "5–6 ago 2026",
         "e1": {
           "title": "Reglas de priorización",
           "body": "Puntaje publicado de antemano, con tope 100 y versión propia, para ordenar qué mira una persona primero."
@@ -549,7 +549,7 @@
       },
       "p4": {
         "name": "Diseño y publicación",
-        "when": "fecha por definir",
+        "when": "5–8 ago 2026",
         "e1": {
           "title": "El conteo dibujado voto por voto",
           "body": "Decisión de mostrar el conteo nacional completo, mesa por mesa, en vez de resumirlo en un solo porcentaje."

@@ -22,9 +22,9 @@ export type DepartmentRollup = {
   id: string;
   code: string | null;
   name: string;
-  valid_votes: number;
-  candidates: Record<string, number>;
-  mesas_reported: number;
+  valid_votes: number | null;
+  candidates: Record<string, number | null>;
+  mesas_reported: number | null;
 };
 
 export type SampleMesa = {
@@ -908,7 +908,9 @@ async function apiRelease(options: ReleaseOptions = {}): Promise<ReleaseView> {
  * summary, which carries the preliminary label with it.
  */
 async function normalizedSummaryRelease(): Promise<ReleaseView | null> {
-  const releases = await apiJson<PublicReleaseRef[]>("/api/v1/release-elections");
+  const releases = await apiJson<PublicReleaseRef[]>(
+    "/api/v1/release-elections",
+  );
   const selected =
     releases.find((item) => item.election_slug === electionSlug) ?? releases[0];
   if (!selected) return null;
@@ -920,12 +922,38 @@ async function normalizedSummaryRelease(): Promise<ReleaseView | null> {
   >(
     `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}/summary`,
   );
+  const prefix = `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}`;
+  const departmentResults = await apiJson<ChildrenResultsPage>(
+    `${prefix}/geographies/CO/children-results?level=department&limit=50`,
+  );
+  if (departmentResults.data_version !== summary.data_version) {
+    throw new Error(
+      `Department response version ${departmentResults.data_version} does not match summary version ${summary.data_version}.`,
+    );
+  }
+  const candidateIds = departmentResults.candidates.map((candidate) =>
+    candidate.replace(/^candidate:/, ""),
+  );
+  const departmentRollup = departmentResults.items.map((department) => ({
+    id: department.i,
+    code: department.c || null,
+    name: department.n,
+    valid_votes: department.v,
+    candidates: Object.fromEntries(
+      candidateIds.map((candidate, index) => [
+        candidate,
+        department.k[index] ?? null,
+      ]),
+    ),
+    mesas_reported: null,
+  }));
   const notice = summary.preliminary_caveat ?? {
     es: "Datos del release inmutable indicado en la página.",
     en: "Data from the immutable release shown on this page.",
   };
   return {
     fixture_notice: notice,
+    department_rollup: departmentRollup,
     release: {
       release_id: selected.release_id,
       data_version: summary.data_version,
@@ -1021,7 +1049,8 @@ async function releaseWithNormalizedFallback(
 }
 
 const liveAdapter: DataAdapter = {
-  getRelease: (options) => releaseWithNormalizedFallback(() => apiRelease(options)),
+  getRelease: (options) =>
+    releaseWithNormalizedFallback(() => apiRelease(options)),
   getNationalSummary: () => releaseWithNormalizedFallback(apiSummaryRelease),
   async getMesa(mesaId) {
     try {

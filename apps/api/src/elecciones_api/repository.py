@@ -1796,6 +1796,12 @@ class PostgresReadRepository:
         categories = self.normalized_categories(
             release_id, election_slug, str(fact["id"]), None, 500
         )
+        slate_rows = self._normalized(
+            """SELECT id,ballot_number,name_es,name_en,short_name_es,short_name_en
+            FROM release_candidates WHERE release_id=:r AND election_slug=:e""",
+            {"r": release_id, "e": election_slug},
+        )
+        slate_by_id = {str(row["id"]): row for row in slate_rows}
 
         # The reader-facing summary needs candidates, not just raw categories:
         # every consumer of ElectionSummary expects {candidate, votes, share}.
@@ -1809,6 +1815,8 @@ class PostgresReadRepository:
             key = str(row.get("category_key", ""))
             if not key.startswith("candidate:"):
                 continue
+            identifier = str(row.get("category_code") or key.removeprefix("candidate:"))
+            slate = slate_by_id.get(identifier)
             votes = row.get("votes")
             value = (
                 votes.get("value")
@@ -1820,15 +1828,19 @@ class PostgresReadRepository:
             candidates.append(
                 {
                     "candidate": {
-                        "id": str(row.get("category_code") or key),
-                        "ballot_number": None,
+                        "id": identifier,
+                        "ballot_number": slate.get("ballot_number") if slate else None,
                         "name": {
-                            "es": row.get("category_name"),
-                            "en": row.get("category_name"),
+                            "es": slate.get("name_es") if slate else row.get("category_name"),
+                            "en": slate.get("name_en") if slate else row.get("category_name"),
                         },
                         "short_name": {
-                            "es": row.get("category_name"),
-                            "en": row.get("category_name"),
+                            "es": (
+                                slate.get("short_name_es") if slate else row.get("category_name")
+                            ),
+                            "en": (
+                                slate.get("short_name_en") if slate else row.get("category_name")
+                            ),
                         },
                     },
                     "votes": {

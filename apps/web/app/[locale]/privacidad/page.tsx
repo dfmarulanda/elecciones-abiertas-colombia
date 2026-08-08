@@ -1,5 +1,10 @@
 import { setRequestLocale } from "next-intl/server";
+import { dataAdapter } from "@/data/fixture-adapter";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { Page, Section } from "@/components/page-primitives";
+
+export const dynamic = "force-dynamic";
+
 export default async function PrivacyPage({
   params,
 }: {
@@ -7,10 +12,17 @@ export default async function PrivacyPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const guard = await loadReleaseOrUnavailable(locale, () =>
+    dataAdapter.getNationalSummary(),
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
   const es = locale === "es";
   return (
     <Page
       locale={locale}
+      synthetic={release.release.synthetic}
+      releaseStatus={release.release.status}
       eyebrow={es ? "Datos y documentos" : "Data and documents"}
       title={es ? "Privacidad" : "Privacy"}
     >
@@ -23,9 +35,13 @@ export default async function PrivacyPage({
       </Section>
       <Section title={es ? "Este entorno" : "This environment"}>
         <p>
-          {es
-            ? "La fijación actual es sintética. Las URLs son ejemplos y no deben usarse para inferir la existencia de personas, mesas, documentos o resultados reales."
-            : "The current fixture is synthetic. URLs are examples and must not be used to infer the existence of real people, mesas, documents, or results."}
+          {release.release.synthetic
+            ? es
+              ? "La fijación actual es sintética. Las URLs son ejemplos y no deben usarse para inferir la existencia de personas, mesas, documentos o resultados reales."
+              : "The current fixture is synthetic. URLs are examples and must not be used to infer the existence of real people, mesas, documents, or results."
+            : es
+              ? "Este entorno presenta un preconteo preliminar real y no lo representa como escrutinio certificado. El visor no conserva documentos de acta ni expone datos personales extraídos de ellos."
+              : "This environment presents a real preliminary pre-count and does not represent it as certified scrutiny. The viewer does not retain record documents or expose personal data extracted from them."}
         </p>
       </Section>
       <Section title={es ? "Enlaces externos" : "External links"}>

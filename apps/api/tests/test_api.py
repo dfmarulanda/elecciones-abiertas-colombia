@@ -197,6 +197,92 @@ def test_normalized_fact_rejects_malformed_source_or_metric_data() -> None:
         _normalized_fact(row, "release-1", "election-1")
 
 
+def test_standard_summary_uses_persisted_candidate_slate_metadata() -> None:
+    repository = object.__new__(PostgresReadRepository)
+
+    def normalized(statement: str, _values: dict[str, object]) -> list[dict[str, object]]:
+        if "FROM release_elections" in statement:
+            return [
+                {
+                    "name_es": "Elección",
+                    "name_en": "Election",
+                    "round": 2,
+                    "election_date": "2026-06-21",
+                    "status": "candidate",
+                    "synthetic": False,
+                }
+            ]
+        if "FROM release_summaries" in statement:
+            return [
+                {
+                    "release_class": "standard",
+                    "completion": {"expected": 1, "reported": 1, "percent": 1},
+                    "coverage": {"expected": 1, "retrieved": 1, "parsed": 1, "missing": 0},
+                    "geographic_collection_coverage": {"status": "full_scope"},
+                    "reconciliation": {"status": "blocked", "exceptions": 3},
+                    "turnout": 0.5,
+                    "preview_caveat_es": None,
+                    "preview_caveat_en": None,
+                }
+            ]
+        if "FROM release_result_facts" in statement:
+            return [
+                {
+                    "id": "national",
+                    "metrics": {
+                        "valid_votes": {"value": 100, "status": "observed"},
+                    },
+                    "source_id": "national-source",
+                    "source_type": "pre_count",
+                    "legal_status": "preliminary",
+                    "source_url": "https://official.example/results",
+                    "retrieved_at": "2026-06-21T22:00:00Z",
+                    "content_hash": "a" * 64,
+                    "parser_version": "parser-v1",
+                    "transform_version": "transform-v1",
+                }
+            ]
+        if "FROM release_candidates" in statement:
+            return [
+                {
+                    "id": "candidate-a",
+                    "ballot_number": 7,
+                    "name_es": "Nombre completo",
+                    "name_en": "Full name",
+                    "short_name_es": "Nombre",
+                    "short_name_en": "Name",
+                }
+            ]
+        raise AssertionError(statement)
+
+    repository._normalized = normalized  # type: ignore[method-assign,assignment]
+    repository.normalized_categories = lambda *_args: [  # type: ignore[method-assign,assignment]
+        {
+            "category_key": "candidate:candidate-a",
+            "category_code": "candidate-a",
+            "category_name": "Fallback name",
+            "votes": {"value": 60, "status": "observed"},
+        }
+    ]
+
+    summary = repository._standard_summary(
+        "release-1",
+        "election-1",
+        {
+            "class": "preliminary",
+            "caveat": {"es": "Preliminar", "en": "Preliminary"},
+        },
+    )
+
+    candidate = cast(list[dict[str, object]], summary["candidates"])[0]["candidate"]
+    assert candidate == {
+        "id": "candidate-a",
+        "ballot_number": 7,
+        "name": {"es": "Nombre completo", "en": "Full name"},
+        "short_name": {"es": "Nombre", "en": "Name"},
+    }
+
+
 class ProductionFixtureRepository(FixtureRepository):
     """A fixture-shaped snapshot used to exercise the production redirect branch."""
 

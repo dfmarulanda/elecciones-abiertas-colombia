@@ -340,6 +340,24 @@ def test_stage_a_emits_every_artifact_with_matching_counts(staged: tuple[Path, P
         SOURCE_MESA,
         SOURCE_ROLLUP,
     }
+    assert load_manifest["election"]["candidates"] == [
+        {
+            "id": CANDIDATES[0],
+            "ballot_number": 1,
+            "name_es": CANDIDATES[0],
+            "name_en": CANDIDATES[0],
+            "short_name_es": CANDIDATES[0],
+            "short_name_en": CANDIDATES[0],
+        },
+        {
+            "id": CANDIDATES[1],
+            "ballot_number": 2,
+            "name_es": CANDIDATES[1],
+            "name_en": CANDIDATES[1],
+            "short_name_es": CANDIDATES[1],
+            "short_name_en": CANDIDATES[1],
+        },
+    ]
 
 
 def test_stage_a_never_derives_a_polling_place_from_a_mesa_id(staged: tuple[Path, Path]) -> None:
@@ -528,6 +546,7 @@ def _counts(url: str, release_id: str) -> dict[str, int]:
         "release_result_facts",
         "release_category_facts",
         "release_sources",
+        "release_candidates",
         "release_summaries",
         "release_exposures",
     )
@@ -554,6 +573,7 @@ def test_stage_b_loads_derives_and_reconciles(postgres_url: str, staged: tuple[P
         "release_result_facts": FIXTURE_FACTS + FIXTURE_AGGREGATES,
         "release_category_facts": (FIXTURE_FACTS + FIXTURE_AGGREGATES) * len(CANDIDATES),
         "release_sources": 4,
+        "release_candidates": 2,
         "release_summaries": 1,
         "release_exposures": 1,
     }
@@ -565,6 +585,14 @@ def test_stage_b_loads_derives_and_reconciles(postgres_url: str, staged: tuple[P
             ).scalar_one()
             == "internal"
         )
+        slates = connection.execute(
+            text(
+                "SELECT id,ballot_number FROM release_candidates "
+                "WHERE release_id=:r ORDER BY ballot_number"
+            ),
+            {"r": FIXTURE_RELEASE},
+        ).all()
+        assert [tuple(row) for row in slates] == [(CANDIDATES[0], 1), (CANDIDATES[1], 2)]
         # Every derived aggregate is attributed to the rollup source, and none
         # of them fabricates a registered-electors denominator.
         derived = connection.execute(
@@ -662,6 +690,7 @@ def test_stage_b_aborts_when_a_place_total_disagrees_with_its_mesas(
             "release_result_facts",
             "release_category_facts",
             "release_sources",
+            "release_candidates",
             "release_summaries",
             "release_exposures",
         ),

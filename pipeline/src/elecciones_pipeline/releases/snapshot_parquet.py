@@ -485,12 +485,34 @@ def snapshot_to_parquet(
     slate = election.get("candidates")
     if not isinstance(slate, list) or len(slate) < 2:
         raise ReleaseLoadError("snapshot election has no candidate slate")
-    candidate_names = {
-        _require_string(entry.get("id"), "candidate id"): _require_string(
-            (entry.get("name") or {}).get("es"), "candidate name"
+    candidates: list[dict[str, Any]] = []
+    candidate_names: dict[str, str] = {}
+    ballot_numbers: set[int] = set()
+    for entry in slate:
+        if not isinstance(entry, dict):
+            raise ReleaseLoadError("snapshot election has a malformed candidate slate")
+        identifier = _require_string(entry.get("id"), "candidate id")
+        if identifier in candidate_names:
+            raise ReleaseLoadError("snapshot election repeats a candidate id")
+        ballot_number = _require_int(entry.get("ballot_number"), "candidate ballot_number")
+        if ballot_number < 1 or ballot_number in ballot_numbers:
+            raise ReleaseLoadError("candidate ballot numbers must be distinct positive integers")
+        name = entry.get("name") or {}
+        short_name = entry.get("short_name") or name
+        name_es = _require_string(name.get("es"), "candidate name es")
+        name_en = _require_string(name.get("en"), "candidate name en")
+        candidate_names[identifier] = name_es
+        ballot_numbers.add(ballot_number)
+        candidates.append(
+            {
+                "id": identifier,
+                "ballot_number": ballot_number,
+                "name_es": name_es,
+                "name_en": name_en,
+                "short_name_es": _require_string(short_name.get("es"), "candidate short name es"),
+                "short_name_en": _require_string(short_name.get("en"), "candidate short name en"),
+            }
         )
-        for entry in slate
-    }
     release = _scalar(snapshot_path, "release")
     summary = _scalar(snapshot_path, "summary")
     if not isinstance(release, dict) or not isinstance(summary, dict):
@@ -551,6 +573,7 @@ def snapshot_to_parquet(
             "election_date": _require_string(
                 election.get("election_date"), "election election_date"
             ),
+            "candidates": candidates,
         },
         # Copied verbatim.  ``reconciliation`` is ``blocked`` with three
         # exceptions and must be served as blocked; recomputing any of these

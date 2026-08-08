@@ -89,6 +89,7 @@ export default async function LocaleHome({
           t={t}
           departments={rel?.department_rollup}
           candidates={candidates}
+          reportedMesas={rel?.summary.completion?.reported}
         />
         <ProcessSection locale={locale} t={t} />
         <LogSection locale={locale} t={t} />

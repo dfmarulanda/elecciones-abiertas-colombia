@@ -349,9 +349,9 @@ export function MesaSection({
 type DeptRow = {
   id: string;
   name: string;
-  valid_votes: number;
-  candidates: Record<string, number>;
-  mesas_reported: number;
+  valid_votes: number | null;
+  candidates: Record<string, number | null>;
+  mesas_reported: number | null;
 };
 
 export function TerritoriesSection({
@@ -359,11 +359,13 @@ export function TerritoriesSection({
   t,
   departments,
   candidates,
+  reportedMesas,
 }: {
   locale: Locale;
   t: Text;
   departments?: DeptRow[];
   candidates?: { id: string; name: { es: string; en: string } }[];
+  reportedMesas?: number;
 }) {
   const nf = new Intl.NumberFormat(locale === "es" ? "es-CO" : "en-US");
 
@@ -382,6 +384,7 @@ export function TerritoriesSection({
         departments={departments}
         candidates={candidates}
         nf={nf}
+        reportedMesas={reportedMesas}
       />
     );
   }
@@ -736,15 +739,27 @@ function RealTerritories({
   departments,
   candidates,
   nf,
+  reportedMesas,
 }: {
   locale: Locale;
   t: Text;
   departments: DeptRow[];
   candidates: { id: string; name: { es: string; en: string } }[];
   nf: Intl.NumberFormat;
+  reportedMesas?: number;
 }) {
   const [a, b] = candidates;
-  const totalMesas = departments.reduce((s, d) => s + d.mesas_reported, 0);
+  const hasMesaCounts = departments.every(
+    (department) => department.mesas_reported !== null,
+  );
+  const totalMesas =
+    reportedMesas ??
+    (hasMesaCounts
+      ? departments.reduce(
+          (sum, department) => sum + (department.mesas_reported ?? 0),
+          0,
+        )
+      : null);
   const mapLabels = {
     mapTitle: t("territories.map.title"),
     legendReporting: t("territories.map.legendReporting"),
@@ -799,7 +814,7 @@ function RealTerritories({
           >
             {t("territories.realIntro", {
               departments: departments.length,
-              mesas: nf.format(totalMesas),
+              mesas: totalMesas === null ? "—" : nf.format(totalMesas),
             })}
           </p>
           <div
@@ -828,7 +843,7 @@ function RealTerritories({
                 <tr style={{ borderBottom: `1px solid ${INK}` }}>
                   {[
                     t("territories.table.territory"),
-                    t("territories.table.mesas"),
+                    ...(hasMesaCounts ? [t("territories.table.mesas")] : []),
                     a?.name[locale] ?? "",
                     b?.name[locale] ?? "",
                     t("territories.table.total"),
@@ -843,7 +858,8 @@ function RealTerritories({
                         fontWeight: 700,
                         color: INK_4,
                         textAlign: i === 0 ? "left" : "right",
-                        whiteSpace: i > 1 ? "normal" : "nowrap",
+                        whiteSpace:
+                          i > (hasMesaCounts ? 1 : 0) ? "normal" : "nowrap",
                       }}
                     >
                       {h}
@@ -853,8 +869,10 @@ function RealTerritories({
               </thead>
               <tbody>
                 {departments.map((d) => {
-                  const av = d.candidates[a?.id ?? ""] ?? 0;
-                  const bv = d.candidates[b?.id ?? ""] ?? 0;
+                  const av = d.candidates[a?.id ?? ""] ?? null;
+                  const bv = d.candidates[b?.id ?? ""] ?? null;
+                  const display = (value: number | null) =>
+                    value === null ? "—" : nf.format(value);
                   return (
                     <tr key={d.id} style={{ borderBottom: RULE_FAINT_LIGHT }}>
                       <th
@@ -868,6 +886,17 @@ function RealTerritories({
                           {d.name}
                         </span>
                       </th>
+                      {hasMesaCounts ? (
+                        <td
+                          className="mono"
+                          style={{
+                            padding: "10px 12px 10px 0",
+                            textAlign: "right",
+                          }}
+                        >
+                          {display(d.mesas_reported)}
+                        </td>
+                      ) : null}
                       <td
                         className="mono"
                         style={{
@@ -875,7 +904,7 @@ function RealTerritories({
                           textAlign: "right",
                         }}
                       >
-                        {nf.format(d.mesas_reported)}
+                        {display(av)}
                       </td>
                       <td
                         className="mono"
@@ -884,16 +913,7 @@ function RealTerritories({
                           textAlign: "right",
                         }}
                       >
-                        {nf.format(av)}
-                      </td>
-                      <td
-                        className="mono"
-                        style={{
-                          padding: "10px 12px 10px 0",
-                          textAlign: "right",
-                        }}
-                      >
-                        {nf.format(bv)}
+                        {display(bv)}
                       </td>
                       <td
                         className="fig"
@@ -903,7 +923,7 @@ function RealTerritories({
                           fontSize: 15,
                         }}
                       >
-                        {nf.format(d.valid_votes)}
+                        {display(d.valid_votes)}
                       </td>
                     </tr>
                   );

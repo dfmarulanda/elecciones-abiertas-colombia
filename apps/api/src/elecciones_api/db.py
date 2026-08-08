@@ -84,6 +84,30 @@ class ReleaseSummaryModel(Base):
     )
 
 
+class ReleaseCandidateModel(Base):
+    __tablename__ = "release_candidates"
+    release_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    election_slug: Mapped[str] = mapped_column(String(160), primary_key=True)
+    id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    ballot_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    name_es: Mapped[str] = mapped_column(Text, nullable=False)
+    name_en: Mapped[str] = mapped_column(Text, nullable=False)
+    short_name_es: Mapped[str] = mapped_column(Text, nullable=False)
+    short_name_en: Mapped[str] = mapped_column(Text, nullable=False)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["release_id", "election_slug"],
+            ["release_elections.release_id", "release_elections.election_slug"],
+        ),
+        UniqueConstraint(
+            "release_id",
+            "election_slug",
+            "ballot_number",
+            name="uq_release_candidate_ballot",
+        ),
+    )
+
+
 class ReleaseGeographyModel(Base):
     __tablename__ = "release_geographies"
     release_id: Mapped[str] = mapped_column(String(128), primary_key=True)

@@ -493,7 +493,7 @@
     "titleLine1": "How it",
     "titleLine2": "was built",
     "intro": "The order in which the decisions were made matters as much as the result. Several of the ones here — separating the layers, not filling the gaps, excluding Benford — were made before looking at the 2026 data, which is why they hold up afterward.",
-    "note": "Sample entries · pending replacement with the real log",
+    "note": "Project record · dates verifiable in version history",
     "trackLabel": "Path through the project's milestones",
     "trackHint": "The timeline advances as you scroll the page; each milestone appears on the curve as it is reached.",
     "milestone": "Milestone",
@@ -501,7 +501,7 @@
     "phase": {
       "p1": {
         "name": "Investigation",
-        "when": "date to be set",
+        "when": "Aug 4, 2026",
         "e1": {
           "title": "What each body actually publishes",
           "body": "An inventory of what the Registraduría and the CNE make public, in what format and at what granularity."
@@ -517,7 +517,7 @@
       },
       "p2": {
         "name": "Sources and data",
-        "when": "date to be set",
+        "when": "Aug 4–5, 2026",
         "e1": {
           "title": "Catalogue of sources",
           "body": "Every source declared with its legal standing before a single file is downloaded."
@@ -533,7 +533,7 @@
       },
       "p3": {
         "name": "Method",
-        "when": "date to be set",
+        "when": "Aug 5–6, 2026",
         "e1": {
           "title": "Prioritization rules",
           "body": "A score published in advance, capped at 100 and versioned, to order what a person looks at first."
@@ -549,7 +549,7 @@
       },
       "p4": {
         "name": "Design and publication",
-        "when": "date to be set",
+        "when": "Aug 5–8, 2026",
         "e1": {
           "title": "The count drawn vote by vote",
           "body": "The decision to show the full national count, table by table, instead of reducing it to a single percentage."

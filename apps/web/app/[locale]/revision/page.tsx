@@ -102,9 +102,13 @@ export default async function ReviewPage({
         <p className="mt-3">
           {es ? "Versión de metodología:" : "Methodology version:"}{" "}
           <code>{release.release.methodology_version}</code>.{" "}
-          {es
-            ? "Los componentes estadísticos de la demostración sintética son experimentales. Las publicaciones reales no están disponibles hasta validación independiente; nunca sustituyen la revisión del documento."
-            : "Statistical components in the synthetic demonstration are experimental. Real releases are unavailable pending independent validation; they never replace document review."}
+          {release.release.synthetic
+            ? es
+              ? "Los componentes estadísticos de esta demostración sintética son experimentales y nunca sustituyen la revisión del documento."
+              : "Statistical components in this synthetic demonstration are experimental and never replace document review."
+            : es
+              ? "Este release preliminar no publica componentes estadísticos de revisión. Una lista vacía no demuestra ausencia de anomalías y nunca sustituye la revisión documental."
+              : "This preliminary release publishes no statistical review components. An empty list does not prove the absence of anomalies and never replaces document review."}
         </p>
       </Section>
 

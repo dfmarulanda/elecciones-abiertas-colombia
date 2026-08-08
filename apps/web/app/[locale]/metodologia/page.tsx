@@ -1,7 +1,11 @@
 import { setRequestLocale } from "next-intl/server";
 
 import { Page, Section } from "@/components/page-primitives";
+import { dataAdapter } from "@/data/fixture-adapter";
+import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { reviewDisclosure } from "@/lib/review-disclosure";
+
+export const dynamic = "force-dynamic";
 
 const points = [
   [
@@ -43,10 +47,17 @@ export default async function MethodologyPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const guard = await loadReleaseOrUnavailable(locale, () =>
+    dataAdapter.getNationalSummary(),
+  );
+  if (guard.fallback) return guard.fallback;
+  const release = guard.release;
   const es = locale === "es";
   return (
     <Page
       locale={locale}
+      synthetic={release.release.synthetic}
+      releaseStatus={release.release.status}
       eyebrow={es ? "Método reproducible" : "Reproducible method"}
       title={es ? "Metodología" : "Methodology"}
     >
@@ -93,9 +104,13 @@ export default async function MethodologyPage({
             : "Before any model, the pipeline validates nonnegative integers, canonical identities, source-specific arithmetic, elector bounds only when the field exists, coverage, and exact aggregation. Comparisons require the same grain. An official correction remains labelled as a correction."}
         </p>
         <p className="mt-3">
-          {es
-            ? "Las señales de pares, espaciales y de sensibilidad son experimentales solo en la demostración sintética. Las publicaciones reales no están disponibles hasta una validación independiente. Nunca convierten una señal estadística en votos afectados."
-            : "Peer, spatial, and outcome-sensitivity signals are experimental only in the synthetic demonstration. Real releases are unavailable pending independent validation. They never turn a statistical signal into affected votes."}
+          {release.release.synthetic
+            ? es
+              ? "Las señales de pares, espaciales y de sensibilidad de esta demostración sintética son experimentales. Nunca convierten una señal estadística en votos afectados."
+              : "Peer, spatial, and outcome-sensitivity signals in this synthetic demonstration are experimental. They never turn a statistical signal into affected votes."
+            : es
+              ? "El release público actual contiene un preconteo preliminar real y no publica señales de prioridad de auditoría. Las tres excepciones de conciliación se conservan explícitamente; una señal estadística nunca equivale a votos afectados."
+              : "The current public release contains a real preliminary pre-count and publishes no audit-priority signals. Its three reconciliation exceptions remain explicit; a statistical signal never equals affected votes."}
         </p>
       </Section>
 
@@ -167,8 +182,8 @@ export default async function MethodologyPage({
       <Section title={es ? "Puertas de publicación" : "Publication gates"}>
         <p>
           {es
-            ? "No se publica un release con señales hasta que pasen cobertura, conciliación agregada, trazabilidad, un artefacto de validación estadística hasheado (100 o más corridas, cota binomial unilateral y FDR empírico), revisión de redacción y controles de datos personales. El fixture actual falla deliberadamente la puerta de publicación real."
-            : "A release with signals is not published until coverage, aggregate reconciliation, traceability, a hashed statistical-validation artifact (100+ runs, one-sided binomial bound, and empirical FDR), wording review, and personal-data controls pass. The current fixture deliberately fails the real-publication gate."}
+            ? "No se publica un release con señales hasta que pasen cobertura, conciliación agregada, trazabilidad, un artefacto de validación estadística hasheado (100 o más corridas, cota binomial unilateral y FDR empírico), revisión de redacción y controles de datos personales. El preconteo actual se expone mediante una vía preliminar separada: es público e inmutable, pero no está certificado y no habilita señales de revisión."
+            : "A release with signals is not published until coverage, aggregate reconciliation, traceability, a hashed statistical-validation artifact (100+ runs, one-sided binomial bound, and empirical FDR), wording review, and personal-data controls pass. The current pre-count uses a separate preliminary exposure path: it is public and immutable, but not certified and does not enable review signals."}
         </p>
       </Section>
     </Page>

@@ -104,6 +104,13 @@ export default async function BulletinsPage({
           </li>
         ))}
       </ol>
+      {!release.bulletins.length && (
+        <p className="border border-ink p-4 text-sm">
+          {es
+            ? "Este release preliminar normalizado no publica una línea de tiempo de boletines. El resumen nacional y los resultados siguen disponibles; una lista vacía no significa cero boletines ni cero reportes."
+            : "This normalized preliminary release does not publish a bulletin timeline. The national summary and results remain available; an empty list does not mean zero bulletins or zero reports."}
+        </p>
+      )}
     </Page>
   );
 }

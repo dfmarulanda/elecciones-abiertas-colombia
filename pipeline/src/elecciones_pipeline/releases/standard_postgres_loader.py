@@ -918,6 +918,41 @@ def load_standard_2026_release(
                 "d": election["election_date"],
             },
         )
+        candidates = election.get("candidates")
+        if not isinstance(candidates, list) or len(candidates) < 2:
+            raise ReleaseLoadError("load manifest election has no candidate slate")
+        seen_candidates: set[str] = set()
+        seen_ballots: set[int] = set()
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                raise ReleaseLoadError("load manifest election has a malformed candidate slate")
+            identifier = _require_string(candidate.get("id"), "candidate id")
+            ballot_number = _require_int(candidate.get("ballot_number"), "candidate ballot_number")
+            if identifier in seen_candidates or ballot_number < 1 or ballot_number in seen_ballots:
+                raise ReleaseLoadError("candidate ids and positive ballot numbers must be distinct")
+            seen_candidates.add(identifier)
+            seen_ballots.add(ballot_number)
+            connection.execute(
+                text(
+                    "INSERT INTO release_candidates "
+                    "(release_id,election_slug,id,ballot_number,name_es,name_en,"
+                    "short_name_es,short_name_en) "
+                    "VALUES (:r,:e,:id,:ballot,:name_es,:name_en,:short_es,:short_en)"
+                ),
+                {
+                    **_scope(release_id),
+                    "id": identifier,
+                    "ballot": ballot_number,
+                    "name_es": _require_string(candidate.get("name_es"), "candidate name_es"),
+                    "name_en": _require_string(candidate.get("name_en"), "candidate name_en"),
+                    "short_es": _require_string(
+                        candidate.get("short_name_es"), "candidate short_name_es"
+                    ),
+                    "short_en": _require_string(
+                        candidate.get("short_name_en"), "candidate short_name_en"
+                    ),
+                },
+            )
         for source in load_manifest["sources"]:
             connection.execute(
                 text(
