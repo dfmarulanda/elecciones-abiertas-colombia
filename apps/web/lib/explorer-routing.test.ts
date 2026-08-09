@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  decodeRouteIdentifier,
   geographyRoute,
   isCanonicalMesaSegment,
   mesaRoute,
@@ -25,6 +26,13 @@ describe("canonical mesa routing", () => {
     );
     expect(geographyRoute("en", "CO-11001", filters)).toBe(
       "/en/resultados/geografia/CO-11001?release=release-2026-r2&election=presidencia-2026-segunda-vuelta&source=scrutiny",
+    );
+  });
+  it("decodes one Next.js dynamic-route encoding layer", () => {
+    expect(decodeRouteIdentifier("scope%3A01")).toBe("scope:01");
+    expect(decodeRouteIdentifier("scope:01")).toBe("scope:01");
+    expect(decodeRouteIdentifier("literal%253Avalue")).toBe(
+      "literal%3Avalue",
     );
   });
 });

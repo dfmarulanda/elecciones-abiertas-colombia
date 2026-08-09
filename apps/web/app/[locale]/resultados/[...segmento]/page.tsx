@@ -20,6 +20,7 @@ import { sourceTypeLabel } from "@/lib/public-labels";
 import { readResultFilters } from "@/lib/result-filters";
 import { breadcrumbJsonLd, releaseMetadata } from "@/lib/seo";
 import { SeoStructuredData } from "@/components/seo-structured-data";
+import { decodeRouteIdentifier } from "@/lib/explorer-routing";
 import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, segmento } = await params;
   const filters = readResultFilters(await searchParams);
-  const identifier = segmento.at(-1);
+  const identifier = decodeRouteIdentifier(segmento.at(-1));
   const mesa = segmento[0] === "mesa";
   const basePathname = mesa
     ? `/resultados/mesa/${encodeURIComponent(identifier ?? "")}`
@@ -135,7 +136,7 @@ export default async function GeographicResultsPage({
   const { locale, segmento } = await params;
   const query = await searchParams;
   setRequestLocale(locale);
-  const mesaId = segmento.at(-1);
+  const mesaId = decodeRouteIdentifier(segmento.at(-1));
   const isMesaRoute = segmento[0] === "mesa";
   const filters = readResultFilters(query);
   const cursor = typeof query.cursor === "string" ? query.cursor : undefined;
