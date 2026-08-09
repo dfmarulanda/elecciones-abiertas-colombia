@@ -20,6 +20,41 @@ afterEach(() => {
 });
 
 describe("fixture release adapter", () => {
+  it("defaults the public explorer to the configured active release", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:9999");
+    vi.stubEnv("NEXT_PUBLIC_ACTIVE_RELEASE", "candidate-live");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([
+            {
+              release_id: "historical-2018",
+              election_slug: "presidencia-2018-segunda-vuelta",
+            },
+            {
+              release_id: "candidate-live",
+              election_slug: "presidencia-2026-segunda-vuelta",
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    );
+    const { getPublicReleaseSelection } = await import("./fixture-adapter");
+
+    const { selected } = await getPublicReleaseSelection({});
+
+    expect(selected).toMatchObject({
+      release_id: "candidate-live",
+      election_slug: "presidencia-2026-segunda-vuelta",
+    });
+  });
+
   it("projects fixture evidence as an index-only public view", async () => {
     const release = await fixtureAdapter.getNationalSummary();
     expect(release.release.status).toBe("fixture");

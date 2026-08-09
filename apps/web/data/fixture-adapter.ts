@@ -462,6 +462,13 @@ function pickPublicRelease(
   if (filters.election) {
     return releases.find((item) => item.election_slug === filters.election);
   }
+  const activeRelease = process.env.NEXT_PUBLIC_ACTIVE_RELEASE;
+  if (activeRelease) {
+    const selected = releases.find(
+      (item) => item.release_id === activeRelease,
+    );
+    if (selected) return selected;
+  }
   return releases[0];
 }
 
