@@ -735,7 +735,9 @@ function Legend({
             gap: 8,
             fontSize: 13,
             color: "#CFC8BC",
-            whiteSpace: "nowrap",
+            minWidth: 0,
+            whiteSpace: "normal",
+            overflowWrap: "anywhere",
           }}
         >
           <span
