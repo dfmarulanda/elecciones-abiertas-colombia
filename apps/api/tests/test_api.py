@@ -112,9 +112,207 @@ def test_versioned_analysis_resources_are_typed_and_keep_detection_separate() ->
     assert summary.status_code == anomalies.status_code == diagnostics.status_code == 200
     item = anomalies.json()["items"][0]
     assert item["is_anomaly"] is True
+    assert item["typed_components"]
     assert item["explanation"]["status"] == "non_evaluable"
     assert item["minimum_ballot_edits_status"] == "not_evaluable"
+    for anomaly in anomalies.json()["items"]:
+        statistical = [
+            component
+            for component in anomaly["typed_components"]
+            if component["evidence_type"] == "research_preview"
+        ]
+        assert all(component["points"] == 0 for component in statistical)
+        legacy_statistical = [
+            component
+            for component in anomaly["components"]
+            if component["component_type"] in {"peer_distribution", "spatial_cluster"}
+        ]
+        assert all(component["points"] == 0 for component in legacy_statistical)
+        if anomaly["evidence_tier"] == "research_preview":
+            assert anomaly["audit_priority_score"] == 0
     assert diagnostics.json()["status"] == "research_preview"
+
+
+def test_analysis_resources_are_pinned_to_one_immutable_analysis_release() -> None:
+    repository = FixtureRepository(ROOT / "data/fixtures/fixture-release.json")
+    version = repository.data_version
+    base = f"/api/v1/releases/{version}/elections/{SLUG}/analysis"
+    with TestClient(create_app(repository=repository)) as api:
+        summary_response = api.get(f"{base}/summary")
+        summary = summary_response.json()
+        analysis_release_id = summary["analysis_release"]["analysis_release_id"]
+        page = api.get(f"{base}/anomalies?limit=1")
+        explicit = api.get(f"{base}/summary", params={"analysis_release": analysis_release_id})
+        mismatch = api.get(f"{base}/summary", params={"analysis_release": "analysis-wrong"})
+
+    metadata = summary["analysis_release"]
+    assert metadata == explicit.json()["analysis_release"]
+    assert metadata["source_release_id"] == version
+    assert metadata["election_slug"] == SLUG
+    assert metadata["exposure_tier"] == "preliminary_research"
+    assert metadata["preliminary_caveat"]["es"]
+    assert metadata["preliminary_caveat"]["en"]
+    assert len(metadata["canonical_input_hash"]) == 64
+    assert len(metadata["manifest_hash"]) == 64
+    assert len(metadata["provenance_hash"]) == 64
+    assert metadata["artifact_status"] == "research_preview"
+    assert metadata["evaluable"] is True
+    assert summary_response.headers["cache-control"] == "no-store, max-age=0"
+    assert summary_response.headers["x-robots-tag"] == "noindex, nofollow, noarchive"
+    assert page.json()["analysis_release"] == metadata
+    assert mismatch.status_code == 404
+
+
+def test_analysis_cursor_is_pinned_to_the_resolved_analysis_release() -> None:
+    repository = FixtureRepository(ROOT / "data/fixtures/fixture-release.json")
+    version = repository.data_version
+    base = f"/api/v1/releases/{version}/elections/{SLUG}/analysis/anomalies"
+    with TestClient(create_app(repository=repository)) as api:
+        first = api.get(base, params={"limit": 1})
+        cursor = first.json()["page"]["next_cursor"]
+        pinned_release = first.json()["analysis_release"]["analysis_release_id"]
+        if cursor is not None:
+            mismatch = api.get(
+                base,
+                params={
+                    "limit": 1,
+                    "cursor": cursor,
+                    "analysis_release": f"{pinned_release}-different",
+                },
+            )
+            assert mismatch.status_code in {400, 404}
+
+
+def test_analysis_artifacts_are_typed_immutable_and_download_safe() -> None:
+    repository = FixtureRepository(ROOT / "data/fixtures/fixture-release.json")
+    version = repository.data_version
+    base = f"/api/v1/releases/{version}/elections/{SLUG}/analysis/artifacts"
+    with TestClient(create_app(repository=repository)) as api:
+        listing = api.get(base)
+        item = listing.json()["items"][0]
+        detail = api.get(f"{base}/{item['artifact_id']}")
+        download = api.get(f"{base}/{item['artifact_id']}/download", follow_redirects=False)
+
+    assert listing.status_code == detail.status_code == 200
+    assert listing.json()["analysis_release"] == detail.json()["analysis_release"]
+    assert item["url"].startswith("https://eleccionesabiertas.co/")
+    assert item["byte_hash"] == item["content_hash"]
+    assert "reviewer" not in json.dumps(item).lower()
+    assert "document_bytes" not in json.dumps(item).lower()
+    assert download.status_code == 307
+    assert download.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert download.headers["etag"] == f'"{item["byte_hash"]}"'
+
+
+def test_analysis_anomaly_detail_openapi_response_is_typed() -> None:
+    repository = FixtureRepository(ROOT / "data/fixtures/fixture-release.json")
+    version = repository.data_version
+    base = f"/api/v1/releases/{version}/elections/{SLUG}/analysis"
+    with TestClient(create_app(repository=repository)) as api:
+        anomaly_id = api.get(f"{base}/anomalies").json()["items"][0]["id"]
+        detail = api.get(f"{base}/anomalies/{anomaly_id}")
+        runtime_openapi = cast(FastAPI, api.app).openapi()
+
+    assert detail.status_code == 200
+    response_schema = runtime_openapi["paths"][
+        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/anomalies/{anomaly_id}"
+    ]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+    assert response_schema["$ref"].endswith("/AnalysisAnomaly")
+
+
+def test_postgres_analysis_guard_is_disjoint_exact_and_never_reads_legacy_signals() -> None:
+    repository = object.__new__(PostgresReadRepository)
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def normalized(statement: str, values: dict[str, object]) -> list[dict[str, object]]:
+        calls.append((statement, values))
+        if "FROM analysis_releases" in statement:
+            return [
+                {
+                    "analysis_release_id": "analysis-1",
+                    "source_release_id": "release-1",
+                    "source_election_slug": "election-1",
+                    "methodology_version": "analysis-v1",
+                    "canonical_input_hash": "a" * 64,
+                    "producer_runtime_fingerprint": "b" * 64,
+                    "generated_at": "2026-08-10T10:00:00Z",
+                    "manifest_hash": "c" * 64,
+                    "exposure_tier": "preliminary_research",
+                    "approved_at": "2026-08-10T11:00:00Z",
+                    "caveat_es": "Investigación preliminar",
+                    "caveat_en": "Preliminary research",
+                }
+            ]
+        if "SELECT artifact_status" in statement:
+            return [{"artifact_status": "available"}]
+        raise AssertionError(statement)
+
+    repository._active_release_id = "release-1"
+    repository._normalized = normalized  # type: ignore[method-assign,assignment]
+    metadata = repository.analysis_release_metadata("election-1", "release-1", "analysis-1")
+
+    guard_sql, guard_values = calls[0]
+    assert metadata.analysis_release_id == "analysis-1"
+    assert guard_values == {"r": "release-1", "e": "election-1", "a": "analysis-1"}
+    assert "ax.revoked_at IS NULL" in guard_sql
+    assert "sx.access_scope='preliminary'" in guard_sql
+    assert "sx.access_scope='public'" in guard_sql
+    assert "review_signals" not in guard_sql
+
+
+def test_postgres_analysis_artifacts_keep_stored_reason_and_reject_unsafe_url() -> None:
+    repository = object.__new__(PostgresReadRepository)
+    repository._active_release_id = "release-1"
+    repository._allowed_artifact_hosts = {"official.example"}
+    artifact_url = f"https://official.example/analysis/{'d' * 64}.json"
+
+    def normalized(statement: str, values: dict[str, object]) -> list[dict[str, object]]:
+        if "FROM analysis_releases" in statement:
+            return [
+                {
+                    "analysis_release_id": "analysis-1",
+                    "source_release_id": "release-1",
+                    "source_election_slug": "election-1",
+                    "methodology_version": "analysis-v1",
+                    "canonical_input_hash": "a" * 64,
+                    "producer_runtime_fingerprint": "b" * 64,
+                    "generated_at": "2026-08-10T10:00:00Z",
+                    "manifest_hash": "c" * 64,
+                    "exposure_tier": "preliminary_research",
+                    "approved_at": "2026-08-10T11:00:00Z",
+                    "caveat_es": "Investigación preliminar",
+                    "caveat_en": "Preliminary research",
+                }
+            ]
+        if "SELECT artifact_status" in statement:
+            return [{"artifact_status": "not_evaluable"}]
+        if "SELECT artifact_id,kind" in statement:
+            return [
+                {
+                    "artifact_id": "spatial-status",
+                    "kind": "spatial_status",
+                    "schema_version": "1.0.0",
+                    "media_type": "application/json",
+                    "record_count": 0,
+                    "byte_size": 0,
+                    "byte_hash": "d" * 64,
+                    "content_hash": "e" * 64,
+                    "immutable_url": None,
+                    "artifact_status": "not_evaluable",
+                    "status_reason": "authenticated_coordinates_missing",
+                }
+            ]
+        raise AssertionError((statement, values))
+
+    repository._normalized = normalized  # type: ignore[method-assign,assignment]
+    artifacts = repository.analysis_artifacts("election-1", "release-1", "analysis-1")
+    assert artifacts[0].status_reasons == ["authenticated_coordinates_missing"]
+
+    with pytest.raises(RepositoryUnavailableError, match="invalid immutable URL"):
+        repository._validated_analysis_artifact_url(  # noqa: SLF001
+            artifact_url.replace("official.example", "official.example@evil.example"),
+            "d" * 64,
+        )
 
 
 def test_sentry_events_drop_visitor_request_data() -> None:

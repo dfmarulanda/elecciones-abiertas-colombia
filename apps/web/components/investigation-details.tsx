@@ -8,7 +8,7 @@ type Locale = "es" | "en";
 type Signal = components["schemas"]["ReviewSignal"];
 type SignalComponent = Signal["components"][number];
 type SignalNumber = components["schemas"]["SignalNumber"];
-type Outcome = components["schemas"]["OutcomeSensitivity"];
+type Outcome = components["schemas"]["AnalysisOutcomeSensitivity"];
 type Metric = components["schemas"]["MetricValue"];
 
 const t = (locale: Locale, es: string, en: string) =>

@@ -181,7 +181,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Frozen OpenAPI document */
+        /**
+         * Frozen OpenAPI document
+         * @description The exact versioned API contract served by this deployment.
+         */
         get: operations["openapi_document_api_v1_openapi_json_get"];
         put?: never;
         post?: never;
@@ -234,6 +237,57 @@ export interface paths {
         };
         /** Analysis Anomaly Detail */
         get: operations["analysis_anomaly_detail_api_v1_releases__release_id__elections__election_slug__analysis_anomalies__anomaly_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analysis Artifacts */
+        get: operations["analysis_artifacts_api_v1_releases__release_id__elections__election_slug__analysis_artifacts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts/{artifact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analysis Artifact */
+        get: operations["analysis_artifact_api_v1_releases__release_id__elections__election_slug__analysis_artifacts__artifact_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts/{artifact_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analysis Artifact Download */
+        get: operations["analysis_artifact_download_api_v1_releases__release_id__elections__election_slug__analysis_artifacts__artifact_id__download_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -516,20 +570,39 @@ export interface components {
     schemas: {
         /** AnalysisAnomaly */
         AnalysisAnomaly: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
             /** Anomaly Types */
             anomaly_types: ("structural_arithmetic" | "identity_coverage" | "cross_source_documentary" | "peer_distribution" | "spatial")[];
             /** Audit Priority Score */
             audit_priority_score: number;
+            /** Calculations */
+            calculations: {
+                [key: string]: unknown;
+            };
             /** Components */
             components: components["schemas"]["SignalComponent"][];
             disclosure: components["schemas"]["LocalizedText"];
+            /**
+             * Evaluability
+             * @enum {string}
+             */
+            evaluability: "evaluable" | "not_evaluable" | "unavailable";
+            /**
+             * Evidence Tier
+             * @enum {string}
+             */
+            evidence_tier: "descriptive" | "deterministic" | "research_preview" | "independently_validated" | "non_evaluable";
             explanation: components["schemas"]["ExplanationMetadata"];
+            /** Family */
+            family: string;
             /** Id */
             id: string;
             /** Ineligible Reasons */
             ineligible_reasons: string[];
             /** Is Anomaly */
             is_anomaly: boolean;
+            /** Limitations */
+            limitations: string[];
             /** Mesa Id */
             mesa_id: string;
             /** Methodology Version */
@@ -543,11 +616,41 @@ export interface components {
              */
             minimum_ballot_edits_status: "evaluable" | "not_evaluable";
             provenance: components["schemas"]["Provenance"];
+            /** Provenance Hash */
+            provenance_hash: string;
+            /** Public Evidence */
+            public_evidence: {
+                [key: string]: unknown;
+            };
             /** Research Preview */
             research_preview: boolean;
+            /** Typed Components */
+            typed_components: components["schemas"]["AnalysisAnomalyComponent"][];
+        };
+        /** AnalysisAnomalyComponent */
+        AnalysisAnomalyComponent: {
+            /** Component Id */
+            component_id: string;
+            /** Component Type */
+            component_type: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Points */
+            points: number;
+            /** Provenance Hash */
+            provenance_hash: string;
+            /** Public Payload */
+            public_payload: {
+                [key: string]: unknown;
+            };
+            /** Unit */
+            unit: string | null;
+            /** Value */
+            value: number | null;
         };
         /** AnalysisAnomalyPage */
         AnalysisAnomalyPage: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
             /** Data Version */
             data_version: string;
             disclosure: components["schemas"]["LocalizedText"];
@@ -557,8 +660,172 @@ export interface components {
             methodology_version: string;
             page: components["schemas"]["CursorMeta"];
         };
+        /** AnalysisArtifactDetail */
+        AnalysisArtifactDetail: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
+            item: components["schemas"]["AnalysisArtifactMetadata"];
+        };
+        /** AnalysisArtifactMetadata */
+        AnalysisArtifactMetadata: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Byte Hash */
+            byte_hash: string;
+            /** Byte Size */
+            byte_size: number;
+            /** Content Hash */
+            content_hash: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Media Type
+             * @enum {string}
+             */
+            media_type: "application/json" | "application/schema+json" | "application/vnd.apache.parquet" | "text/plain";
+            /** Record Count */
+            record_count: number;
+            /** Schema Version */
+            schema_version: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "available" | "not_evaluable" | "unavailable" | "withheld";
+            /** Status Reasons */
+            status_reasons: string[];
+            /** Url */
+            url: string | null;
+        };
+        /** AnalysisArtifactPage */
+        AnalysisArtifactPage: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
+            /** Items */
+            items: components["schemas"]["AnalysisArtifactMetadata"][];
+        };
+        /** AnalysisOutcomeSensitivity */
+        AnalysisOutcomeSensitivity: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
+            /** Calculation */
+            calculation: string;
+            /** Combined Affected Vote Upper Bound */
+            combined_affected_vote_upper_bound: number | null;
+            /** Combined Margin Headroom */
+            combined_margin_headroom: number | null;
+            /** Combined Margin Shift Upper Bound */
+            combined_margin_shift_upper_bound: number | null;
+            /** Data Version */
+            data_version: string;
+            /** Election Slug */
+            election_slug: string;
+            /** Evaluable */
+            evaluable: boolean;
+            /** Evidence Hash */
+            evidence_hash: string | null;
+            /** Issues */
+            issues: components["schemas"]["OutcomeSensitivityIssue"][];
+            /** Lead Change Possible From Verified */
+            lead_change_possible_from_verified: boolean | null;
+            /** Lead Change Possible Including Unresolved */
+            lead_change_possible_including_unresolved: boolean | null;
+            /** Leader Id */
+            leader_id: string | null;
+            /** Leader Votes */
+            leader_votes: number | null;
+            /** Limitations */
+            limitations: string[];
+            /**
+             * Margin Shift Factor
+             * @constant
+             */
+            margin_shift_factor: 2;
+            /**
+             * Methodology Version
+             * @constant
+             */
+            methodology_version: "outcome-sensitivity-v3.0.0";
+            /** Observed Margin Votes */
+            observed_margin_votes: number | null;
+            outcome_source: components["schemas"]["OutcomeSourceScope"] | null;
+            /** Output Hash */
+            output_hash: string;
+            /** Release Id */
+            release_id: string;
+            /** Runner Up Id */
+            runner_up_id: string | null;
+            /** Runner Up Votes */
+            runner_up_votes: number | null;
+            scope: components["schemas"]["OutcomeGeographicScope"] | null;
+            /** Source Links */
+            source_links: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "not_evaluable" | "robust_within_evaluated_bounds" | "tie_within_verified_bound" | "lead_change_within_verified_bound" | "tie_only_with_unresolved_bound" | "lead_change_only_with_unresolved_bound";
+            /** Tie Possible From Verified */
+            tie_possible_from_verified: boolean | null;
+            /** Tie Possible Including Unresolved */
+            tie_possible_including_unresolved: boolean | null;
+            /** Unresolved Affected Vote Upper Bound */
+            unresolved_affected_vote_upper_bound: number | null;
+            /** Unresolved Margin Shift Upper Bound */
+            unresolved_margin_shift_upper_bound: number | null;
+            /** Unresolved Record Ids */
+            unresolved_record_ids: string[] | null;
+            /** Verified Affected Votes */
+            verified_affected_votes: number | null;
+            /** Verified Margin Headroom */
+            verified_margin_headroom: number | null;
+            /** Verified Margin Shift Bound */
+            verified_margin_shift_bound: number | null;
+            /** Verified Record Ids */
+            verified_record_ids: string[] | null;
+        };
+        /** AnalysisReleaseMetadata */
+        AnalysisReleaseMetadata: {
+            /** Analysis Release Id */
+            analysis_release_id: string;
+            /**
+             * Approved At
+             * Format: date-time
+             */
+            approved_at: string;
+            /**
+             * Artifact Status
+             * @enum {string}
+             */
+            artifact_status: "available" | "research_preview" | "not_evaluable" | "unavailable" | "withheld";
+            /** Canonical Input Hash */
+            canonical_input_hash: string;
+            /** Election Slug */
+            election_slug: string;
+            /** Evaluable */
+            evaluable: boolean;
+            /**
+             * Exposure Tier
+             * @enum {string}
+             */
+            exposure_tier: "preliminary_research" | "certified_public";
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Manifest Hash */
+            manifest_hash: string;
+            /** Methodology Version */
+            methodology_version: string;
+            preliminary_caveat: components["schemas"]["LocalizedText"] | null;
+            /** Provenance Hash */
+            provenance_hash: string;
+            /** Source Release Id */
+            source_release_id: string;
+            /** Status Reasons */
+            status_reasons: string[];
+        };
         /** AnalysisReport */
         AnalysisReport: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
             /** Artifact Hash */
             artifact_hash?: string | null;
             disclosure: components["schemas"]["LocalizedText"];
@@ -587,6 +854,7 @@ export interface components {
         };
         /** AnalysisSummary */
         AnalysisSummary: {
+            analysis_release: components["schemas"]["AnalysisReleaseMetadata"];
             anomaly_count: components["schemas"]["SignalCount"];
             /** Anomaly Counts */
             anomaly_counts: {
@@ -1136,87 +1404,6 @@ export interface components {
              * @enum {string}
              */
             level: "mesa" | "place" | "municipality" | "department" | "national";
-        };
-        /**
-         * OutcomeSensitivity
-         * @description A core artifact bound to one immutable public release/election scope.
-         */
-        OutcomeSensitivity: {
-            /** Calculation */
-            calculation: string;
-            /** Combined Affected Vote Upper Bound */
-            combined_affected_vote_upper_bound: number | null;
-            /** Combined Margin Headroom */
-            combined_margin_headroom: number | null;
-            /** Combined Margin Shift Upper Bound */
-            combined_margin_shift_upper_bound: number | null;
-            /** Data Version */
-            data_version: string;
-            /** Election Slug */
-            election_slug: string;
-            /** Evaluable */
-            evaluable: boolean;
-            /** Evidence Hash */
-            evidence_hash: string | null;
-            /** Issues */
-            issues: components["schemas"]["OutcomeSensitivityIssue"][];
-            /** Lead Change Possible From Verified */
-            lead_change_possible_from_verified: boolean | null;
-            /** Lead Change Possible Including Unresolved */
-            lead_change_possible_including_unresolved: boolean | null;
-            /** Leader Id */
-            leader_id: string | null;
-            /** Leader Votes */
-            leader_votes: number | null;
-            /** Limitations */
-            limitations: string[];
-            /**
-             * Margin Shift Factor
-             * @constant
-             */
-            margin_shift_factor: 2;
-            /**
-             * Methodology Version
-             * @constant
-             */
-            methodology_version: "outcome-sensitivity-v3.0.0";
-            /** Observed Margin Votes */
-            observed_margin_votes: number | null;
-            outcome_source: components["schemas"]["OutcomeSourceScope"] | null;
-            /** Output Hash */
-            output_hash: string;
-            /** Release Id */
-            release_id: string;
-            /** Runner Up Id */
-            runner_up_id: string | null;
-            /** Runner Up Votes */
-            runner_up_votes: number | null;
-            scope: components["schemas"]["OutcomeGeographicScope"] | null;
-            /** Source Links */
-            source_links: string[];
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "not_evaluable" | "robust_within_evaluated_bounds" | "tie_within_verified_bound" | "lead_change_within_verified_bound" | "tie_only_with_unresolved_bound" | "lead_change_only_with_unresolved_bound";
-            /** Tie Possible From Verified */
-            tie_possible_from_verified: boolean | null;
-            /** Tie Possible Including Unresolved */
-            tie_possible_including_unresolved: boolean | null;
-            /** Unresolved Affected Vote Upper Bound */
-            unresolved_affected_vote_upper_bound: number | null;
-            /** Unresolved Margin Shift Upper Bound */
-            unresolved_margin_shift_upper_bound: number | null;
-            /** Unresolved Record Ids */
-            unresolved_record_ids: string[] | null;
-            /** Verified Affected Votes */
-            verified_affected_votes: number | null;
-            /** Verified Margin Headroom */
-            verified_margin_headroom: number | null;
-            /** Verified Margin Shift Bound */
-            verified_margin_shift_bound: number | null;
-            /** Verified Record Ids */
-            verified_record_ids: string[] | null;
         };
         /** OutcomeSensitivityIssue */
         OutcomeSensitivityIssue: {
@@ -2259,13 +2446,9 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The exact versioned API contract served by this deployment. */
+            /** @description Successful Response */
             200: {
                 headers: {
-                    /** @description Immutable cache policy. */
-                    "Cache-Control"?: string;
-                    /** @description Validator for the frozen contract bytes. */
-                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -2302,6 +2485,7 @@ export interface operations {
                 cursor?: string | null;
                 limit?: number;
                 anomaly_type?: ("structural_arithmetic" | "identity_coverage" | "cross_source_documentary" | "peer_distribution" | "spatial") | null;
+                analysis_release?: string | null;
             };
             header?: never;
             path: {
@@ -2334,12 +2518,118 @@ export interface operations {
     };
     analysis_anomaly_detail_api_v1_releases__release_id__elections__election_slug__analysis_anomalies__anomaly_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                analysis_release?: string | null;
+            };
             header?: never;
             path: {
                 release_id: string;
                 election_slug: string;
                 anomaly_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisAnomaly"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analysis_artifacts_api_v1_releases__release_id__elections__election_slug__analysis_artifacts_get: {
+        parameters: {
+            query?: {
+                analysis_release?: string | null;
+            };
+            header?: never;
+            path: {
+                release_id: string;
+                election_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisArtifactPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analysis_artifact_api_v1_releases__release_id__elections__election_slug__analysis_artifacts__artifact_id__get: {
+        parameters: {
+            query?: {
+                analysis_release?: string | null;
+            };
+            header?: never;
+            path: {
+                release_id: string;
+                election_slug: string;
+                artifact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisArtifactDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analysis_artifact_download_api_v1_releases__release_id__elections__election_slug__analysis_artifacts__artifact_id__download_get: {
+        parameters: {
+            query?: {
+                analysis_release?: string | null;
+            };
+            header?: never;
+            path: {
+                release_id: string;
+                election_slug: string;
+                artifact_id: string;
             };
             cookie?: never;
         };
@@ -2367,7 +2657,9 @@ export interface operations {
     };
     analysis_summary_api_v1_releases__release_id__elections__election_slug__analysis_summary_get: {
         parameters: {
-            query?: never;
+            query?: {
+                analysis_release?: string | null;
+            };
             header?: never;
             path: {
                 release_id: string;
@@ -2399,7 +2691,9 @@ export interface operations {
     };
     analysis_report_api_v1_releases__release_id__elections__election_slug__analysis__report_kind__get: {
         parameters: {
-            query?: never;
+            query?: {
+                analysis_release?: string | null;
+            };
             header?: never;
             path: {
                 release_id: string;
@@ -2726,7 +3020,9 @@ export interface operations {
     };
     normalized_outcome_sensitivity_api_v1_releases__release_id__elections__election_slug__outcome_sensitivity_get: {
         parameters: {
-            query?: never;
+            query?: {
+                analysis_release?: string | null;
+            };
             header?: never;
             path: {
                 release_id: string;
@@ -2742,7 +3038,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OutcomeSensitivity"];
+                    "application/json": components["schemas"]["AnalysisOutcomeSensitivity"];
                 };
             };
             /** @description Validation Error */

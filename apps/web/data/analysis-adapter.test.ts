@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const releaseId = "release-public";
 const election = "presidencia-2026-segunda-vuelta";
 const hash = "a".repeat(64);
+const analysisReleaseId = "analysis-release-1";
 const disclosure = {
   es: "Una anomalía prioriza revisión y no es una probabilidad ni un hallazgo de fraude. Una explicación posterior no elimina la anomalía detectada; la ausencia de explicación en los datos disponibles tampoco prueba fraude ni error.",
   en: "An anomaly prioritizes review and is not a probability or finding of fraud. A later explanation does not erase the detected anomaly; absence of an explanation in available data does not prove fraud or error.",
@@ -17,6 +18,25 @@ const provenance = {
   parser_version: "parser-v1",
   transform_version: "transform-v1",
   methodology_version: "method-v1",
+};
+const analysisRelease = {
+  analysis_release_id: analysisReleaseId,
+  methodology_version: "method-v1",
+  source_release_id: releaseId,
+  election_slug: election,
+  exposure_tier: "preliminary_research",
+  preliminary_caveat: {
+    es: "Investigacion preliminar.",
+    en: "Preliminary research.",
+  },
+  artifact_status: "available",
+  evaluable: true,
+  status_reasons: ["independent_validation_pending"],
+  canonical_input_hash: hash,
+  manifest_hash: hash,
+  provenance_hash: hash,
+  generated_at: "2026-08-04T11:00:00Z",
+  approved_at: "2026-08-04T12:00:00Z",
 };
 const anomaly = {
   id: "anomaly-1",
@@ -55,6 +75,15 @@ const anomaly = {
   methodology_version: "method-v1",
   disclosure,
   provenance,
+  analysis_release: analysisRelease,
+  family: "cross-source-documentary",
+  evidence_tier: "deterministic",
+  evaluability: "evaluable",
+  public_evidence: {},
+  calculations: {},
+  limitations: ["Document review is scoped to linked official records."],
+  provenance_hash: hash,
+  typed_components: [],
 };
 const releases = [
   {
@@ -92,6 +121,7 @@ const summary = {
   ineligible_reasons: ["validation_not_published"],
   disclosure,
   provenance,
+  analysis_release: analysisRelease,
 };
 
 function json(body: unknown, status = 200) {
@@ -128,14 +158,17 @@ function mockPublicApi(
           data_version: options.crossedVersion ? "other-release" : releaseId,
           methodology_version: "method-v1",
           disclosure,
+          analysis_release: analysisRelease,
         });
-      if (url.endsWith("/analysis/anomalies/anomaly-1"))
+      if (url.includes("/analysis/anomalies/anomaly-1"))
         return json(options.invalidDetail ? { id: "anomaly-1" } : anomaly);
+      if (url.includes("/analysis/artifacts?"))
+        return json({ items: [], analysis_release: analysisRelease });
       if (
-        /\/analysis\/(model_diagnostics|validation|local_sensitivity)$/.test(
+        /\/analysis\/(model_diagnostics|validation|local_sensitivity)\?/.test(
           url,
         ) ||
-        url.endsWith("/outcome-sensitivity")
+        url.includes("/outcome-sensitivity?")
       )
         return json({ detail: "Not published" }, 404);
       throw new Error(`Unexpected URL: ${url}`);
@@ -178,6 +211,16 @@ describe("frozen public analysis adapter", () => {
       "cross_source_documentary",
     );
     expect(listUrl.searchParams.get("cursor")).toBe("next-page");
+    expect(listUrl.searchParams.get("analysis_release")).toBe(
+      analysisReleaseId,
+    );
+    expect(state.analysisRelease.analysis_release_id).toBe(analysisReleaseId);
+    expect(state.reports.validation.status).toBe("unavailable");
+    expect(state.outcomeSensitivity.status).toBe("unavailable");
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    for (const [, init] of vi.mocked(fetch).mock.calls) {
+      expect(init).toMatchObject({ cache: "no-store" });
+    }
   });
 
   it("fails closed when analytical resources cross release versions", async () => {

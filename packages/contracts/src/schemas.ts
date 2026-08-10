@@ -68,7 +68,10 @@ export const ReleaseElectionRefSchema = z
     ),
   })
   .superRefine((release, context) => {
-    if (release.status === "candidate" && release.exposure_approved_at !== null) {
+    if (
+      release.status === "candidate" &&
+      release.exposure_approved_at !== null
+    ) {
       context.addIssue({
         code: "custom",
         message: "Candidate releases cannot claim approved public exposure",
@@ -240,9 +243,8 @@ const historicalComparisonItem = z.object({
   baseline_provenance: z.lazy(() => ProvenanceSchema),
 });
 
-export const HistoricalComparisonSchema = z.discriminatedUnion(
-  "comparison_status",
-  [
+export const HistoricalComparisonSchema = z
+  .discriminatedUnion("comparison_status", [
     z.object({
       ...historicalComparisonBase,
       comparison_status: z.literal("not_comparable"),
@@ -272,29 +274,29 @@ export const HistoricalComparisonSchema = z.discriminatedUnion(
       baseline_geography_id: z.string().min(1),
       items: z.array(historicalComparisonItem),
     }),
-  ],
-).superRefine((comparison, context) => {
-  if (comparison.comparison_status !== "descriptive_context_only") return;
-  if (comparison.reason && comparison.items.length > 0) {
-    context.addIssue({
-      code: "custom",
-      message: "Uncrosswalked descriptive context cannot emit compared facts",
-    });
-  }
-  if (
-    !comparison.reason &&
-    (!comparison.comparison_key ||
-      !comparison.geography_crosswalk_version ||
-      !comparison.geography_approved_at ||
-      !comparison.baseline_geography_id)
-  ) {
-    context.addIssue({
-      code: "custom",
-      message:
-        "Compared descriptive context requires an approved geography crosswalk",
-    });
-  }
-});
+  ])
+  .superRefine((comparison, context) => {
+    if (comparison.comparison_status !== "descriptive_context_only") return;
+    if (comparison.reason && comparison.items.length > 0) {
+      context.addIssue({
+        code: "custom",
+        message: "Uncrosswalked descriptive context cannot emit compared facts",
+      });
+    }
+    if (
+      !comparison.reason &&
+      (!comparison.comparison_key ||
+        !comparison.geography_crosswalk_version ||
+        !comparison.geography_approved_at ||
+        !comparison.baseline_geography_id)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Compared descriptive context requires an approved geography crosswalk",
+      });
+    }
+  });
 
 export const CandidateSchema = z.object({
   id: z.string().min(1),
@@ -1243,10 +1245,14 @@ export const ExplanationMetadataSchema = z
   })
   .superRefine((value, context) => {
     if (
-      (value.status === "explained" || value.status === "partially_explained") &&
+      (value.status === "explained" ||
+        value.status === "partially_explained") &&
       value.preregistration_hash === null
     ) {
-      context.addIssue({ code: "custom", message: "Explanations require preregistration" });
+      context.addIssue({
+        code: "custom",
+        message: "Explanations require preregistration",
+      });
     }
     if (
       value.status === "non_evaluable" &&
@@ -1255,13 +1261,88 @@ export const ExplanationMetadataSchema = z
         value.reviewed_at !== null ||
         value.notes !== null)
     ) {
-      context.addIssue({ code: "custom", message: "Non-evaluable explanations have no review evidence" });
+      context.addIssue({
+        code: "custom",
+        message: "Non-evaluable explanations have no review evidence",
+      });
     }
   });
 
 const analyticalDisclosureSchema = z.object({
   es: z.literal(ANALYTICAL_DISCLOSURE_ES),
   en: z.literal(ANALYTICAL_DISCLOSURE_EN),
+});
+
+export const AnalysisReleaseMetadataSchema = z
+  .strictObject({
+    analysis_release_id: z.string().min(1),
+    methodology_version: z.string().min(1),
+    source_release_id: z.string().min(1),
+    election_slug: z.string().min(1),
+    exposure_tier: z.enum(["preliminary_research", "certified_public"]),
+    preliminary_caveat: LocalizedTextSchema.nullable(),
+    artifact_status: z.enum([
+      "available",
+      "research_preview",
+      "not_evaluable",
+      "unavailable",
+      "withheld",
+    ]),
+    evaluable: z.boolean(),
+    status_reasons: z.array(z.string().min(1)),
+    canonical_input_hash: sha256Schema,
+    manifest_hash: sha256Schema,
+    provenance_hash: sha256Schema,
+    generated_at: z.string().datetime({ offset: true }),
+    approved_at: z.string().datetime({ offset: true }),
+  })
+  .superRefine((value, context) => {
+    if (
+      value.exposure_tier === "preliminary_research" &&
+      (value.preliminary_caveat === null ||
+        !value.preliminary_caveat.es ||
+        !value.preliminary_caveat.en)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Preliminary analysis requires a bilingual caveat",
+      });
+    }
+    if (
+      value.exposure_tier === "certified_public" &&
+      value.preliminary_caveat !== null
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Certified analysis cannot carry preliminary framing",
+      });
+    }
+    if (
+      value.evaluable &&
+      ["not_evaluable", "unavailable", "withheld"].includes(
+        value.artifact_status,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Evaluability and artifact status disagree",
+      });
+    }
+  });
+
+export const AnalysisOutcomeSensitivitySchema = OutcomeSensitivitySchema.and(
+  z.strictObject({ analysis_release: AnalysisReleaseMetadataSchema }),
+);
+
+export const AnalysisAnomalyComponentSchema = z.strictObject({
+  component_id: z.string().min(1),
+  component_type: z.string().min(1),
+  evidence_type: z.string().min(1),
+  points: z.number().int().min(0).max(100),
+  value: z.number().nullable(),
+  unit: z.string().nullable(),
+  public_payload: z.record(z.string(), z.unknown()),
+  provenance_hash: sha256Schema,
 });
 
 export const AnalysisAnomalySchema = z
@@ -1281,25 +1362,102 @@ export const AnalysisAnomalySchema = z
     methodology_version: z.string().min(1),
     disclosure: analyticalDisclosureSchema,
     provenance: ProvenanceSchema,
+    analysis_release: AnalysisReleaseMetadataSchema,
+    family: z.string().min(1),
+    evidence_tier: z.enum([
+      "descriptive",
+      "deterministic",
+      "research_preview",
+      "independently_validated",
+      "non_evaluable",
+    ]),
+    evaluability: z.enum(["evaluable", "not_evaluable", "unavailable"]),
+    public_evidence: z.record(z.string(), z.unknown()),
+    calculations: z.record(z.string(), z.unknown()),
+    limitations: z.array(z.string().min(1)),
+    provenance_hash: sha256Schema,
+    typed_components: z.array(AnalysisAnomalyComponentSchema),
   })
   .superRefine((value, context) => {
     if (new Set(value.anomaly_types).size !== value.anomaly_types.length) {
-      context.addIssue({ code: "custom", message: "Anomaly types must be unique" });
+      context.addIssue({
+        code: "custom",
+        message: "Anomaly types must be unique",
+      });
     }
     if (
       (value.minimum_ballot_edits_status === "evaluable") !==
       (value.minimum_ballot_edits.status === "observed")
     ) {
-      context.addIssue({ code: "custom", message: "Ballot edit status must be explicit" });
+      context.addIssue({
+        code: "custom",
+        message: "Ballot edit status must be explicit",
+      });
+    }
+    if (
+      (value.evidence_tier === "research_preview" ||
+        value.evidence_tier === "non_evaluable") &&
+      value.audit_priority_score !== 0
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Research-preview and non-evaluable evidence has zero priority",
+      });
+    }
+    const statisticalTypes = new Set([
+      "peer_distribution",
+      "spatial",
+      "spatial_cluster",
+    ]);
+    const statisticalPoints = value.typed_components
+      .filter((component) => statisticalTypes.has(component.component_type))
+      .reduce((sum, component) => sum + component.points, 0);
+    if (statisticalPoints > 20) {
+      context.addIssue({
+        code: "custom",
+        message: "Statistical evidence is capped at twenty priority points",
+      });
+    }
+    if (
+      value.typed_components.some(
+        (component) =>
+          component.evidence_type === "research_preview" &&
+          component.points !== 0,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Research-preview components contribute zero public points",
+      });
+    }
+    if (
+      value.analysis_release.exposure_tier === "preliminary_research" &&
+      [...value.components, ...value.typed_components].some(
+        (component) =>
+          statisticalTypes.has(component.component_type) &&
+          component.points !== 0,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "Preliminary statistical evidence contributes zero public points",
+      });
     }
   });
 
 export const AnalysisAnomalyPageSchema = z.object({
   items: z.array(AnalysisAnomalySchema),
-  page: z.object({ next_cursor: z.string().nullable(), has_more: z.boolean(), limit: z.number().int().positive() }),
+  page: z.object({
+    next_cursor: z.string().nullable(),
+    has_more: z.boolean(),
+    limit: z.number().int().positive(),
+  }),
   data_version: z.string().min(1),
   methodology_version: z.string().min(1),
   disclosure: analyticalDisclosureSchema,
+  analysis_release: AnalysisReleaseMetadataSchema,
 });
 
 export const AnalysisSummarySchema = z.object({
@@ -1314,11 +1472,17 @@ export const AnalysisSummarySchema = z.object({
   ineligible_reasons: z.array(z.string().min(1)),
   disclosure: analyticalDisclosureSchema,
   provenance: ProvenanceSchema,
+  analysis_release: AnalysisReleaseMetadataSchema,
 });
 
 export const AnalysisReportSchema = z.object({
   report_kind: z.enum(["model_diagnostics", "validation", "local_sensitivity"]),
-  status: z.enum(["available", "research_preview", "ineligible", "not_evaluable"]),
+  status: z.enum([
+    "available",
+    "research_preview",
+    "ineligible",
+    "not_evaluable",
+  ]),
   research_preview: z.boolean(),
   ineligible_reasons: z.array(z.string().min(1)),
   methodology_version: z.string().min(1),
@@ -1327,14 +1491,69 @@ export const AnalysisReportSchema = z.object({
   provenance: ProvenanceSchema,
   disclosure: analyticalDisclosureSchema,
   metrics: z.record(z.string(), SignalNumberSchema),
+  analysis_release: AnalysisReleaseMetadataSchema,
+});
+
+export const AnalysisArtifactMetadataSchema = z
+  .strictObject({
+    artifact_id: z.string().min(1),
+    kind: z.string().min(1),
+    schema_version: z.string().min(1),
+    media_type: z.enum([
+      "application/json",
+      "application/schema+json",
+      "application/vnd.apache.parquet",
+      "text/plain",
+    ]),
+    record_count: z.number().int().nonnegative(),
+    byte_size: z.number().int().nonnegative(),
+    byte_hash: sha256Schema,
+    content_hash: sha256Schema,
+    url: z.string().url().nullable(),
+    status: z.enum(["available", "not_evaluable", "unavailable", "withheld"]),
+    status_reasons: z.array(z.string().min(1)),
+  })
+  .superRefine((value, context) => {
+    if (value.status === "available" && value.url === null) {
+      context.addIssue({
+        code: "custom",
+        message: "Available analysis artifacts require an immutable URL",
+      });
+    }
+    if (value.status !== "available" && value.url !== null) {
+      context.addIssue({
+        code: "custom",
+        message: "Unavailable analysis artifacts cannot expose a URL",
+      });
+    }
+    if (value.url !== null && !value.url.includes(value.byte_hash)) {
+      context.addIssue({
+        code: "custom",
+        message: "Analysis artifact URL must contain its byte hash",
+      });
+    }
+  });
+
+export const AnalysisArtifactPageSchema = z.strictObject({
+  items: z.array(AnalysisArtifactMetadataSchema),
+  analysis_release: AnalysisReleaseMetadataSchema,
+});
+
+export const AnalysisArtifactDetailSchema = z.strictObject({
+  item: AnalysisArtifactMetadataSchema,
+  analysis_release: AnalysisReleaseMetadataSchema,
 });
 
 export type MetricValue = z.infer<typeof MetricValueSchema>;
 export type Provenance = z.infer<typeof ProvenanceSchema>;
 export type ResultFact = z.infer<typeof ResultFactSchema>;
 export type ReleaseElectionRef = z.infer<typeof ReleaseElectionRefSchema>;
-export type ContextElectionSummary = z.infer<typeof ContextElectionSummarySchema>;
-export type NormalizedCategoryResult = z.infer<typeof NormalizedCategoryResultSchema>;
+export type ContextElectionSummary = z.infer<
+  typeof ContextElectionSummarySchema
+>;
+export type NormalizedCategoryResult = z.infer<
+  typeof NormalizedCategoryResultSchema
+>;
 export type PackagedDataset = z.infer<typeof PackagedDatasetSchema>;
 export type ScopedGeography = z.infer<typeof ScopedGeographySchema>;
 export type ScopedMesa = z.infer<typeof ScopedMesaSchema>;
@@ -1342,5 +1561,17 @@ export type ReleaseManifest = z.infer<typeof ReleaseManifestSchema>;
 export type ReviewSignal = z.infer<typeof ReviewSignalSchema>;
 export type EvidenceDocument = z.infer<typeof EvidenceDocumentSchema>;
 export type AnalysisAnomaly = z.infer<typeof AnalysisAnomalySchema>;
+export type AnalysisAnomalyComponent = z.infer<
+  typeof AnalysisAnomalyComponentSchema
+>;
 export type AnalysisSummary = z.infer<typeof AnalysisSummarySchema>;
 export type AnalysisReport = z.infer<typeof AnalysisReportSchema>;
+export type AnalysisReleaseMetadata = z.infer<
+  typeof AnalysisReleaseMetadataSchema
+>;
+export type AnalysisArtifactMetadata = z.infer<
+  typeof AnalysisArtifactMetadataSchema
+>;
+export type AnalysisOutcomeSensitivity = z.infer<
+  typeof AnalysisOutcomeSensitivitySchema
+>;

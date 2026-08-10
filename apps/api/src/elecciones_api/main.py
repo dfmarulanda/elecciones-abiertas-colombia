@@ -9,7 +9,7 @@ import os
 from collections.abc import AsyncIterator, Callable, Iterable, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated, Literal, TypeVar, cast
+from typing import Annotated, Any, Literal, TypeVar, cast
 from urllib.parse import urlparse
 
 import sentry_sdk
@@ -50,7 +50,11 @@ from .repository import (
     ResourceNotFoundError,
 )
 from .schemas import (
+    AnalysisAnomaly,
     AnalysisAnomalyPage,
+    AnalysisArtifactDetail,
+    AnalysisArtifactPage,
+    AnalysisOutcomeSensitivity,
     AnalysisReport,
     AnalysisSummary,
     Bulletin,
@@ -65,7 +69,6 @@ from .schemas import (
     HistoricalComparisonResponse,
     MesaDetail,
     NormalizedCategoryPage,
-    OutcomeSensitivity,
     PackagedDataset,
     PreliminaryElectionSummary,
     Provenance,
@@ -164,6 +167,7 @@ def _if_none_match(header: str | None, current: str) -> bool:
 #: scraper — cannot mistake a pre-count for a certified result.
 DATA_CLASS_HEADER = "X-Election-Data-Class"
 PreliminaryCache = "public, max-age=60"
+PreliminaryAnalysisCache = "no-store, max-age=0"
 
 
 def _cached_json(
@@ -171,15 +175,25 @@ def _cached_json(
 ) -> Response:
     tag = _etag(payload)
     headers = {"ETag": tag, "Cache-Control": cache_control, "Vary": "Origin"}
+    inspected = jsonable_encoder(payload)
     # A preliminary payload is short-lived and must never be cached as long as
     # an immutable certified one. The class is read off the payload the
     # repository built, so the label and the grant that authorised it cannot
     # drift apart.
-    if isinstance(payload, Mapping) and payload.get("exposure_class") == "preliminary":
+    if isinstance(inspected, Mapping) and inspected.get("exposure_class") == "preliminary":
         headers[DATA_CLASS_HEADER] = "preliminary"
         headers["Cache-Control"] = PreliminaryCache
-    elif isinstance(payload, Mapping) and payload.get("exposure_class") == "certified":
+    elif isinstance(inspected, Mapping) and inspected.get("exposure_class") == "certified":
         headers[DATA_CLASS_HEADER] = "certified"
+    if isinstance(inspected, Mapping):
+        analysis_release = inspected.get("analysis_release")
+        if (
+            isinstance(analysis_release, Mapping)
+            and analysis_release.get("exposure_tier") == "preliminary_research"
+        ):
+            headers[DATA_CLASS_HEADER] = "preliminary-analysis"
+            headers["Cache-Control"] = PreliminaryAnalysisCache
+            headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
     if _if_none_match(request.headers.get("if-none-match"), tag):
         return Response(status_code=304, headers=headers)
     return JSONResponse(_jsonable(payload), headers=headers)
@@ -320,10 +334,19 @@ def _csv_safe_row(row: dict[str, object]) -> dict[str, object]:
 
 def _allowlisted_artifact_url(url: str, allowed_hosts: set[str]) -> str:
     parsed = urlparse(url)
+    try:
+        port = parsed.port
+    except ValueError:
+        port = -1
     if (
         parsed.scheme != "https"
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
         or not parsed.hostname
         or parsed.hostname.lower() not in allowed_hosts
+        or bool(parsed.query)
+        or bool(parsed.fragment)
     ):
         raise APIProblem(
             500,
@@ -1064,10 +1087,13 @@ def create_app(
 
     @app.get(
         "/api/v1/releases/{release_id}/elections/{election_slug}/outcome-sensitivity",
-        response_model=OutcomeSensitivity,
+        response_model=AnalysisOutcomeSensitivity,
     )
     async def normalized_outcome_sensitivity(
-        request: Request, release_id: str, election_slug: str
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        analysis_release: str | None = None,
     ) -> Response:
         """A bounded documentary sensitivity artifact at one public release scope."""
         repository = repo(request)
@@ -1079,17 +1105,30 @@ def create_app(
             )
         return _cached_json(
             request,
-            translate(lambda: repository.normalized_outcome_sensitivity(release_id, election_slug)),
+            translate(
+                lambda: repository.normalized_outcome_sensitivity(
+                    release_id, election_slug, analysis_release
+                )
+            ),
         )
 
     @app.get(
         "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/summary",
         response_model=AnalysisSummary,
     )
-    async def analysis_summary(request: Request, release_id: str, election_slug: str) -> Response:
+    async def analysis_summary(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        analysis_release: str | None = None,
+    ) -> Response:
         return _cached_json(
             request,
-            translate(lambda: repo(request).analysis_summary(election_slug, release_id)),
+            translate(
+                lambda: repo(request).analysis_summary(
+                    election_slug, release_id, analysis_release
+                )
+            ),
             ImmutableCache,
         )
 
@@ -1111,14 +1150,31 @@ def create_app(
             "spatial",
         ]
         | None = None,
+        analysis_release: str | None = None,
     ) -> Response:
-        values = translate(lambda: repo(request).anomalies(election_slug, release_id))
+        repository = repo(request)
+        metadata = translate(
+            lambda: repository.analysis_release_metadata(
+                election_slug, release_id, analysis_release
+            )
+        )
+        resolved_analysis_release = metadata.analysis_release_id
+        values = translate(
+            lambda: repository.anomalies(
+                election_slug, release_id, resolved_analysis_release
+            )
+        )
         filtered = [
             item for item in values if anomaly_type is None or anomaly_type in item.anomaly_types
         ]
         filtered.sort(key=lambda item: (-item.audit_priority_score, item.id))
         scope = scope_for(
-            {"release": release_id, "slug": election_slug, "anomaly_type": anomaly_type}
+            {
+                "release": release_id,
+                "slug": election_slug,
+                "analysis_release": resolved_analysis_release,
+                "anomaly_type": anomaly_type,
+            }
         )
         try:
             offset = 0 if cursor is None else decode_cursor(cursor, scope, settings.cursor_secret)
@@ -1129,7 +1185,11 @@ def create_app(
         next_cursor = (
             encode_cursor(offset + limit, scope, settings.cursor_secret) if has_more else None
         )
-        summary = translate(lambda: repo(request).analysis_summary(election_slug, release_id))
+        summary = translate(
+            lambda: repository.analysis_summary(
+                election_slug, release_id, resolved_analysis_release
+            )
+        )
         return _cached_json(
             request,
             {
@@ -1138,20 +1198,121 @@ def create_app(
                 "data_version": release_id,
                 "methodology_version": summary.methodology_version,
                 "disclosure": summary.disclosure,
+                "analysis_release": metadata,
             },
+            PreliminaryAnalysisCache
+            if metadata.exposure_tier == "preliminary_research"
+            else ImmutableCache,
+        )
+
+    @app.get(
+        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/anomalies/{anomaly_id}",
+        response_model=AnalysisAnomaly,
+    )
+    async def analysis_anomaly_detail(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        anomaly_id: str,
+        analysis_release: str | None = None,
+    ) -> Response:
+        return _cached_json(
+            request,
+            translate(
+                lambda: repo(request).anomaly(
+                    election_slug, anomaly_id, release_id, analysis_release
+                )
+            ),
             ImmutableCache,
         )
 
     @app.get(
-        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/anomalies/{anomaly_id}"
+        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts",
+        response_model=AnalysisArtifactPage,
     )
-    async def analysis_anomaly_detail(
-        request: Request, release_id: str, election_slug: str, anomaly_id: str
+    async def analysis_artifacts(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        analysis_release: str | None = None,
     ) -> Response:
+        repository = repo(request)
+        metadata = translate(
+            lambda: repository.analysis_release_metadata(
+                election_slug, release_id, analysis_release
+            )
+        )
+        items = translate(
+            lambda: repository.analysis_artifacts(
+                election_slug, release_id, metadata.analysis_release_id
+            )
+        )
         return _cached_json(
             request,
-            translate(lambda: repo(request).anomaly(election_slug, anomaly_id, release_id)),
+            {"items": items, "analysis_release": metadata},
             ImmutableCache,
+        )
+
+    @app.get(
+        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts/{artifact_id}",
+        response_model=AnalysisArtifactDetail,
+    )
+    async def analysis_artifact(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        artifact_id: str,
+        analysis_release: str | None = None,
+    ) -> Response:
+        repository = repo(request)
+        metadata = translate(
+            lambda: repository.analysis_release_metadata(
+                election_slug, release_id, analysis_release
+            )
+        )
+        item = translate(
+            lambda: repository.analysis_artifact(
+                election_slug, artifact_id, release_id, metadata.analysis_release_id
+            )
+        )
+        return _cached_json(
+            request,
+            {"item": item, "analysis_release": metadata},
+            ImmutableCache,
+        )
+
+    @app.get(
+        "/api/v1/releases/{release_id}/elections/{election_slug}/analysis/artifacts/{artifact_id}/download"
+    )
+    async def analysis_artifact_download(
+        request: Request,
+        release_id: str,
+        election_slug: str,
+        artifact_id: str,
+        analysis_release: str | None = None,
+    ) -> Response:
+        repository = repo(request)
+        metadata = translate(
+            lambda: repository.analysis_release_metadata(
+                election_slug, release_id, analysis_release
+            )
+        )
+        item = translate(
+            lambda: repository.analysis_artifact(
+                election_slug, artifact_id, release_id, metadata.analysis_release_id
+            )
+        )
+        if item.status != "available" or item.url is None:
+            raise APIProblem(
+                404,
+                "Resource not found",
+                "The analysis artifact is not available for public download.",
+            )
+        location = _allowlisted_artifact_url(str(item.url), settings.allowed_artifact_hosts)
+        return RedirectResponse(
+            location,
+            status_code=307,
+            headers={"Cache-Control": ImmutableCache, "ETag": f'"{item.byte_hash}"'},
         )
 
     @app.get(
@@ -1163,11 +1324,14 @@ def create_app(
         release_id: str,
         election_slug: str,
         report_kind: Literal["model_diagnostics", "validation", "local_sensitivity"],
+        analysis_release: str | None = None,
     ) -> Response:
         return _cached_json(
             request,
             translate(
-                lambda: repo(request).analysis_report(election_slug, report_kind, release_id)
+                lambda: repo(request).analysis_report(
+                    election_slug, report_kind, release_id, analysis_release
+                )
             ),
             ImmutableCache,
         )
@@ -1777,7 +1941,12 @@ def create_app(
             headers={"Cache-Control": ImmutableCache, "ETag": f'"{dataset.content_hash}"'},
         )
 
-    @app.get("/api/v1/openapi.json", include_in_schema=False)
+    @app.get(
+        "/api/v1/openapi.json",
+        response_model=dict[str, Any],
+        summary="Frozen OpenAPI document",
+        description="The exact versioned API contract served by this deployment.",
+    )
     async def openapi_document(request: Request) -> Response:
         return _cached_json(request, FROZEN_OPENAPI, ImmutableCache)
 

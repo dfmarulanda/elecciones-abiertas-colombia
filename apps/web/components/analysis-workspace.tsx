@@ -1,14 +1,18 @@
 import { ArrowRight, ExternalLink, FlaskConical, Search } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 import { OutcomeSensitivityPanel } from "@/components/investigation-details";
 import { Page } from "@/components/page-primitives";
 import { StatusBadge } from "@/components/ui";
+import { analysisArtifactDownloadUrl } from "@/data/analysis-adapter";
 import type {
   AnalysisAnomaly,
   AnalysisAnomalyType,
+  AnalysisArtifactMetadata,
   AnalysisReport,
   AnalysisReportKind,
+  AnalysisReleaseMetadata,
   AnalysisSummary,
   PublicAnalysisReady,
   PublicAnomalyDetailState,
@@ -18,8 +22,17 @@ import type { PublicReleaseRef } from "@/data/fixture-adapter";
 import { legalStatusLabel, sourceTypeLabel } from "@/lib/public-labels";
 import { reviewDisclosure } from "@/lib/review-disclosure";
 import { formatDate, formatNumber } from "@/lib/utils";
+import enMessages from "@/messages/en.json";
+import esMessages from "@/messages/es.json";
 
 type Locale = "es" | "en";
+
+const analysisCatalog = {
+  es: esMessages.analysis,
+  en: enMessages.analysis,
+} as const;
+
+type EvidenceTier = AnalysisAnomaly["evidence_tier"];
 
 const copy = {
   es: {
@@ -383,6 +396,11 @@ function signalStatusLabel(status: string, locale: Locale) {
     not_evaluable: { es: "No evaluable", en: "Not evaluable" },
     eligible: { es: "Elegible", en: "Eligible" },
     ineligible: { es: "No elegible", en: "Ineligible" },
+    available: { es: "Disponible", en: "Available" },
+    research_preview: {
+      es: "Investigación preliminar",
+      en: "Research preview",
+    },
   };
   return labels[status]?.[locale] ?? status.replaceAll("_", " ");
 }
@@ -396,15 +414,69 @@ function nullableNumber(value: number | null, locale: Locale) {
 function scopedQuery(
   selected: PublicReleaseRef,
   values: Record<string, string | null | undefined> = {},
+  analysisRelease?: string,
 ) {
   const query = new URLSearchParams({
     release: selected.release_id,
     election: selected.election_slug,
   });
+  if (analysisRelease) query.set("analysis_release", analysisRelease);
   for (const [key, value] of Object.entries(values)) {
     if (value) query.set(key, value);
   }
   return query.toString();
+}
+
+function sentenceCode(value: string, locale: Locale) {
+  const readable = readableCode(value, locale);
+  return `${readable.charAt(0).toUpperCase()}${readable.slice(1)}`;
+}
+
+function evidenceTierLabel(tier: EvidenceTier, locale: Locale) {
+  const a = analysisCatalog[locale];
+  return {
+    descriptive: a.descriptiveTier,
+    deterministic: a.deterministicTier,
+    research_preview: a.researchTier,
+    independently_validated: a.validatedTier,
+    non_evaluable: a.nonEvaluableTier,
+  }[tier];
+}
+
+function EvidenceState({
+  locale,
+  tier,
+  status,
+  reasons = [],
+}: {
+  locale: Locale;
+  tier: EvidenceTier;
+  status: string;
+  reasons?: string[];
+}) {
+  const a = analysisCatalog[locale];
+  return (
+    <div className="mt-4 border-l-4 border-neon pl-4 text-xs">
+      <div className="flex flex-wrap gap-2">
+        <StatusBadge tone={tier === "research_preview" ? "fixture" : "neutral"}>
+          {a.evidenceTier}: {evidenceTierLabel(tier, locale)}
+        </StatusBadge>
+        <StatusBadge>
+          {a.evaluability}: {signalStatusLabel(status, locale)}
+        </StatusBadge>
+      </div>
+      {reasons.length ? (
+        <div className="mt-3">
+          <p className="font-bold uppercase">{a.reasons}</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+            {reasons.map((reason) => (
+              <li key={reason}>{sentenceCode(reason, locale)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function safeHttpUrl(value: string) {
@@ -506,19 +578,31 @@ function ReleaseRail({
   locale,
   selected,
   summary,
+  analysisRelease,
 }: {
   locale: Locale;
   selected: PublicReleaseRef;
   summary: Pick<AnalysisSummary, "data_version" | "methodology_version">;
+  analysisRelease: AnalysisReleaseMetadata;
 }) {
   const c = copy[locale];
+  const a = analysisCatalog[locale];
   return (
     <dl className="grid gap-px border border-ink bg-ink text-sm sm:grid-cols-2 lg:grid-cols-4">
       {[
         [c.release, selected.release_id],
         [c.election, selected.election_slug],
-        [c.version, summary.data_version],
+        [a.analysisRelease, analysisRelease.analysis_release_id],
         [c.methodology, summary.methodology_version],
+        [a.canonicalInput, analysisRelease.canonical_input_hash],
+        [a.manifest, analysisRelease.manifest_hash],
+        [a.provenance, analysisRelease.provenance_hash],
+        [
+          analysisRelease.exposure_tier === "preliminary_research"
+            ? a.preliminary
+            : a.certified,
+          `${a.generated}: ${formatDate(analysisRelease.generated_at, locale)} · ${a.approved}: ${formatDate(analysisRelease.approved_at, locale)}`,
+        ],
       ].map(([label, value]) => (
         <div className="min-w-0 bg-paper p-4" key={label}>
           <dt className="font-mono text-[11px] font-bold tracking-[.08em] text-muted uppercase">
@@ -603,8 +687,16 @@ function AnomalyCard({
 }) {
   const c = copy[locale];
   const primary = anomaly.components[0];
-  const detailQuery = scopedQuery(selected);
-  const resultQuery = scopedQuery(selected);
+  const detailQuery = scopedQuery(
+    selected,
+    {},
+    anomaly.analysis_release.analysis_release_id,
+  );
+  const resultQuery = scopedQuery(
+    selected,
+    {},
+    anomaly.analysis_release.analysis_release_id,
+  );
   return (
     <li className="border-b border-ink py-6 last:border-b-0">
       <article>
@@ -633,6 +725,12 @@ function AnomalyCard({
               {explanationLabels[anomaly.explanation.status]?.[locale] ??
                 anomaly.explanation.status}
             </h3>
+            <EvidenceState
+              locale={locale}
+              tier={anomaly.evidence_tier}
+              status={anomaly.evaluability}
+              reasons={anomaly.ineligible_reasons}
+            />
             <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="font-bold">{c.observed}</dt>
@@ -661,16 +759,6 @@ function AnomalyCard({
             </p>
           </div>
         </div>
-        {anomaly.ineligible_reasons.length ? (
-          <div className="mt-5 border-l-4 border-neon pl-4">
-            <p className="text-xs font-bold uppercase">{c.exactLimits}</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
-              {anomaly.ineligible_reasons.map((reason) => (
-                <li key={reason}>{readableCode(reason, locale)}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
         <p className="mt-5 border border-ink p-4 text-sm leading-6">
           {anomaly.disclosure[locale]}
         </p>
@@ -711,13 +799,18 @@ function ExpertReport({
         </span>
       </summary>
       <div className="pb-6">
-        {report.ineligible_reasons.length ? (
-          <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
-            {report.ineligible_reasons.map((reason) => (
-              <li key={reason}>{readableCode(reason, locale)}</li>
-            ))}
-          </ul>
-        ) : null}
+        <EvidenceState
+          locale={locale}
+          tier={
+            report.status === "not_evaluable" || report.status === "ineligible"
+              ? "non_evaluable"
+              : report.research_preview
+                ? "research_preview"
+                : "independently_validated"
+          }
+          status={report.status}
+          reasons={report.ineligible_reasons}
+        />
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-3">
           <div>
             <dt className="font-bold">{c.methodology}</dt>
@@ -784,6 +877,109 @@ function ExpertReport({
   );
 }
 
+function ExpectedEvidence({
+  locale,
+  title,
+  intro,
+  tier,
+  status,
+  reasons,
+  children,
+}: {
+  locale: Locale;
+  title: string;
+  intro: string;
+  tier: EvidenceTier;
+  status: string;
+  reasons: string[];
+  children?: React.ReactNode;
+}) {
+  return (
+    <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
+      <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
+        {title}
+      </h2>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{intro}</p>
+      <EvidenceState
+        locale={locale}
+        tier={tier}
+        status={status}
+        reasons={reasons}
+      />
+      {children}
+    </section>
+  );
+}
+
+function ArtifactDownloads({
+  locale,
+  artifacts,
+  selected,
+  analysisRelease,
+}: {
+  locale: Locale;
+  artifacts: AnalysisArtifactMetadata[];
+  selected: PublicReleaseRef;
+  analysisRelease: AnalysisReleaseMetadata;
+}) {
+  const a = analysisCatalog[locale];
+  return (
+    <div className="mt-8">
+      <h3 className="font-display text-xl font-bold uppercase">
+        {a.downloads}
+      </h3>
+      {artifacts.length ? (
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {artifacts.map((artifact) => {
+            const href = analysisArtifactDownloadUrl(
+              selected,
+              analysisRelease,
+              artifact,
+            );
+            return (
+              <li
+                className="min-w-0 border border-ink p-4"
+                key={artifact.artifact_id}
+              >
+                <p className="break-words font-bold">{artifact.kind}</p>
+                <p className="mt-1 break-all font-mono text-[11px] text-muted">
+                  {artifact.byte_hash}
+                </p>
+                <EvidenceState
+                  locale={locale}
+                  tier={
+                    artifact.status === "available"
+                      ? "descriptive"
+                      : "non_evaluable"
+                  }
+                  status={artifact.status}
+                  reasons={artifact.status_reasons}
+                />
+                {href ? (
+                  <a
+                    className="mt-4 inline-flex min-h-11 max-w-full items-center gap-2 break-words border border-ink px-4 font-mono text-xs font-bold uppercase hover:bg-neon"
+                    href={href}
+                  >
+                    {a.download}{" "}
+                    <ExternalLink
+                      className="size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                  </a>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-4 border border-ink p-4 text-sm">
+          {a.artifactUnavailable}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function AnalysisWorkspace({
   locale,
   analysis,
@@ -792,31 +988,72 @@ export function AnalysisWorkspace({
   analysis: PublicAnalysisReady;
 }) {
   const c = copy[locale];
+  const a = analysisCatalog[locale];
   const { selected, summary, anomalies } = analysis;
-  const reports = Object.values(analysis.reports).filter(
-    (item): item is AnalysisReport => Boolean(item),
+  const peerAnomalies = anomalies.items.filter((item) =>
+    item.anomaly_types.includes("peer_distribution"),
   );
-  const resetQuery = scopedQuery(selected);
-  const nextQuery = scopedQuery(selected, {
-    tipo: analysis.filters.anomalyType,
-    cursor: anomalies.page.next_cursor,
-  });
+  const spatialAnomalies = anomalies.items.filter((item) =>
+    item.anomaly_types.includes("spatial"),
+  );
+  const resetQuery = scopedQuery(
+    selected,
+    {},
+    analysis.analysisRelease.analysis_release_id,
+  );
+  const nextQuery = scopedQuery(
+    selected,
+    {
+      tipo: analysis.filters.anomalyType,
+      cursor: anomalies.page.next_cursor,
+    },
+    analysis.analysisRelease.analysis_release_id,
+  );
+  const contextValue = (release: PublicReleaseRef) => {
+    const value = new URLSearchParams({
+      release: release.release_id,
+      election: release.election_slug,
+    });
+    if (
+      release.release_id === selected.release_id &&
+      release.election_slug === selected.election_slug
+    ) {
+      value.set(
+        "analysis_release",
+        analysis.analysisRelease.analysis_release_id,
+      );
+    }
+    return value.toString();
+  };
   return (
     <Page
       locale={locale}
       eyebrow={c.eyebrow}
       title={c.title}
       synthetic={false}
-      releaseStatus="published"
+      releaseStatus={selected.status}
     >
       <p className="max-w-3xl text-base leading-7 text-muted">{c.intro}</p>
       <div className="mt-6">
-        <ReleaseRail locale={locale} selected={selected} summary={summary} />
+        <ReleaseRail
+          locale={locale}
+          selected={selected}
+          summary={summary}
+          analysisRelease={analysis.analysisRelease}
+        />
       </div>
       {summary.research_preview || summary.ineligible_reasons.length ? (
         <div className="mt-6">
           <ResearchGate locale={locale} reasons={summary.ineligible_reasons} />
         </div>
+      ) : null}
+      {analysis.analysisRelease.preliminary_caveat ? (
+        <p
+          className="mt-6 border border-ink bg-neon p-4 text-sm leading-6"
+          role="status"
+        >
+          {analysis.analysisRelease.preliminary_caveat[locale]}
+        </p>
       ) : null}
       <div className="mt-6">
         <PlainConclusion locale={locale} summary={summary} />
@@ -829,14 +1066,11 @@ export function AnalysisWorkspace({
         className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8"
         aria-labelledby="analysis-coverage"
       >
-        <p className="font-mono text-[11px] font-bold tracking-[.12em] text-muted uppercase">
-          02 / {c.coverage}
-        </p>
         <h2
           id="analysis-coverage"
           className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl"
         >
-          {c.coverage}
+          {a.releaseStatus}
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
           {c.coverageIntro}
@@ -848,6 +1082,21 @@ export function AnalysisWorkspace({
             caption={c.coverage}
           />
         </div>
+        <EvidenceState
+          locale={locale}
+          tier="descriptive"
+          status={analysis.analysisRelease.artifact_status}
+          reasons={analysis.analysisRelease.status_reasons}
+        />
+      </section>
+
+      <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
+        <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
+          {a.descriptive}
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
+          {a.descriptiveIntro}
+        </p>
         <h3 className="mt-7 font-bold">{c.qualifyingByRule}</h3>
         <dl className="mt-3 grid gap-px border border-ink bg-ink sm:grid-cols-2 lg:grid-cols-5">
           {Object.entries(summary.anomaly_counts).map(([type, count]) => (
@@ -865,58 +1114,43 @@ export function AnalysisWorkspace({
             </div>
           ))}
         </dl>
+        <EvidenceState locale={locale} tier="descriptive" status="available" />
       </section>
 
       <section
         className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8"
         aria-labelledby="analysis-explorer"
       >
-        <p className="font-mono text-[11px] font-bold tracking-[.12em] text-muted uppercase">
-          03 / {c.explorer}
-        </p>
         <h2
           id="analysis-explorer"
           className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl"
         >
-          {c.explorer}
+          {a.deterministic}
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-          {c.explorerIntro}
+          {a.deterministicIntro} {c.explorerIntro}
         </p>
         <form
-          className="mt-6 grid gap-4 border-y border-ink py-5 lg:grid-cols-[1fr_1.35fr_1.35fr_auto] lg:items-end"
+          className="mt-6 grid gap-4 border-y border-ink py-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_auto] lg:items-end"
           aria-label={c.explorer}
         >
           <label className="grid gap-2 font-mono text-[11px] font-bold uppercase">
-            {c.release}
+            {a.context}
             <select
               className="min-h-11 min-w-0 border border-ink bg-paper px-3 text-sm font-normal normal-case"
-              name="release"
-              defaultValue={selected.release_id}
+              name="context"
+              defaultValue={contextValue(selected)}
             >
               {analysis.releases.map((release) => (
                 <option
-                  value={release.release_id}
+                  value={contextValue(release)}
                   key={`${release.release_id}:${release.election_slug}`}
                 >
+                  {locale === "es" ? release.name_es : release.name_en} ·{" "}
                   {release.release_id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 font-mono text-[11px] font-bold uppercase">
-            {c.election}
-            <select
-              className="min-h-11 min-w-0 border border-ink bg-paper px-3 text-sm font-normal normal-case"
-              name="election"
-              defaultValue={selected.election_slug}
-            >
-              {analysis.releases.map((release) => (
-                <option
-                  value={release.election_slug}
-                  key={`${release.release_id}:${release.election_slug}`}
-                >
-                  {locale === "es" ? release.name_es : release.name_en}
+                  {release.release_id === selected.release_id
+                    ? ` · ${analysis.analysisRelease.analysis_release_id}`
+                    : ""}
                 </option>
               ))}
             </select>
@@ -986,41 +1220,123 @@ export function AnalysisWorkspace({
         </nav>
       </section>
 
-      <section
-        className="grid border-x border-b border-ink lg:grid-cols-12"
-        aria-labelledby="outcome-and-reports"
+      <ExpectedEvidence
+        locale={locale}
+        title={a.peer}
+        intro={a.peerIntro}
+        tier="research_preview"
+        status={peerAnomalies.length ? "evaluable" : "not_evaluable"}
+        reasons={
+          peerAnomalies.length
+            ? peerAnomalies.flatMap((item) => item.ineligible_reasons)
+            : ["peer_results_not_published"]
+        }
       >
-        <div className="p-4 sm:p-6 lg:col-span-5 lg:p-8">
+        {!peerAnomalies.length ? (
+          <p className="mt-5 text-sm">{a.noPeer}</p>
+        ) : null}
+      </ExpectedEvidence>
+
+      <ExpectedEvidence
+        locale={locale}
+        title={a.spatial}
+        intro={a.spatialIntro}
+        tier={spatialAnomalies.length ? "research_preview" : "non_evaluable"}
+        status={spatialAnomalies.length ? "evaluable" : "not_evaluable"}
+        reasons={
+          spatialAnomalies.length
+            ? spatialAnomalies.flatMap((item) => item.ineligible_reasons)
+            : ["authenticated_coordinates_not_available"]
+        }
+      >
+        {!spatialAnomalies.length ? (
+          <p className="mt-5 text-sm">{a.noSpatial}</p>
+        ) : null}
+      </ExpectedEvidence>
+
+      <ExpectedEvidence
+        locale={locale}
+        title={a.outcome}
+        intro={a.outcomeIntro}
+        tier={
+          analysis.outcomeSensitivity.status === "available" &&
+          analysis.outcomeSensitivity.value.evaluable
+            ? "independently_validated"
+            : "non_evaluable"
+        }
+        status={
+          analysis.outcomeSensitivity.status === "available" &&
+          analysis.outcomeSensitivity.value.evaluable
+            ? "evaluable"
+            : "not_evaluable"
+        }
+        reasons={
+          analysis.outcomeSensitivity.status === "available"
+            ? analysis.outcomeSensitivity.value.issues.map(
+                (issue) => issue.code,
+              )
+            : [analysis.outcomeSensitivity.reason]
+        }
+      >
+        <div className="mt-6">
           <OutcomeSensitivityPanel
             locale={locale}
-            outcome={analysis.outcomeSensitivity}
+            outcome={
+              analysis.outcomeSensitivity.status === "available"
+                ? analysis.outcomeSensitivity.value
+                : null
+            }
           />
         </div>
-        <div className="border-t border-ink px-4 py-8 sm:px-6 lg:col-span-7 lg:border-t-0 lg:border-l lg:px-8">
-          <p className="font-mono text-[11px] font-bold tracking-[.12em] text-muted uppercase">
-            04 / {c.expertReports}
-          </p>
-          <h2
-            id="outcome-and-reports"
-            className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl"
-          >
-            {c.expertReports}
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-muted">{c.expertIntro}</p>
-          <div className="mt-6 border-t border-ink">
-            {reports.length ? (
-              reports.map((report) => (
-                <ExpertReport
-                  locale={locale}
-                  report={report}
-                  key={report.report_kind}
-                />
-              ))
+      </ExpectedEvidence>
+
+      <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
+        <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
+          {a.expert}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-muted">{a.expertIntro}</p>
+        <div className="mt-6 border-t border-ink">
+          {Object.entries(analysis.reports).map(([kind, resource]) =>
+            resource.status === "available" ? (
+              <ExpertReport
+                locale={locale}
+                report={resource.value}
+                key={kind}
+              />
             ) : (
-              <p className="border-b border-ink py-5 text-sm">{c.noMetrics}</p>
-            )}
-          </div>
+              <div className="border-b border-ink py-5" key={kind}>
+                <p className="font-bold">
+                  {reportLabels[kind as AnalysisReportKind][locale]}
+                </p>
+                <p className="mt-2 text-sm text-muted">{a.reportUnavailable}</p>
+                <EvidenceState
+                  locale={locale}
+                  tier="non_evaluable"
+                  status="unavailable"
+                  reasons={[resource.reason]}
+                />
+              </div>
+            ),
+          )}
         </div>
+        <ArtifactDownloads
+          locale={locale}
+          artifacts={
+            analysis.artifacts.status === "available"
+              ? analysis.artifacts.value
+              : []
+          }
+          selected={selected}
+          analysisRelease={analysis.analysisRelease}
+        />
+        {analysis.artifacts.status === "unavailable" ? (
+          <EvidenceState
+            locale={locale}
+            tier="non_evaluable"
+            status="unavailable"
+            reasons={[analysis.artifacts.reason]}
+          />
+        ) : null}
       </section>
 
       <section className="border-x border-b border-ink bg-ink p-5 text-paper sm:p-7">
@@ -1068,6 +1384,7 @@ export function AnalysisUnavailable({
   message?: string;
 }) {
   const es = locale === "es";
+  const sourceStatus = selected?.status ?? "candidate";
   const title =
     status === "not_found"
       ? es
@@ -1081,16 +1398,20 @@ export function AnalysisUnavailable({
           ? es
             ? "Análisis real no publicado"
             : "Real analysis is not published"
-          : es
-            ? "El análisis publicado no está disponible"
-            : "The published analysis is unavailable";
+          : sourceStatus === "published"
+            ? es
+              ? "El análisis publicado no está disponible"
+              : "The published analysis is unavailable"
+            : es
+              ? "El análisis preliminar no está disponible"
+              : "The preliminary analysis is unavailable";
   return (
     <Page
       locale={locale}
       eyebrow={es ? "Estado del análisis" : "Analysis status"}
       title={title}
       synthetic={status === "fixture"}
-      releaseStatus={selected ? "published" : "candidate"}
+      releaseStatus={sourceStatus}
     >
       <section className="border border-ink p-5 sm:p-7" role="alert">
         <p className="max-w-3xl text-sm leading-6">
@@ -1261,7 +1582,11 @@ export function AnalysisAnomalyDetail({
 }) {
   const c = copy[locale];
   const { anomaly, selected } = state;
-  const query = scopedQuery(selected);
+  const query = scopedQuery(
+    selected,
+    {},
+    anomaly.analysis_release.analysis_release_id,
+  );
   const notes = anomaly.explanation.notes?.[locale];
   return (
     <Page
@@ -1269,7 +1594,7 @@ export function AnalysisAnomalyDetail({
       eyebrow={c.eyebrow}
       title={`${c.anomalyTitle} · ${anomaly.mesa_id}`}
       synthetic={false}
-      releaseStatus="published"
+      releaseStatus={selected.status}
     >
       <nav aria-label={c.back}>
         <Link
@@ -1290,6 +1615,7 @@ export function AnalysisAnomalyDetail({
             data_version: anomaly.provenance.data_version,
             methodology_version: anomaly.methodology_version,
           }}
+          analysisRelease={anomaly.analysis_release}
         />
       </div>
       <section className="mt-6 grid border border-ink lg:grid-cols-12">
@@ -1317,6 +1643,12 @@ export function AnalysisAnomalyDetail({
           <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
             {c.explanationMeaning}
           </p>
+          <EvidenceState
+            locale={locale}
+            tier={anomaly.evidence_tier}
+            status={anomaly.evaluability}
+            reasons={anomaly.ineligible_reasons}
+          />
         </div>
         <aside className="border-t border-ink bg-ink p-5 text-paper sm:p-7 lg:col-span-4 lg:border-t-0 lg:border-l">
           <p className="font-display text-5xl font-bold tabular-nums">

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Annotated, Literal
@@ -12,6 +13,11 @@ from typing import Annotated, Literal
 import httpx
 import typer
 
+from .analytics.analysis_release import (
+    build_analysis_bundle,
+    build_registry_from_files,
+    write_analysis_bundle,
+)
 from .catalog import CatalogError, load_source_catalog
 from .ingest.historical_2018 import (
     Historical2018Error,
@@ -30,6 +36,10 @@ from .ingest.relay_transport import (
     PrecountRelayTransport,
     RelayTransportError,
     load_relay_token,
+)
+from .releases.analysis_postgres_loader import (
+    approve_preliminary_analysis_release,
+    load_analysis_release,
 )
 from .releases.candidate import CandidateBuildError, build_national_precount_candidate
 from .releases.compact_postgres_loader import load_historical_context_release
@@ -663,6 +673,200 @@ def release_build_candidate(
             },
             ensure_ascii=False,
             indent=2,
+            sort_keys=True,
+        )
+    )
+
+
+@app.command("analysis-release-build")
+def analysis_release_build(
+    snapshot_path: Annotated[
+        Path,
+        typer.Option("--snapshot", help="Immutable source release API snapshot."),
+    ],
+    source_manifest_path: Annotated[
+        Path,
+        typer.Option("--source-manifest", help="Immutable bound election release manifest."),
+    ],
+    generated_at: Annotated[
+        str,
+        typer.Option(
+            "--generated-at",
+            help="Frozen timezone-aware ISO-8601 producer timestamp for deterministic replay.",
+        ),
+    ],
+    runtime_fingerprint: Annotated[
+        str,
+        typer.Option(
+            "--runtime-fingerprint",
+            help="Pinned producer image or dependency-lock runtime fingerprint.",
+        ),
+    ],
+    output_directory: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Root for immutable analysis release directories."),
+    ] = ROOT / "data/analysis-releases",
+    configuration_path: Annotated[
+        Path,
+        typer.Option("--configuration", help="Frozen detector configuration and seed registry."),
+    ] = ROOT / "config/analytics/analysis-release-v1.json",
+    methodology_version: Annotated[
+        str,
+        typer.Option("--methodology-version", help="Analysis overlay methodology version."),
+    ] = "analysis-release-v1.0.0",
+    historical_context: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--historical-context",
+            help="Optional immutable contextual comparison artifact; repeat as needed.",
+        ),
+    ] = None,
+) -> None:
+    """Build an internal immutable analysis overlay; never approve or expose it."""
+    try:
+        timestamp = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        registry = build_registry_from_files(
+            snapshot_path=snapshot_path,
+            source_manifest_path=source_manifest_path,
+            configuration_path=configuration_path,
+            detector_source_directory=ROOT / "pipeline/src/elecciones_pipeline/analytics",
+            runtime_fingerprint=runtime_fingerprint,
+            historical_context_paths=tuple(historical_context or ()),
+        )
+        bundle = build_analysis_bundle(
+            registry,
+            methodology_version=methodology_version,
+            generated_at=timestamp,
+        )
+        target = write_analysis_bundle(bundle, output_directory)
+    except (OSError, RuntimeError, ValueError) as exc:
+        typer.echo(f"Analysis release build failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "analysis_release_id": bundle.analysis_release_id,
+                "source_release_id": bundle.source_release_id,
+                "election_slug": bundle.election_slug,
+                "canonical_input_hash": bundle.canonical_input_hash,
+                "manifest_hash": bundle.manifest_hash,
+                "exposure_tier": bundle.exposure_tier.value,
+                "bundle_path": str(target),
+                "publication_performed": False,
+            },
+            sort_keys=True,
+        )
+    )
+
+
+@app.command("analysis-release-load-postgres")
+def analysis_release_load_postgres(
+    database_url: Annotated[str, typer.Option("--database-url", help="PostgreSQL URL.")],
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest", help="Verified immutable analysis manifest."),
+    ],
+    producer_operator_id: Annotated[
+        str,
+        typer.Option("--producer-operator", help="Identified producer loading the bundle."),
+    ],
+    artifact_base_url: Annotated[
+        str,
+        typer.Option(
+            "--artifact-base-url",
+            help="Allowlisted immutable HTTPS base for content-addressed artifact bytes.",
+        ),
+    ],
+) -> None:
+    """Load verified analysis bytes with an internal exposure; never approve them."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.exc import SQLAlchemyError
+
+    try:
+        outcome = load_analysis_release(
+            create_engine(database_url),
+            manifest_path,
+            producer_operator_id=producer_operator_id,
+            artifact_base_url=artifact_base_url,
+        )
+    except (OSError, RuntimeError, SQLAlchemyError, ValueError) as exc:
+        typer.echo(f"Analysis release load failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "analysis_release_id": outcome.analysis_release_id,
+                "manifest_hash": outcome.manifest_hash,
+                "artifact_count": outcome.artifact_count,
+                "anomaly_count": outcome.anomaly_count,
+                "report_count": outcome.report_count,
+                "installed": outcome.installed,
+                "exposure_tier": "internal",
+                "approval_performed": False,
+            },
+            sort_keys=True,
+        )
+    )
+
+
+@app.command("analysis-release-approve-preliminary")
+def analysis_release_approve_preliminary(
+    database_url: Annotated[str, typer.Option("--database-url", help="PostgreSQL URL.")],
+    analysis_release_id: Annotated[
+        str,
+        typer.Option("--analysis-release", help="Exact installed analysis release identity."),
+    ],
+    approved_by: Annotated[
+        str,
+        typer.Option("--approved-by", help="Identified preliminary release approver."),
+    ],
+    approved_at: Annotated[
+        str,
+        typer.Option("--approved-at", help="Frozen timezone-aware approval timestamp."),
+    ],
+    approval_signature_hash: Annotated[
+        str,
+        typer.Option(
+            "--approval-signature-hash",
+            help="SHA-256 hash of the immutable preliminary approval packet.",
+        ),
+    ],
+    caveat_es: Annotated[
+        str,
+        typer.Option("--caveat-es", help="Required Spanish preliminary caveat."),
+    ],
+    caveat_en: Annotated[
+        str,
+        typer.Option("--caveat-en", help="Required English preliminary caveat."),
+    ],
+) -> None:
+    """Approve one validated internal overlay as preliminary research only."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.exc import SQLAlchemyError
+
+    try:
+        timestamp = datetime.fromisoformat(approved_at.replace("Z", "+00:00"))
+        outcome = approve_preliminary_analysis_release(
+            create_engine(database_url),
+            analysis_release_id,
+            approved_by=approved_by,
+            approved_at=timestamp,
+            approval_signature_hash=approval_signature_hash,
+            caveat_es=caveat_es,
+            caveat_en=caveat_en,
+        )
+    except (OSError, RuntimeError, SQLAlchemyError, ValueError) as exc:
+        typer.echo(f"Preliminary analysis approval failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "analysis_release_id": outcome.analysis_release_id,
+                "manifest_hash": outcome.manifest_hash,
+                "approved": outcome.approved,
+                "exposure_tier": "preliminary_research",
+                "certification_performed": False,
+            },
             sort_keys=True,
         )
     )

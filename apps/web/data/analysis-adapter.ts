@@ -15,7 +15,9 @@ export type AnalysisSummary = S["AnalysisSummary"];
 export type AnalysisAnomaly = S["AnalysisAnomaly"];
 export type AnalysisAnomalyPage = S["AnalysisAnomalyPage"];
 export type AnalysisReport = S["AnalysisReport"];
-export type OutcomeSensitivity = S["OutcomeSensitivity"];
+export type OutcomeSensitivity = S["AnalysisOutcomeSensitivity"];
+export type AnalysisReleaseMetadata = S["AnalysisReleaseMetadata"];
+export type AnalysisArtifactMetadata = S["AnalysisArtifactMetadata"];
 export type SignalComponent = S["SignalComponent"];
 export type AnalysisAnomalyType = AnalysisAnomaly["anomaly_types"][number];
 export type AnalysisReportKind = AnalysisReport["report_kind"];
@@ -39,17 +41,23 @@ export type PublicAnalysisFilters = Pick<
   "release" | "election" | "cursor"
 > & {
   anomalyType?: AnalysisAnomalyType;
+  analysisRelease?: string;
 };
+
+export type AnalysisResource<T> =
+  { status: "available"; value: T } | { status: "unavailable"; reason: string };
 
 export type PublicAnalysisReady = {
   status: "ready";
   releases: PublicReleaseRef[];
   selected: PublicReleaseRef;
   filters: PublicAnalysisFilters;
+  analysisRelease: AnalysisReleaseMetadata;
   summary: AnalysisSummary;
   anomalies: AnalysisAnomalyPage;
-  reports: Partial<Record<AnalysisReportKind, AnalysisReport>>;
-  outcomeSensitivity: OutcomeSensitivity | null;
+  reports: Record<AnalysisReportKind, AnalysisResource<AnalysisReport>>;
+  outcomeSensitivity: AnalysisResource<OutcomeSensitivity>;
+  artifacts: AnalysisResource<AnalysisArtifactMetadata[]>;
 };
 
 export type PublicAnalysisState =
@@ -78,6 +86,23 @@ export type PublicAnomalyDetailState =
 
 function prefixFor(selected: PublicReleaseRef) {
   return `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}`;
+}
+
+function withAnalysisRelease(pathname: string, analysisRelease: string) {
+  const [path, rawQuery = ""] = pathname.split("?", 2);
+  const query = new URLSearchParams(rawQuery);
+  query.set("analysis_release", analysisRelease);
+  return `${path}?${query}`;
+}
+
+export function analysisArtifactDownloadUrl(
+  selected: PublicReleaseRef,
+  analysisRelease: AnalysisReleaseMetadata,
+  artifact: AnalysisArtifactMetadata,
+) {
+  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (!base || artifact.status !== "available" || !artifact.url) return null;
+  return `${base}${prefixFor(selected)}/analysis/artifacts/${encodeURIComponent(artifact.artifact_id)}/download?analysis_release=${encodeURIComponent(analysisRelease.analysis_release_id)}`;
 }
 
 function errorView(error: unknown) {
@@ -159,6 +184,22 @@ function isSignalComponent(value: unknown) {
   );
 }
 
+function isAnalysisReleaseMetadata(value: unknown) {
+  return (
+    isRecord(value) &&
+    typeof value.analysis_release_id === "string" &&
+    typeof value.methodology_version === "string" &&
+    typeof value.source_release_id === "string" &&
+    typeof value.election_slug === "string" &&
+    ["preliminary_research", "certified_public"].includes(
+      String(value.exposure_tier),
+    ) &&
+    typeof value.canonical_input_hash === "string" &&
+    typeof value.manifest_hash === "string" &&
+    typeof value.provenance_hash === "string"
+  );
+}
+
 /**
  * The frozen OpenAPI currently types the anomaly-detail response as unknown.
  * Narrow it at the web boundary and fail closed instead of trusting a cast.
@@ -197,7 +238,18 @@ export function isAnalysisAnomaly(value: unknown): value is AnalysisAnomaly {
     isStringArray(value.ineligible_reasons) &&
     typeof value.methodology_version === "string" &&
     isLocalizedText(value.disclosure) &&
-    isProvenance(value.provenance)
+    isProvenance(value.provenance) &&
+    isAnalysisReleaseMetadata(value.analysis_release) &&
+    [
+      "descriptive",
+      "deterministic",
+      "research_preview",
+      "independently_validated",
+      "non_evaluable",
+    ].includes(String(value.evidence_tier)) &&
+    ["evaluable", "not_evaluable", "unavailable"].includes(
+      String(value.evaluability),
+    )
   );
 }
 
@@ -210,6 +262,7 @@ function assertFrozenScope(
 ) {
   const expectedVersion = selected.release_id;
   const expectedMethodology = summary.methodology_version;
+  const analysisRelease = summary.analysis_release;
   if (
     summary.election_slug !== selected.election_slug ||
     summary.data_version !== expectedVersion ||
@@ -218,11 +271,19 @@ function assertFrozenScope(
     throw new Error("Analysis resources crossed immutable release scope.");
   }
   if (
-    anomalies.methodology_version !== expectedMethodology ||
-    (selected.methodology_version !== null &&
-      selected.methodology_version !== expectedMethodology)
+    summary.methodology_version !== analysisRelease.methodology_version ||
+    anomalies.methodology_version !== expectedMethodology
   ) {
     throw new Error("Analysis resources crossed methodology versions.");
+  }
+  if (
+    analysisRelease.source_release_id !== selected.release_id ||
+    analysisRelease.election_slug !== selected.election_slug ||
+    analysisRelease.methodology_version !== expectedMethodology ||
+    anomalies.analysis_release.analysis_release_id !==
+      analysisRelease.analysis_release_id
+  ) {
+    throw new Error("Analysis resources crossed immutable analysis scope.");
   }
   for (const anomaly of anomalies.items) {
     if (!isAnalysisAnomaly(anomaly)) {
@@ -232,7 +293,9 @@ function assertFrozenScope(
     }
     if (
       anomaly.methodology_version !== expectedMethodology ||
-      anomaly.provenance.data_version !== expectedVersion
+      anomaly.provenance.data_version !== expectedVersion ||
+      anomaly.analysis_release.analysis_release_id !==
+        analysisRelease.analysis_release_id
     ) {
       throw new Error("An anomaly crossed immutable release scope.");
     }
@@ -241,7 +304,9 @@ function assertFrozenScope(
     if (
       report.report_kind !== kind ||
       report.methodology_version !== expectedMethodology ||
-      report.provenance.data_version !== expectedVersion
+      report.provenance.data_version !== expectedVersion ||
+      report.analysis_release.analysis_release_id !==
+        analysisRelease.analysis_release_id
     ) {
       throw new Error("An analytical report crossed immutable release scope.");
     }
@@ -250,7 +315,9 @@ function assertFrozenScope(
     outcome &&
     (outcome.release_id !== expectedVersion ||
       outcome.election_slug !== selected.election_slug ||
-      outcome.data_version !== expectedVersion)
+      outcome.data_version !== expectedVersion ||
+      outcome.analysis_release.analysis_release_id !==
+        analysisRelease.analysis_release_id)
   ) {
     throw new Error("Outcome sensitivity crossed immutable release scope.");
   }
@@ -258,7 +325,7 @@ function assertFrozenScope(
 
 async function optionalJson<T>(pathname: string): Promise<T | null> {
   try {
-    return await publicApiJson<T>(pathname);
+    return await publicApiJson<T>(pathname, "exposure");
   } catch (error) {
     if (error instanceof PublicApiError && error.status === 404) return null;
     throw error;
@@ -274,20 +341,40 @@ export async function getPublicAnalysis(
   let releases: PublicReleaseRef[] = [];
   let selected: PublicReleaseRef | undefined;
   try {
-    const selection = await getPublicReleaseSelection(filters);
+    const selection = await getPublicReleaseSelection(filters, "exposure");
     releases = selection.releases;
     selected = selection.selected;
     if (!selected) return { status: "no_release", releases, filters };
 
     const prefix = prefixFor(selected);
-    const anomalyQuery = new URLSearchParams({ limit: "25" });
+    const summaryPath = filters.analysisRelease
+      ? withAnalysisRelease(
+          `${prefix}/analysis/summary`,
+          filters.analysisRelease,
+        )
+      : `${prefix}/analysis/summary`;
+    const summary = await optionalJson<AnalysisSummary>(summaryPath);
+    if (!summary) {
+      return {
+        status: "unavailable",
+        releases,
+        selected,
+        filters,
+        error: { status: 404, message: "Published analysis is unavailable." },
+      };
+    }
+    const resolvedAnalysisRelease =
+      summary.analysis_release.analysis_release_id;
+    const anomalyQuery = new URLSearchParams({
+      limit: "25",
+      analysis_release: resolvedAnalysisRelease,
+    });
     if (filters.cursor) anomalyQuery.set("cursor", filters.cursor);
     if (filters.anomalyType)
       anomalyQuery.set("anomaly_type", filters.anomalyType);
 
-    const [summary, anomalies, reportValues, outcomeSensitivity] =
+    const [anomalies, reportValues, outcomeSensitivity, artifacts] =
       await Promise.all([
-        optionalJson<AnalysisSummary>(`${prefix}/analysis/summary`),
         optionalJson<AnalysisAnomalyPage>(
           `${prefix}/analysis/anomalies?${anomalyQuery}`,
         ),
@@ -297,14 +384,28 @@ export async function getPublicAnalysis(
               [
                 kind,
                 await optionalJson<AnalysisReport>(
-                  `${prefix}/analysis/${kind}`,
+                  withAnalysisRelease(
+                    `${prefix}/analysis/${kind}`,
+                    resolvedAnalysisRelease,
+                  ),
                 ),
               ] as const,
           ),
         ),
-        optionalJson<OutcomeSensitivity>(`${prefix}/outcome-sensitivity`),
+        optionalJson<OutcomeSensitivity>(
+          withAnalysisRelease(
+            `${prefix}/outcome-sensitivity`,
+            resolvedAnalysisRelease,
+          ),
+        ),
+        optionalJson<S["AnalysisArtifactPage"]>(
+          withAnalysisRelease(
+            `${prefix}/analysis/artifacts`,
+            resolvedAnalysisRelease,
+          ),
+        ),
       ]);
-    if (!summary || !anomalies) {
+    if (!anomalies) {
       return {
         status: "unavailable",
         releases,
@@ -314,27 +415,49 @@ export async function getPublicAnalysis(
       };
     }
     const reports = Object.fromEntries(
-      reportValues.filter(
-        (entry): entry is readonly [AnalysisReportKind, AnalysisReport] =>
-          entry[1] !== null,
+      reportValues.map(([kind, report]) => [
+        kind,
+        report
+          ? { status: "available" as const, value: report }
+          : {
+              status: "unavailable" as const,
+              reason: "report_not_published",
+            },
+      ]),
+    ) as Record<AnalysisReportKind, AnalysisResource<AnalysisReport>>;
+    const availableReports = Object.fromEntries(
+      Object.entries(reports).flatMap(([kind, resource]) =>
+        resource.status === "available" ? [[kind, resource.value]] : [],
       ),
     ) as Partial<Record<AnalysisReportKind, AnalysisReport>>;
     assertFrozenScope(
       selected,
       summary,
       anomalies,
-      reports,
+      availableReports,
       outcomeSensitivity,
     );
+    if (
+      artifacts &&
+      artifacts.analysis_release.analysis_release_id !== resolvedAnalysisRelease
+    ) {
+      throw new Error("Artifacts crossed immutable analysis scope.");
+    }
     return {
       status: "ready",
       releases,
       selected,
       filters,
+      analysisRelease: summary.analysis_release,
       summary,
       anomalies,
       reports,
-      outcomeSensitivity,
+      outcomeSensitivity: outcomeSensitivity
+        ? { status: "available", value: outcomeSensitivity }
+        : { status: "unavailable", reason: "report_not_published" },
+      artifacts: artifacts
+        ? { status: "available", value: artifacts.items }
+        : { status: "unavailable", reason: "artifact_manifest_not_published" },
     };
   } catch (error) {
     return {
@@ -349,7 +472,10 @@ export async function getPublicAnalysis(
 
 export async function getPublicAnalysisAnomaly(
   anomalyId: string,
-  filters: Pick<PublicAnalysisFilters, "release" | "election"> = {},
+  filters: Pick<
+    PublicAnalysisFilters,
+    "release" | "election" | "analysisRelease"
+  > = {},
 ): Promise<PublicAnomalyDetailState> {
   if (!publicNormalizedApiConfigured()) {
     return { status: "fixture", releases: [] };
@@ -357,21 +483,25 @@ export async function getPublicAnalysisAnomaly(
   let releases: PublicReleaseRef[] = [];
   let selected: PublicReleaseRef | undefined;
   try {
-    const selection = await getPublicReleaseSelection(filters);
+    const selection = await getPublicReleaseSelection(filters, "exposure");
     releases = selection.releases;
     selected = selection.selected;
     if (!selected) return { status: "no_release", releases };
     const prefix = prefixFor(selected);
+    const detailPath = `${prefix}/analysis/anomalies/${encodeURIComponent(anomalyId)}`;
     const value = await publicApiJson<unknown>(
-      `${prefix}/analysis/anomalies/${encodeURIComponent(anomalyId)}`,
+      filters.analysisRelease
+        ? withAnalysisRelease(detailPath, filters.analysisRelease)
+        : detailPath,
+      "exposure",
     );
     if (!isAnalysisAnomaly(value)) {
       throw new Error("The anomaly detail does not match the frozen contract.");
     }
     if (
       value.provenance.data_version !== selected.release_id ||
-      (selected.methodology_version !== null &&
-        value.methodology_version !== selected.methodology_version)
+      value.analysis_release.source_release_id !== selected.release_id ||
+      value.analysis_release.election_slug !== selected.election_slug
     ) {
       throw new Error("The anomaly detail crossed immutable release scope.");
     }

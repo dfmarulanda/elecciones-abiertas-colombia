@@ -34,6 +34,32 @@ describe("SEO sitemap partitions", () => {
     expect(urls.every((item) => item.lastmod === catalog.lastmod)).toBe(true);
   });
 
+  it("adds a scoped analytics URL only for a certified bound analysis", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://analysis.example.org");
+    const base: SeoSitemapCatalog = {
+      lastmod: "2026-08-04T12:00:00Z",
+      release: { release_id: "release-1", election_slug: "election-1" },
+      departments: [],
+      municipalities: [],
+    };
+
+    expect(
+      sitemapUrls(base, "national").some((item) =>
+        item.loc.includes("analitica"),
+      ),
+    ).toBe(false);
+    const urls = sitemapUrls(
+      { ...base, analysisReleaseId: "analysis-certified-1" },
+      "national",
+    );
+    const analytics = urls.filter((item) => item.loc.includes("/analitica"));
+    expect(analytics).toHaveLength(2);
+    expect(analytics[0]?.loc).toContain(
+      "analysis_release=analysis-certified-1",
+    );
+    expect(analytics[0]?.loc).toContain("release=release-1");
+  });
+
   it("never exceeds the protocol's 50,000 URL cap when both locales are emitted", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://analysis.example.org");
     const catalog: SeoSitemapCatalog = {

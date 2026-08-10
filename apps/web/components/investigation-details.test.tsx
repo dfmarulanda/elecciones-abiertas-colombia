@@ -11,9 +11,25 @@ import {
   ReviewSignalDetails,
 } from "./investigation-details";
 
-type Outcome = components["schemas"]["OutcomeSensitivity"];
+type Outcome = components["schemas"]["AnalysisOutcomeSensitivity"];
 
 const base: Outcome = {
+  analysis_release: {
+    analysis_release_id: "analysis-release-1",
+    methodology_version: "analysis-method-v1",
+    source_release_id: "release-public",
+    election_slug: "presidencia-2026",
+    exposure_tier: "preliminary_research",
+    preliminary_caveat: { es: "Preliminar.", en: "Preliminary." },
+    artifact_status: "not_evaluable",
+    evaluable: false,
+    status_reasons: ["documentary_registry_not_validated"],
+    canonical_input_hash: "a".repeat(64),
+    manifest_hash: "a".repeat(64),
+    provenance_hash: "a".repeat(64),
+    generated_at: "2026-08-10T12:00:00Z",
+    approved_at: "2026-08-10T13:00:00Z",
+  },
   release_id: "release-public",
   election_slug: "presidencia-2026",
   data_version: "release-public",

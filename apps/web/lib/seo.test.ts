@@ -49,7 +49,12 @@ describe("release SEO eligibility", () => {
       release: fixture,
       page: "national",
     });
-    expect(metadata.robots).toMatchObject({ index: false, follow: false });
+    expect(metadata.robots).toEqual({
+      index: false,
+      follow: false,
+      nocache: true,
+    });
+    expect(metadata.alternates).toMatchObject({ canonical: "/es/resultados" });
   });
 
   it("indexes only a published, complete, reconciled real release", () => {

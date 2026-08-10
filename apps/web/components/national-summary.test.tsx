@@ -50,7 +50,7 @@ function translator(locale: "es" | "en") {
 function renderSummary(
   release: ReleaseView,
   locale: "es" | "en",
-  outcomeSensitivity: components["schemas"]["OutcomeSensitivity"] | null = null,
+  outcomeSensitivity: components["schemas"]["AnalysisOutcomeSensitivity"] | null = null,
 ) {
   return render(
     <NationalSummary

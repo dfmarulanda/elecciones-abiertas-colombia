@@ -3,9 +3,29 @@ import process from "node:process";
 import { URL } from "node:url";
 
 const port = Number(process.env.NORMALIZED_MOCK_PORT ?? 3210);
-const releaseId = "release-2026-r2-public";
+const releaseId = "candidate-2026-r2-dacb28aa766eec87";
 const election = "presidencia-2026-segunda-vuelta";
 const hash = "a".repeat(64);
+const analysisMethodology = "analysis-release-v1.0.0";
+const analysisRelease = {
+  analysis_release_id: "analysis-c0861cb0e75421d1aef02335",
+  methodology_version: analysisMethodology,
+  source_release_id: releaseId,
+  election_slug: election,
+  exposure_tier: "preliminary_research",
+  preliminary_caveat: {
+    es: "Investigación preliminar; no es una conclusión certificada.",
+    en: "Preliminary research; this is not a certified conclusion.",
+  },
+  artifact_status: "research_preview",
+  evaluable: true,
+  status_reasons: ["independent_validation_pending"],
+  canonical_input_hash: hash,
+  manifest_hash: hash,
+  provenance_hash: hash,
+  generated_at: "2026-08-03T11:00:00Z",
+  approved_at: "2026-08-03T12:00:00Z",
+};
 // This real historical candidate is intentionally not returned by
 // /release-elections: it is context_only and has not been published. It is
 // retained here only to prove that a URL cannot turn it into a public baseline
@@ -68,16 +88,21 @@ const releases = [
     name_en,
     round,
     election_date,
-    status: "published",
+    status: release_id === releaseId ? "candidate" : "published",
     methodology_version: "method-v1",
     release_manifest_hash: hash,
-    exposure_approved_at: "2026-08-03T12:00:00Z",
+    exposure_approved_at:
+      release_id === releaseId ? null : "2026-08-03T12:00:00Z",
     sources: [
       {
         id: "source-scrutiny",
-        source_type: "scrutiny",
-        legal_status: "official_scrutiny",
-        source_url: "https://example.test/e24",
+        source_type: release_id === releaseId ? "pre_count" : "scrutiny",
+        legal_status:
+          release_id === releaseId ? "preliminary" : "official_scrutiny",
+        source_url:
+          release_id === releaseId
+            ? "https://example.test/precount"
+            : "https://example.test/e24",
         content_hash: hash,
       },
       {
@@ -156,15 +181,21 @@ const metric = (
   value,
   status = value === null ? "unavailable" : "observed",
 ) => ({ value, status });
-const provenance = (sourceType = "scrutiny") => ({
+const provenance = (sourceType = "pre_count") => ({
   data_version: releaseId,
   source_type: sourceType,
   legal_status:
-    sourceType === "contextual_baseline" ? "context_only" : "official_scrutiny",
+    sourceType === "contextual_baseline"
+      ? "context_only"
+      : sourceType === "pre_count"
+        ? "preliminary"
+        : "official_scrutiny",
   source_url:
     sourceType === "contextual_baseline"
       ? "https://example.test/context"
-      : "https://example.test/e24",
+      : sourceType === "pre_count"
+        ? "https://example.test/precount"
+        : "https://example.test/e24",
   retrieved_at: "2026-08-03T12:00:00Z",
   content_hash: hash,
   parser_version: "parser-v1",
@@ -176,7 +207,7 @@ const fact = (
   geographyId,
   level,
   mesaId = null,
-  sourceType = "scrutiny",
+  sourceType = "pre_count",
 ) => ({
   id,
   election_slug: election,
@@ -243,7 +274,7 @@ const documentaryComponent = {
 const peerComponent = {
   ...documentaryComponent,
   component_type: "peer_distribution",
-  points: 10,
+  points: 0,
   observed_value: 0.62,
   comparator: "Leave-one-out municipality peers: 0.48",
   calculation: "Posterior-predictive peer comparison",
@@ -282,9 +313,17 @@ const anomalyBase = {
   minimum_ballot_edits_reason:
     "complete_mutually_exclusive_ballot_categories_not_published",
   research_preview: true,
-  methodology_version: "method-v1",
+  methodology_version: analysisMethodology,
   disclosure: analysisDisclosure,
   provenance: provenance(),
+  analysis_release: analysisRelease,
+  evidence_tier: "research_preview",
+  evaluability: "evaluable",
+  public_evidence: {},
+  calculations: {},
+  limitations: ["Research preview."],
+  provenance_hash: hash,
+  typed_components: [],
 };
 const analysisAnomalies = [
   {
@@ -294,6 +333,8 @@ const analysisAnomalies = [
     anomaly_types: ["cross_source_documentary"],
     audit_priority_score: 70,
     components: [documentaryComponent],
+    family: "cross-source-documentary",
+    evidence_tier: "deterministic",
     ineligible_reasons: [
       "legacy_release_has_no_preregistered_explanation_artifact",
       "complete_ballot_vector_not_published",
@@ -304,8 +345,9 @@ const analysisAnomalies = [
     id: "analysis-anomaly-002",
     mesa_id: "MESA-002",
     anomaly_types: ["peer_distribution"],
-    audit_priority_score: 10,
+    audit_priority_score: 0,
     components: [peerComponent],
+    family: "peer-distribution",
     ineligible_reasons: [
       "independent_simulation_validation_artifact_not_published",
     ],
@@ -314,7 +356,7 @@ const analysisAnomalies = [
 const analysisSummary = {
   election_slug: election,
   data_version: releaseId,
-  methodology_version: "method-v1",
+  methodology_version: analysisMethodology,
   total_records_evaluated: metric(2),
   anomaly_count: metric(2),
   anomaly_counts: {
@@ -332,6 +374,7 @@ const analysisSummary = {
   ],
   disclosure: analysisDisclosure,
   provenance: provenance(),
+  analysis_release: analysisRelease,
 };
 const report = (report_kind) => ({
   report_kind,
@@ -346,15 +389,17 @@ const report = (report_kind) => ({
             "hierarchical_model_not_implemented",
             "psis_diagnostics_not_implemented",
           ],
-  methodology_version: "method-v1",
+  methodology_version: analysisMethodology,
   artifact_hash: null,
   missingness: coverage,
   provenance: provenance(),
   disclosure: analysisDisclosure,
   metrics:
     report_kind === "validation" ? { false_discovery_rate: metric(0) } : {},
+  analysis_release: analysisRelease,
 });
 const outcomeSensitivity = {
+  analysis_release: analysisRelease,
   release_id: releaseId,
   election_slug: election,
   data_version: releaseId,
@@ -427,8 +472,9 @@ createServer((request, response) => {
         limit: 25,
       },
       data_version: releaseId,
-      methodology_version: "method-v1",
+      methodology_version: analysisMethodology,
       disclosure: analysisDisclosure,
+      analysis_release: analysisRelease,
     });
   }
   const anomalyMatch = url.pathname.match(
@@ -448,6 +494,25 @@ createServer((request, response) => {
     ),
   );
   if (reportMatch) return send(response, 200, report(reportMatch[1]));
+  if (url.pathname === `${prefix}/analysis/artifacts`)
+    return send(response, 200, {
+      items: [
+        {
+          artifact_id: "run-manifest",
+          kind: "run_manifest",
+          schema_version: "1",
+          media_type: "application/json",
+          record_count: 1,
+          byte_size: 100,
+          byte_hash: hash,
+          content_hash: hash,
+          url: `https://artifacts.example.test/${hash}/manifest.json`,
+          status: "available",
+          status_reasons: [],
+        },
+      ],
+      analysis_release: analysisRelease,
+    });
   if (url.pathname === `${prefix}/outcome-sensitivity`)
     return send(response, 200, outcomeSensitivity);
   if (url.pathname === `${prefix}/historical-comparison`) {
@@ -537,7 +602,7 @@ createServer((request, response) => {
       });
     const source = url.searchParams.get("source_type");
     const results =
-      source === "pre_count"
+      source && source !== "pre_count"
         ? []
         : [
             fact(
@@ -545,7 +610,7 @@ createServer((request, response) => {
               "MESA-001",
               "mesa",
               "MESA-001",
-              source || "scrutiny",
+              source || "pre_count",
             ),
           ];
     return send(response, 200, {

@@ -37,6 +37,7 @@ export type SeoSitemapCatalog = {
   release: Pick<PublicRelease, "release_id" | "election_slug">;
   departments: Geography[];
   municipalities: Geography[];
+  analysisReleaseId?: string;
 };
 
 function apiBase() {
@@ -53,6 +54,14 @@ async function apiJson<T>(pathname: string) {
   if (!response.ok)
     throw new Error(`Sitemap API request failed (${response.status}).`);
   return (await response.json()) as T;
+}
+
+async function optionalApiJson<T>(pathname: string) {
+  try {
+    return await apiJson<T>(pathname);
+  } catch {
+    return null;
+  }
 }
 
 async function children(release: PublicRelease, parent: string) {
@@ -122,6 +131,22 @@ async function uncachedCatalog(): Promise<SeoSitemapCatalog | null> {
   ) {
     return null;
   }
+  const analysis = await optionalApiJson<{
+    analysis_release: {
+      analysis_release_id: string;
+      source_release_id: string;
+      election_slug: string;
+      exposure_tier: "preliminary_research" | "certified_public";
+    };
+  }>(
+    `/api/v1/releases/${encodeURIComponent(release.release_id)}/elections/${encodeURIComponent(release.election_slug)}/analysis/summary`,
+  );
+  const analysisReleaseId =
+    analysis?.analysis_release.exposure_tier === "certified_public" &&
+    analysis.analysis_release.source_release_id === release.release_id &&
+    analysis.analysis_release.election_slug === release.election_slug
+      ? analysis.analysis_release.analysis_release_id
+      : undefined;
   const departments = (await children(release, "CO")).filter(
     (item) => item.level === "department" && item.has_published_facts,
   );
@@ -137,12 +162,13 @@ async function uncachedCatalog(): Promise<SeoSitemapCatalog | null> {
     release,
     departments,
     municipalities,
+    analysisReleaseId,
   };
 }
 
 export const getSeoSitemapCatalog = unstable_cache(
   uncachedCatalog,
-  ["seo-sitemap-v1"],
+  ["seo-sitemap-v2"],
   {
     revalidate: SEO_REVALIDATE_SECONDS,
     tags: ["seo-sitemaps"],
@@ -183,15 +209,28 @@ export function sitemapUrls(
   partition: SitemapPartition,
 ): SitemapUrl[] {
   if (!catalog) return [];
-  const both = (pathname: string) => [
-    ...localizedUrls("es", scopedPath(catalog, pathname), catalog.lastmod),
-    ...localizedUrls("en", scopedPath(catalog, pathname), catalog.lastmod),
+  const both = (pathname: string, extra?: Record<string, string>) => [
+    ...localizedUrls(
+      "es",
+      scopedPath(catalog, pathname, extra),
+      catalog.lastmod,
+    ),
+    ...localizedUrls(
+      "en",
+      scopedPath(catalog, pathname, extra),
+      catalog.lastmod,
+    ),
   ];
   if (partition === "national")
     return [
       ...localizedUrls("es", "", catalog.lastmod),
       ...localizedUrls("en", "", catalog.lastmod),
       ...both("/resultados"),
+      ...(catalog.analysisReleaseId
+        ? both("/analitica", {
+            analysis_release: catalog.analysisReleaseId,
+          })
+        : []),
     ];
   const rows =
     partition === "departments"
@@ -205,10 +244,15 @@ export function sitemapUrls(
   );
 }
 
-function scopedPath(catalog: SeoSitemapCatalog, pathname: string) {
+function scopedPath(
+  catalog: SeoSitemapCatalog,
+  pathname: string,
+  extra: Record<string, string> = {},
+) {
   const query = new URLSearchParams({
     release: catalog.release.release_id,
     election: catalog.release.election_slug,
+    ...extra,
   });
   return `${pathname}?${query}`;
 }

@@ -33,6 +33,10 @@ AnomalyType = Literal[
     "peer_distribution",
     "spatial",
 ]
+AnalysisAvailabilityStatus = Literal[
+    "available", "research_preview", "not_evaluable", "unavailable", "withheld"
+]
+AnalysisArtifactStatus = Literal["available", "not_evaluable", "unavailable", "withheld"]
 ExplanationStatus = Literal[
     "explained",
     "partially_explained",
@@ -1119,6 +1123,53 @@ class ExplanationMetadata(StrictModel):
         return self
 
 
+class AnalysisReleaseMetadata(StrictModel):
+    analysis_release_id: str = Field(min_length=1)
+    methodology_version: str = Field(min_length=1)
+    source_release_id: str = Field(min_length=1)
+    election_slug: str = Field(min_length=1)
+    exposure_tier: Literal["preliminary_research", "certified_public"]
+    preliminary_caveat: LocalizedText | None
+    artifact_status: AnalysisAvailabilityStatus
+    evaluable: bool
+    status_reasons: list[Annotated[str, Field(min_length=1)]]
+    canonical_input_hash: str = Field(pattern=_SHA256_PATTERN)
+    manifest_hash: str = Field(pattern=_SHA256_PATTERN)
+    provenance_hash: str = Field(pattern=_SHA256_PATTERN)
+    generated_at: datetime
+    approved_at: datetime
+
+    @model_validator(mode="after")
+    def exposure_metadata_is_consistent(self) -> "AnalysisReleaseMetadata":
+        if self.exposure_tier == "preliminary_research":
+            if self.preliminary_caveat is None:
+                raise ValueError("Preliminary analysis requires a bilingual caveat")
+            if not self.preliminary_caveat.es or not self.preliminary_caveat.en:
+                raise ValueError("Preliminary analysis caveats cannot be empty")
+        elif self.preliminary_caveat is not None:
+            raise ValueError("Certified analysis cannot carry preliminary framing")
+        if self.evaluable and self.artifact_status in {
+            "not_evaluable",
+            "unavailable",
+            "withheld",
+        }:
+            raise ValueError(
+                "An evaluable analysis release must expose an evaluable artifact status"
+            )
+        return self
+
+
+class AnalysisAnomalyComponent(StrictModel):
+    component_id: str = Field(min_length=1)
+    component_type: str = Field(min_length=1)
+    evidence_type: str = Field(min_length=1)
+    points: int = Field(ge=0, le=100)
+    value: float | None
+    unit: str | None
+    public_payload: dict[str, Any]
+    provenance_hash: str = Field(pattern=_SHA256_PATTERN)
+
+
 class AnalysisAnomaly(StrictModel):
     id: str = Field(min_length=1)
     mesa_id: str = Field(min_length=1)
@@ -1135,6 +1186,21 @@ class AnalysisAnomaly(StrictModel):
     methodology_version: str = Field(min_length=1)
     disclosure: LocalizedText
     provenance: Provenance
+    analysis_release: AnalysisReleaseMetadata
+    family: str = Field(min_length=1)
+    evidence_tier: Literal[
+        "descriptive",
+        "deterministic",
+        "research_preview",
+        "independently_validated",
+        "non_evaluable",
+    ]
+    evaluability: Literal["evaluable", "not_evaluable", "unavailable"]
+    public_evidence: dict[str, Any]
+    calculations: dict[str, Any]
+    limitations: list[Annotated[str, Field(min_length=1)]]
+    provenance_hash: str = Field(pattern=_SHA256_PATTERN)
+    typed_components: list[AnalysisAnomalyComponent]
 
     @model_validator(mode="after")
     def anomaly_semantics_are_separate_from_explanation(self) -> "AnalysisAnomaly":
@@ -1150,6 +1216,36 @@ class AnalysisAnomaly(StrictModel):
             or self.disclosure.en != ANALYTICAL_DISCLOSURE_EN
         ):
             raise ValueError("analysis disclosure is a permanent anti-fraud wording")
+        if (
+            self.evidence_tier in {"research_preview", "non_evaluable"}
+            and self.audit_priority_score != 0
+        ):
+            raise ValueError("research-preview and non-evaluable evidence has zero priority")
+        statistical_types = {"peer_distribution", "spatial", "spatial_cluster"}
+        statistical_points = sum(
+            component.points
+            for component in self.typed_components
+            if component.component_type in statistical_types
+        )
+        if statistical_points > 20:
+            raise ValueError("statistical evidence is capped at twenty priority points")
+        if any(
+            component.evidence_type == "research_preview" and component.points != 0
+            for component in self.typed_components
+        ):
+            raise ValueError("research-preview components contribute zero public points")
+        preliminary_statistical_points = any(
+            component.component_type in statistical_types and component.points != 0
+            for component in self.components
+        ) or any(
+            component.component_type in statistical_types and component.points != 0
+            for component in self.typed_components
+        )
+        if (
+            self.analysis_release.exposure_tier == "preliminary_research"
+            and preliminary_statistical_points
+        ):
+            raise ValueError("preliminary statistical evidence contributes zero public points")
         return self
 
 
@@ -1159,6 +1255,7 @@ class AnalysisAnomalyPage(StrictModel):
     data_version: str
     methodology_version: str
     disclosure: LocalizedText
+    analysis_release: AnalysisReleaseMetadata
 
 
 class AnalysisSummary(StrictModel):
@@ -1173,6 +1270,7 @@ class AnalysisSummary(StrictModel):
     ineligible_reasons: list[str]
     disclosure: LocalizedText
     provenance: Provenance
+    analysis_release: AnalysisReleaseMetadata
 
     @model_validator(mode="after")
     def summary_disclosure_is_permanent(self) -> "AnalysisSummary":
@@ -1195,6 +1293,7 @@ class AnalysisReport(StrictModel):
     provenance: Provenance
     disclosure: LocalizedText
     metrics: dict[str, SignalNumber]
+    analysis_release: AnalysisReleaseMetadata
 
     @model_validator(mode="after")
     def report_disclosure_is_permanent(self) -> "AnalysisReport":
@@ -1306,6 +1405,7 @@ class OutcomeSensitivityArtifact(StrictModel):
                 "data_version",
                 "margin_shift_factor",
                 "output_hash",
+                "analysis_release",
             }
         }
         encoded = json.dumps(
@@ -1322,7 +1422,13 @@ class OutcomeSensitivityArtifact(StrictModel):
     def pipeline_artifact_payload(self) -> dict[str, object]:
         payload = self.model_dump(
             mode="json",
-            exclude={"release_id", "election_slug", "data_version", "margin_shift_factor"},
+            exclude={
+                "release_id",
+                "election_slug",
+                "data_version",
+                "margin_shift_factor",
+                "analysis_release",
+            },
         )
         payload.pop("output_hash")
         return payload
@@ -1446,12 +1552,59 @@ class OutcomeSensitivity(OutcomeSensitivityArtifact):
     election_slug: str
     data_version: str
     margin_shift_factor: Literal[2]
+    # The pipeline-bound core remains independently reusable. Public HTTP
+    # responses use AnalysisOutcomeSensitivity, where this field is required.
+    analysis_release: AnalysisReleaseMetadata | None = None
 
     @model_validator(mode="after")
     def release_scope_is_consistent(self) -> "OutcomeSensitivity":
         if self.data_version != self.release_id:
             raise ValueError("Outcome sensitivity data_version must equal release_id")
         return self
+
+
+class AnalysisOutcomeSensitivity(OutcomeSensitivity):
+    analysis_release: AnalysisReleaseMetadata
+
+
+class AnalysisArtifactMetadata(StrictModel):
+    artifact_id: str = Field(min_length=1)
+    kind: str = Field(min_length=1)
+    schema_version: str = Field(min_length=1)
+    media_type: Literal[
+        "application/json",
+        "application/schema+json",
+        "application/vnd.apache.parquet",
+        "text/plain",
+    ]
+    record_count: int = Field(ge=0)
+    byte_size: int = Field(ge=0)
+    byte_hash: str = Field(pattern=_SHA256_PATTERN)
+    content_hash: str = Field(pattern=_SHA256_PATTERN)
+    url: HttpUrl | None
+    status: AnalysisArtifactStatus
+    status_reasons: list[Annotated[str, Field(min_length=1)]]
+
+    @model_validator(mode="after")
+    def immutable_url_is_content_addressed(self) -> "AnalysisArtifactMetadata":
+        if self.status == "available" and self.url is None:
+            raise ValueError("Available analysis artifacts require an immutable URL")
+        if self.status != "available" and self.url is not None:
+            raise ValueError("Unavailable analysis artifacts cannot expose a download URL")
+        url = "" if self.url is None else str(self.url)
+        if self.url is not None and self.byte_hash not in url:
+            raise ValueError("Analysis artifact URLs must be content-addressed by byte hash")
+        return self
+
+
+class AnalysisArtifactPage(StrictModel):
+    items: list[AnalysisArtifactMetadata]
+    analysis_release: AnalysisReleaseMetadata
+
+
+class AnalysisArtifactDetail(StrictModel):
+    item: AnalysisArtifactMetadata
+    analysis_release: AnalysisReleaseMetadata
 
 
 class Dataset(StrictModel):

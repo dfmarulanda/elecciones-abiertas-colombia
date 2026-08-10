@@ -190,7 +190,7 @@ export function NationalSummary({
   release: ReleaseView;
   locale: Locale;
   t: Text;
-  outcomeSensitivity: components["schemas"]["OutcomeSensitivity"] | null;
+  outcomeSensitivity: components["schemas"]["AnalysisOutcomeSensitivity"] | null;
 }) {
   const data = release.summary;
   const href = (path: string) => `/${locale}${path}`;

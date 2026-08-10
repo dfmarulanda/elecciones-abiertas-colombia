@@ -3,6 +3,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  ANALYTICAL_DISCLOSURE_EN,
+  ANALYTICAL_DISCLOSURE_ES,
+  AnalysisAnomalySchema,
+  AnalysisArtifactMetadataSchema,
+  AnalysisReleaseMetadataSchema,
   ContextElectionSummarySchema,
   EvidenceDocumentSchema,
   GeographicCollectionCoverageSchema,
@@ -16,6 +21,137 @@ import {
 } from "./schemas";
 
 describe("shared data contracts", () => {
+  it("rejects public points from preliminary statistical evidence", () => {
+    const hash = "a".repeat(64);
+    const anomaly = {
+      id: "peer-1",
+      mesa_id: "mesa-1",
+      anomaly_types: ["peer_distribution" as const],
+      is_anomaly: true,
+      audit_priority_score: 0,
+      explanation: {
+        status: "non_evaluable" as const,
+        preregistration_hash: null,
+        available_data_hash: null,
+        reviewed_at: null,
+        quantitative_effect: { value: null, status: "unknown" as const },
+        quantitative_p_value: { value: null, status: "unknown" as const },
+        notes: null,
+      },
+      minimum_ballot_edits: { value: null, status: "unknown" as const },
+      minimum_ballot_edits_status: "not_evaluable" as const,
+      minimum_ballot_edits_reason: "documentary_bound_unavailable",
+      components: [],
+      research_preview: true,
+      ineligible_reasons: ["independent_validation_pending"],
+      methodology_version: "analysis-v1",
+      disclosure: {
+        es: ANALYTICAL_DISCLOSURE_ES,
+        en: ANALYTICAL_DISCLOSURE_EN,
+      },
+      provenance: {
+        data_version: "release-1",
+        source_type: "pre_count" as const,
+        legal_status: "preliminary" as const,
+        source_url: "https://official.example/source.json",
+        retrieved_at: "2026-08-10T10:00:00Z",
+        content_hash: hash,
+        parser_version: "parser-v1",
+        transform_version: "transform-v1",
+        methodology_version: "analysis-v1",
+      },
+      analysis_release: {
+        analysis_release_id: "analysis-1",
+        methodology_version: "analysis-v1",
+        source_release_id: "release-1",
+        election_slug: "election-1",
+        exposure_tier: "preliminary_research" as const,
+        preliminary_caveat: { es: "Preliminar", en: "Preliminary" },
+        artifact_status: "research_preview" as const,
+        evaluable: true,
+        status_reasons: ["independent_validation_pending"],
+        canonical_input_hash: hash,
+        manifest_hash: hash,
+        provenance_hash: hash,
+        generated_at: "2026-08-10T10:00:00Z",
+        approved_at: "2026-08-10T11:00:00Z",
+      },
+      family: "peer_distribution",
+      evidence_tier: "research_preview" as const,
+      evaluability: "evaluable" as const,
+      public_evidence: {},
+      calculations: {},
+      limitations: ["Research preview."],
+      provenance_hash: hash,
+      typed_components: [
+        {
+          component_id: "peer-1:component-1",
+          component_type: "peer_distribution",
+          evidence_type: "research_preview",
+          points: 0,
+          value: 0.1,
+          unit: "share",
+          public_payload: {},
+          provenance_hash: hash,
+        },
+      ],
+    };
+    expect(AnalysisAnomalySchema.parse(anomaly).audit_priority_score).toBe(0);
+    expect(() =>
+      AnalysisAnomalySchema.parse({ ...anomaly, audit_priority_score: 10 }),
+    ).toThrow();
+    expect(() =>
+      AnalysisAnomalySchema.parse({
+        ...anomaly,
+        typed_components: [{ ...anomaly.typed_components[0], points: 10 }],
+      }),
+    ).toThrow();
+  });
+
+  it("binds public analysis metadata and artifacts to immutable hashes", () => {
+    const hash = "a".repeat(64);
+    const metadata = {
+      analysis_release_id: "analysis-1",
+      methodology_version: "analysis-v1",
+      source_release_id: "release-1",
+      election_slug: "election-1",
+      exposure_tier: "preliminary_research" as const,
+      preliminary_caveat: { es: "Preliminar", en: "Preliminary" },
+      artifact_status: "research_preview" as const,
+      evaluable: true,
+      status_reasons: ["research_only"],
+      canonical_input_hash: hash,
+      manifest_hash: hash,
+      provenance_hash: hash,
+      generated_at: "2026-08-10T10:00:00Z",
+      approved_at: "2026-08-10T11:00:00Z",
+    };
+    expect(
+      AnalysisReleaseMetadataSchema.parse(metadata).analysis_release_id,
+    ).toBe("analysis-1");
+    expect(() =>
+      AnalysisReleaseMetadataSchema.parse({
+        ...metadata,
+        preliminary_caveat: null,
+      }),
+    ).toThrow();
+    expect(
+      AnalysisArtifactMetadataSchema.parse({
+        artifact_id: "manifest",
+        kind: "manifest",
+        schema_version: "1",
+        media_type: "application/json",
+        record_count: 1,
+        byte_size: 100,
+        byte_hash: hash,
+        content_hash: hash,
+        url: `https://eleccionesabiertas.co/artifacts/${hash}.json`,
+        status: "available",
+        status_reasons: [],
+      }).status,
+    ).toBe("available");
+  });
+
   it("preserves observed zero separately from unavailable data", () => {
     expect(MetricValueSchema.parse({ value: 0, status: "observed" })).toEqual({
       value: 0,
@@ -78,7 +214,11 @@ describe("shared data contracts", () => {
         observed_category_facts: 1,
         reason: "Observed rows are not a denominator",
       },
-      reconciliation: { status: "not_run" as const, checked_facts: 0, exceptions: 0 },
+      reconciliation: {
+        status: "not_run" as const,
+        checked_facts: 0,
+        exceptions: 0,
+      },
       provenance: { ...provenance, preview_caveat: "Candidate preview" },
     };
     expect(ContextElectionSummarySchema.parse(summary).completion.status).toBe(

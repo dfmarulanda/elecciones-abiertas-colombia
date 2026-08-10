@@ -1,0 +1,32 @@
+{
+  "analysis_methodology_version": "analysis-release-v1.0.0",
+  "outcome_sensitivity_methodology_version": "outcome-sensitivity-v3.0.0",
+  "peer_distribution": {
+    "absolute_residual_minimum": 3.5,
+    "candidate_effect_minimum": 0.08,
+    "candidate_pools": ["polling_place", "municipality", "department"],
+    "denominator_minimum": 80,
+    "false_discovery_adjustment": "benjamini-yekutieli",
+    "minimum_peers": 30,
+    "null_unmarked_effect_minimum": 0.03,
+    "p_maximum": 0.001,
+    "q_maximum": 0.05,
+    "target_exclusion": "exact_leave_one_out"
+  },
+  "public_priority": {
+    "research_preview_statistical_points": 0,
+    "statistical_points_cap": 20
+  },
+  "simulation_profiles": {
+    "certification": {"alternative": 1000, "null": 1000, "seed": 20260804},
+    "preliminary": {"alternative": 100, "null": 100, "seed": 0}
+  },
+  "spatial": {
+    "eligible_units_minimum": 100,
+    "maximum_distance_km": 20,
+    "neighbors_maximum": 5,
+    "neighbors_minimum": 3,
+    "permutations_minimum": 9999,
+    "test": "synchronized_max_t"
+  }
+}

@@ -1,6 +1,14 @@
 "use client";
 
+import { useParams } from "next/navigation";
+
+import enMessages from "@/messages/en.json";
+import esMessages from "@/messages/es.json";
+
 export default function AnalysisError({ reset }: { reset: () => void }) {
+  const params = useParams<{ locale?: string }>();
+  const text =
+    params.locale === "en" ? enMessages.analysis : esMessages.analysis;
   return (
     <main
       id="main-content"
@@ -8,19 +16,17 @@ export default function AnalysisError({ reset }: { reset: () => void }) {
     >
       <section className="border border-ink p-6" role="alert">
         <h1 className="font-display text-3xl font-bold uppercase">
-          Analysis unavailable / Análisis no disponible
+          {text.errorTitle}
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-          Missing or offline resources are not replaced with zeros or sample
-          conclusions. / Los recursos ausentes o sin conexión no se sustituyen
-          por ceros ni conclusiones de muestra.
+          {text.errorBody}
         </p>
         <button
           className="mt-6 min-h-11 border border-ink bg-ink px-4 font-mono text-xs font-bold uppercase text-paper hover:bg-neon hover:text-ink"
           onClick={reset}
           type="button"
         >
-          Retry / Reintentar
+          {text.retry}
         </button>
       </section>
     </main>

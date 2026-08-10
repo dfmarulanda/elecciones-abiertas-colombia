@@ -5,7 +5,6 @@ import {
   AnalysisUnavailable,
   AnalysisWorkspace,
 } from "@/components/analysis-workspace";
-import { AnalyticsPortal } from "@/components/analytics-portal";
 import {
   ANALYSIS_ANOMALY_TYPES,
   getPublicAnalysis,
@@ -13,7 +12,6 @@ import {
   type PublicAnalysisFilters,
 } from "@/data/analysis-adapter";
 import { dataAdapter } from "@/data/fixture-adapter";
-import { loadReleaseOrUnavailable } from "@/lib/release-guard";
 import { releaseMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -25,10 +23,13 @@ function first(value: string | string[] | undefined) {
 function readAnalysisFilters(
   query: Record<string, string | string[] | undefined>,
 ): PublicAnalysisFilters {
+  const context = new URLSearchParams(first(query.context) ?? "");
   const anomalyType = first(query.tipo);
   return {
-    release: first(query.release),
-    election: first(query.election),
+    release: context.get("release") ?? first(query.release),
+    election: context.get("election") ?? first(query.election),
+    analysisRelease:
+      context.get("analysis_release") ?? first(query.analysis_release),
     cursor: first(query.cursor),
     anomalyType: ANALYSIS_ANOMALY_TYPES.includes(
       anomalyType as AnalysisAnomalyType,
@@ -42,6 +43,8 @@ function pathnameFor(filters: PublicAnalysisFilters) {
   const query = new URLSearchParams();
   if (filters.release) query.set("release", filters.release);
   if (filters.election) query.set("election", filters.election);
+  if (filters.analysisRelease)
+    query.set("analysis_release", filters.analysisRelease);
   if (filters.anomalyType) query.set("tipo", filters.anomalyType);
   return `/analitica${query.size ? `?${query}` : ""}`;
 }
@@ -60,8 +63,8 @@ export async function generateMetadata({
   let release = null;
   if (
     analysis.status === "ready" &&
-    !analysis.summary.research_preview &&
-    analysis.summary.ineligible_reasons.length === 0
+    analysis.analysisRelease.exposure_tier === "certified_public" &&
+    analysis.selected.status === "published"
   ) {
     const candidate = await dataAdapter.getNationalSummary().catch(() => null);
     if (
@@ -101,23 +104,6 @@ export default async function AnalyticsPage({
 
   if (analysis.status === "ready") {
     return <AnalysisWorkspace locale={locale} analysis={analysis} />;
-  }
-
-  if (analysis.status === "fixture") {
-    // The adapter refuses rather than inventing analytics when no release is
-    // readable. Render that refusal as the explicit unavailable state instead
-    // of throwing it into the error boundary.
-    const guard = await loadReleaseOrUnavailable(locale, () =>
-      dataAdapter.getRelease({ include: "analytics" }),
-    );
-    if (guard.fallback) return guard.fallback;
-    return (
-      <AnalyticsPortal
-        locale={locale}
-        release={guard.release}
-        outcomeSensitivity={null}
-      />
-    );
   }
 
   return (

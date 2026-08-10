@@ -15,10 +15,16 @@ function first(value: string | string[] | undefined) {
   return typeof value === "string" ? value : value?.[0];
 }
 
-function detailPath(anomalyId: string, release?: string, election?: string) {
+function detailPath(
+  anomalyId: string,
+  release?: string,
+  election?: string,
+  analysisRelease?: string,
+) {
   const query = new URLSearchParams();
   if (release) query.set("release", release);
   if (election) query.set("election", election);
+  if (analysisRelease) query.set("analysis_release", analysisRelease);
   return `/analitica/anomalias/${encodeURIComponent(anomalyId)}${query.size ? `?${query}` : ""}`;
 }
 
@@ -33,16 +39,18 @@ export async function generateMetadata({
   const query = await searchParams;
   const releaseId = first(query.release);
   const election = first(query.election);
-  const pathname = detailPath(anomalyId, releaseId, election);
+  const analysisRelease = first(query.analysis_release);
+  const pathname = detailPath(anomalyId, releaseId, election, analysisRelease);
   const state = await getPublicAnalysisAnomaly(anomalyId, {
     release: releaseId,
     election,
+    analysisRelease,
   });
   let release = null;
   if (
     state.status === "ready" &&
-    !state.anomaly.research_preview &&
-    state.anomaly.ineligible_reasons.length === 0
+    state.anomaly.analysis_release.exposure_tier === "certified_public" &&
+    state.selected.status === "published"
   ) {
     const candidate = await dataAdapter.getNationalSummary().catch(() => null);
     if (
@@ -83,6 +91,7 @@ export default async function AnalysisAnomalyPage({
   const state = await getPublicAnalysisAnomaly(anomalyId, {
     release: first(query.release),
     election: first(query.election),
+    analysisRelease: first(query.analysis_release),
   });
 
   if (state.status === "ready") {

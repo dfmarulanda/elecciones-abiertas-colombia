@@ -781,6 +781,9 @@ function NormalizedResultsExplorer({
   enumLabels: PublicResultLabels;
 }) {
   const selected = explorer.selected;
+  const preliminary =
+    selected?.exposure_class === "preliminary" ||
+    selected?.status === "candidate";
   const current = (next: Partial<ResultFilters>) =>
     resultHref(locale, {
       ...filters,
@@ -838,7 +841,9 @@ function NormalizedResultsExplorer({
           {label(locale, "Explorador público", "Public explorer")}
         </p>
         <h1 className="mt-4 min-w-0 max-w-full font-display text-[clamp(2rem,6vw,4.5rem)] font-normal leading-[.95]">
-          {label(locale, "Resultados publicados", "Published results")}
+          {preliminary
+            ? label(locale, "Resultados preliminares", "Preliminary results")
+            : label(locale, "Resultados publicados", "Published results")}
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
           {label(
@@ -949,7 +954,13 @@ function NormalizedResultsExplorer({
             }
           >
             <option value="">
-              {label(locale, "Todas las publicadas", "All published")}
+              {preliminary
+                ? label(
+                    locale,
+                    "Todas las fuentes disponibles",
+                    "All available sources",
+                  )
+                : label(locale, "Todas las publicadas", "All published")}
             </option>
             {sourceTypes.map((source) => (
               <option key={source} value={source}>
@@ -1127,11 +1138,17 @@ function NormalizedResultsExplorer({
         </h2>
         <table className="w-full min-w-[760px] text-left text-sm">
           <caption className="sr-only">
-            {label(
-              locale,
-              "Resultados publicados, paginados por keyset",
-              "Published results, keyset paginated",
-            )}
+            {preliminary
+              ? label(
+                  locale,
+                  "Resultados preliminares, paginados por keyset",
+                  "Preliminary results, keyset paginated",
+                )
+              : label(
+                  locale,
+                  "Resultados publicados, paginados por keyset",
+                  "Published results, keyset paginated",
+                )}
           </caption>
           <thead className="bg-ink text-xs tracking-[.08em] text-paper uppercase">
             <tr>
@@ -1205,11 +1222,17 @@ function NormalizedResultsExplorer({
       </section>
       {explorer.results.items.length === 0 && !explorer.error ? (
         <p className="mt-5 border border-ink bg-paper p-4 text-sm">
-          {label(
-            locale,
-            "No hay hechos publicados para esta selección. Esto no significa cero ni ausencia de una candidatura.",
-            "There are no published facts for this selection. This does not mean zero or absence of a candidate.",
-          )}
+          {preliminary
+            ? label(
+                locale,
+                "No hay hechos preliminares disponibles para esta selección. Esto no significa cero ni ausencia de una candidatura.",
+                "There are no preliminary facts available for this selection. This does not mean zero or absence of a candidate.",
+              )
+            : label(
+                locale,
+                "No hay hechos publicados para esta selección. Esto no significa cero ni ausencia de una candidatura.",
+                "There are no published facts for this selection. This does not mean zero or absence of a candidate.",
+              )}
         </p>
       ) : null}
       {nextPage ? (

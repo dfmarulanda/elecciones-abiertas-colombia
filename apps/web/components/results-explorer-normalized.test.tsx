@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { PublicExplorer } from "@/data/fixture-adapter";
 import { publicResultLabels } from "@/lib/public-labels";
@@ -11,6 +11,8 @@ import { publicResultLabels } from "@/lib/public-labels";
 import { ResultsExplorer } from "./results-explorer";
 
 vi.mock("./result-map", () => ({ ResultMap: () => <div /> }));
+
+afterEach(cleanup);
 
 const explorer: PublicExplorer = {
   kind: "normalized",
@@ -81,6 +83,33 @@ const explorer: PublicExplorer = {
 };
 
 describe("normalized public explorer", () => {
+  it("labels an approved candidate context as preliminary, never published", () => {
+    const preliminary = {
+      ...explorer.releases[0]!,
+      status: "candidate" as const,
+      exposure_class: "preliminary" as const,
+      exposure_approved_at: null,
+    };
+    render(
+      <ResultsExplorer
+        explorer={{ ...explorer, selected: preliminary }}
+        locale="es"
+        filters={explorer.filters}
+        enumLabels={publicResultLabels("es")}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Resultados preliminares" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("table", { name: /resultados preliminares/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Resultados publicados" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("lists only supplied public releases and labels 2022 as descriptive-only", () => {
     render(
       <ResultsExplorer

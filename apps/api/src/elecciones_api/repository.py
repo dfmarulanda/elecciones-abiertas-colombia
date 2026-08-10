@@ -18,6 +18,8 @@ from .schemas import (
     ANALYTICAL_DISCLOSURE_EN,
     ANALYTICAL_DISCLOSURE_ES,
     AnalysisAnomaly,
+    AnalysisArtifactMetadata,
+    AnalysisReleaseMetadata,
     AnalysisReport,
     AnalysisSummary,
     Bulletin,
@@ -96,6 +98,56 @@ def _reject_nonfinite_json(value: str) -> None:
     raise ValueError(f"non-finite JSON number: {value}")
 
 
+_PUBLIC_ANALYSIS_EVIDENCE_KEYS = frozenset(
+    {
+        "affected_votes",
+        "analysis_unit_id",
+        "attestation_hashes",
+        "candidate_id",
+        "document_links",
+        "evidence_hashes",
+        "geography_id",
+        "mesa_id",
+        "metric",
+        "provenance",
+        "reason",
+        "source_hash",
+        "source_ids",
+        "source_links",
+        "source_url",
+        "unit_id",
+    }
+)
+_PRIVATE_ANALYSIS_KEYS = frozenset(
+    {"contact", "document_bytes", "email", "ocr", "phone", "private", "reviewer_contact"}
+)
+
+
+def _scrub_public_analysis_value(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _scrub_public_analysis_value(item)
+            for key, item in value.items()
+            if str(key).lower() not in _PRIVATE_ANALYSIS_KEYS
+        }
+    if isinstance(value, list):
+        return [_scrub_public_analysis_value(item) for item in value]
+    return value
+
+
+def _public_analysis_mapping(value: object, *, wrapped_key: str) -> dict[str, object]:
+    if not isinstance(value, Mapping):
+        return {}
+    wrapped = value.get(wrapped_key)
+    if isinstance(wrapped, Mapping):
+        return cast(dict[str, object], _scrub_public_analysis_value(wrapped))
+    return {
+        str(key): _scrub_public_analysis_value(item)
+        for key, item in value.items()
+        if str(key) in _PUBLIC_ANALYSIS_EVIDENCE_KEYS
+    }
+
+
 class ReadRepository(Protocol):
     """Read operations all implementations must offer to the HTTP layer."""
 
@@ -137,15 +189,45 @@ class ReadRepository(Protocol):
 
     def review_disclosure(self, slug: str, version: str | None) -> LocalizedText: ...
 
-    def analysis_summary(self, slug: str, version: str | None) -> AnalysisSummary: ...
+    def analysis_summary(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisSummary: ...
 
-    def anomalies(self, slug: str, version: str | None) -> list[AnalysisAnomaly]: ...
+    def anomalies(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisAnomaly]: ...
 
-    def anomaly(self, slug: str, anomaly_id: str, version: str | None) -> AnalysisAnomaly: ...
+    def anomaly(
+        self,
+        slug: str,
+        anomaly_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisAnomaly: ...
 
     def analysis_report(
-        self, slug: str, report_kind: str, version: str | None
+        self,
+        slug: str,
+        report_kind: str,
+        version: str | None,
+        analysis_release: str | None = None,
     ) -> AnalysisReport: ...
+
+    def analysis_release_metadata(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisReleaseMetadata: ...
+
+    def analysis_artifacts(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisArtifactMetadata]: ...
+
+    def analysis_artifact(
+        self,
+        slug: str,
+        artifact_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisArtifactMetadata: ...
 
 
 class FixtureRepository:
@@ -388,13 +470,59 @@ class FixtureRepository:
     def _analysis_disclosure(self) -> LocalizedText:
         return LocalizedText(es=ANALYTICAL_DISCLOSURE_ES, en=ANALYTICAL_DISCLOSURE_EN)
 
-    def anomalies(self, slug: str, version: str | None) -> list[AnalysisAnomaly]:
+    def analysis_release_metadata(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisReleaseMetadata:
+        self._assert_election(slug, version)
+        provenance = self.summary(slug, version).provenance
+        seed = f"{self._version}:{slug}:{provenance.methodology_version or 'fixture'}"
+        canonical_input_hash = hashlib.sha256(f"canonical:{seed}".encode()).hexdigest()
+        manifest_hash = hashlib.sha256(f"manifest:{seed}".encode()).hexdigest()
+        provenance_hash = hashlib.sha256(f"provenance:{seed}".encode()).hexdigest()
+        resolved_id = f"analysis-{hashlib.sha256(seed.encode()).hexdigest()[:24]}"
+        if analysis_release is not None and analysis_release != resolved_id:
+            raise ReleaseNotFoundError(
+                f"Analysis release '{analysis_release}' was not found for this release/election."
+            )
+        caveat = LocalizedText(
+            es=(
+                "Vista preliminar de investigación. Prioriza revisión y no demuestra fraude, "
+                "causalidad ni votos afectados."
+            ),
+            en=(
+                "Preliminary research preview. It prioritizes review and does not demonstrate "
+                "fraud, causation, or affected votes."
+            ),
+        )
+        return AnalysisReleaseMetadata.model_validate(
+            {
+                "analysis_release_id": resolved_id,
+                "methodology_version": provenance.methodology_version or "fixture-analysis-v1",
+                "source_release_id": self._version,
+                "election_slug": slug,
+                "exposure_tier": "preliminary_research",
+                "preliminary_caveat": caveat,
+                "artifact_status": "research_preview",
+                "evaluable": True,
+                "status_reasons": ["synthetic_fixture_research_only"],
+                "canonical_input_hash": canonical_input_hash,
+                "manifest_hash": manifest_hash,
+                "provenance_hash": provenance_hash,
+                "generated_at": provenance.retrieved_at,
+                "approved_at": provenance.retrieved_at,
+            }
+        )
+
+    def anomalies(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisAnomaly]:
         """Project legacy immutable review signals into the v1 analysis resource.
 
         The projection exposes only facts already in the frozen release.  It
         purposefully records missing explanation and ballot-vector artifacts as
         non-evaluable instead of manufacturing an explanation or an estimate.
         """
+        metadata = self.analysis_release_metadata(slug, version, analysis_release)
         signals = self.review_signals(slug, version)
         type_map = {
             "verified_accounting_failure": "structural_arithmetic",
@@ -408,6 +536,14 @@ class FixtureRepository:
         result: list[AnalysisAnomaly] = []
         for signal in signals:
             anomaly_types = sorted({type_map[item.component_type] for item in signal.components})
+            public_priority_score = min(
+                100,
+                sum(
+                    item.points
+                    for item in signal.components
+                    if item.component_type not in {"peer_distribution", "spatial_cluster"}
+                ),
+            )
             preview_reasons = [
                 "legacy_release_has_no_preregistered_explanation_artifact",
                 "complete_ballot_vector_not_published",
@@ -417,6 +553,7 @@ class FixtureRepository:
                 for item in signal.components
             ):
                 preview_reasons.append("independent_simulation_validation_artifact_not_published")
+            evidence_tier = "deterministic" if public_priority_score > 0 else "research_preview"
             result.append(
                 AnalysisAnomaly.model_validate(
                     {
@@ -424,7 +561,7 @@ class FixtureRepository:
                         "mesa_id": signal.mesa_id,
                         "anomaly_types": anomaly_types,
                         "is_anomaly": bool(signal.components),
-                        "audit_priority_score": signal.score,
+                        "audit_priority_score": public_priority_score,
                         "explanation": {
                             "status": "non_evaluable",
                             "preregistration_hash": None,
@@ -437,27 +574,79 @@ class FixtureRepository:
                         "minimum_ballot_edits": {"value": None, "status": "unknown"},
                         "minimum_ballot_edits_status": "not_evaluable",
                         "minimum_ballot_edits_reason": "complete_mutually_exclusive_ballot_categories_not_published",
-                        "components": [item.model_dump(mode="json") for item in signal.components],
+                        "components": [
+                            item.model_dump(mode="json")
+                            for item in signal.components
+                            if item.component_type not in {"peer_distribution", "spatial_cluster"}
+                        ],
                         "research_preview": True,
                         "ineligible_reasons": preview_reasons,
                         "methodology_version": signal.methodology_version,
                         "disclosure": self._analysis_disclosure(),
                         "provenance": signal.provenance,
+                        "analysis_release": metadata,
+                        "family": anomaly_types[0],
+                        "evidence_tier": evidence_tier,
+                        "evaluability": "not_evaluable",
+                        "public_evidence": {},
+                        "calculations": {},
+                        "limitations": preview_reasons,
+                        "provenance_hash": metadata.provenance_hash,
+                        "typed_components": [
+                            {
+                                "component_id": f"{signal.id}:component:{index + 1}",
+                                "component_type": component.component_type,
+                                "evidence_type": (
+                                    "research_preview"
+                                    if component.component_type
+                                    in {"peer_distribution", "spatial_cluster"}
+                                    else "trusted_fact"
+                                ),
+                                "points": (
+                                    0
+                                    if component.component_type
+                                    in {"peer_distribution", "spatial_cluster"}
+                                    else component.points
+                                ),
+                                "value": component.observed_value,
+                                "unit": None,
+                                "public_payload": {
+                                    "evidence_artifact_hash": component.evidence_artifact_hash,
+                                    "analyzer_output_hash": component.analyzer_output_hash,
+                                },
+                                "provenance_hash": metadata.provenance_hash,
+                            }
+                            for index, component in enumerate(signal.components)
+                        ],
                     }
                 )
             )
         return result
 
-    def anomaly(self, slug: str, anomaly_id: str, version: str | None) -> AnalysisAnomaly:
+    def anomaly(
+        self,
+        slug: str,
+        anomaly_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisAnomaly:
         value = next(
-            (item for item in self.anomalies(slug, version) if item.id == anomaly_id), None
+            (
+                item
+                for item in self.anomalies(slug, version, analysis_release)
+                if item.id == anomaly_id
+            ),
+            None,
         )
         if value is None:
             raise ResourceNotFoundError(f"Analysis anomaly '{anomaly_id}' was not found.")
         return value
 
-    def analysis_summary(self, slug: str, version: str | None) -> AnalysisSummary:
-        anomalies = self.anomalies(slug, version)
+    def analysis_summary(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisSummary:
+        metadata = self.analysis_release_metadata(slug, version, analysis_release)
+        anomalies = self.anomalies(slug, version, metadata.analysis_release_id)
         coverage = self.summary(slug, version).coverage
         counts = {
             kind: sum(kind in item.anomaly_types for item in anomalies)
@@ -491,13 +680,21 @@ class FixtureRepository:
                 ],
                 "disclosure": self._analysis_disclosure(),
                 "provenance": provenance,
+                "analysis_release": metadata,
             }
         )
 
-    def analysis_report(self, slug: str, report_kind: str, version: str | None) -> AnalysisReport:
+    def analysis_report(
+        self,
+        slug: str,
+        report_kind: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisReport:
         if report_kind not in {"model_diagnostics", "validation", "local_sensitivity"}:
             raise ResourceNotFoundError(f"Analysis report '{report_kind}' was not found.")
         summary = self.summary(slug, version)
+        metadata = self.analysis_release_metadata(slug, version, analysis_release)
         reasons = {
             "model_diagnostics": [
                 "hierarchical_model_not_implemented",
@@ -518,8 +715,56 @@ class FixtureRepository:
                 "provenance": summary.provenance,
                 "disclosure": self._analysis_disclosure(),
                 "metrics": {},
+                "analysis_release": metadata,
             }
         )
+
+    def analysis_artifacts(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisArtifactMetadata]:
+        metadata = self.analysis_release_metadata(slug, version, analysis_release)
+        byte_hash = hashlib.sha256(
+            f"fixture-canonical-input:{metadata.canonical_input_hash}".encode()
+        ).hexdigest()
+        return [
+            AnalysisArtifactMetadata.model_validate(
+                {
+                    "artifact_id": "canonical-input-registry",
+                    "kind": "canonical_input_registry",
+                    "schema_version": "analysis-canonical-input-v1",
+                    "media_type": "application/json",
+                    "record_count": len(self._data["results"]),
+                    "byte_size": 1,
+                    "byte_hash": byte_hash,
+                    "content_hash": byte_hash,
+                    "url": (
+                        "https://eleccionesabiertas.co/analysis-artifacts/"
+                        f"{metadata.analysis_release_id}/{byte_hash}.json"
+                    ),
+                    "status": "available",
+                    "status_reasons": ["synthetic_fixture_research_only"],
+                }
+            )
+        ]
+
+    def analysis_artifact(
+        self,
+        slug: str,
+        artifact_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisArtifactMetadata:
+        item = next(
+            (
+                artifact
+                for artifact in self.analysis_artifacts(slug, version, analysis_release)
+                if artifact.artifact_id == artifact_id
+            ),
+            None,
+        )
+        if item is None:
+            raise ResourceNotFoundError(f"Analysis artifact '{artifact_id}' was not found.")
+        return item
 
     def datasets(self, slug: str, version: str | None) -> list[Dataset]:
         self._assert_election(slug, version)
@@ -693,25 +938,471 @@ class PostgresReadRepository:
         self._legacy_public(slug, version)
         return self._snapshot(version).review_disclosure(slug, version)
 
-    def analysis_summary(self, slug: str, version: str | None) -> AnalysisSummary:
-        self._reject_context_analysis(version or self._active_release_id, slug)
-        self._legacy_public(slug, version)
-        return self._snapshot(version).analysis_summary(slug, version)
+    def analysis_release_metadata(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisReleaseMetadata:
+        release_id = version or self._active_release_id
+        row = self._authorized_analysis(release_id, slug, analysis_release)
+        artifact_rows = self._normalized(
+            """SELECT artifact_status FROM analysis_artifacts
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e ORDER BY artifact_id""",
+            {"a": row["analysis_release_id"], "r": release_id, "e": slug},
+        )
+        statuses = {str(item["artifact_status"]) for item in artifact_rows}
+        if not statuses:
+            artifact_status = "not_evaluable"
+            evaluable = False
+            reasons = ["no_public_analysis_artifacts"]
+        elif statuses == {"available"}:
+            artifact_status = (
+                "research_preview"
+                if row["exposure_tier"] == "preliminary_research"
+                else "available"
+            )
+            evaluable = True
+            reasons = (
+                ["preliminary_research_zero_public_statistical_points"]
+                if row["exposure_tier"] == "preliminary_research"
+                else []
+            )
+        elif "withheld" in statuses:
+            artifact_status = "withheld"
+            evaluable = False
+            reasons = ["one_or_more_artifacts_withheld"]
+        elif "unavailable" in statuses:
+            artifact_status = "unavailable"
+            evaluable = False
+            reasons = ["one_or_more_artifacts_unavailable"]
+        else:
+            artifact_status = "not_evaluable"
+            evaluable = False
+            reasons = ["one_or_more_artifacts_not_evaluable"]
+        provenance_payload = {
+            key: row[key]
+            for key in (
+                "analysis_release_id",
+                "source_release_id",
+                "source_election_slug",
+                "methodology_version",
+                "canonical_input_hash",
+                "producer_runtime_fingerprint",
+                "manifest_hash",
+            )
+        }
+        provenance_hash = hashlib.sha256(
+            json.dumps(
+                provenance_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            ).encode()
+        ).hexdigest()
+        caveat = (
+            {"es": row["caveat_es"], "en": row["caveat_en"]}
+            if row["exposure_tier"] == "preliminary_research"
+            else None
+        )
+        try:
+            return AnalysisReleaseMetadata.model_validate(
+                {
+                    "analysis_release_id": row["analysis_release_id"],
+                    "methodology_version": row["methodology_version"],
+                    "source_release_id": row["source_release_id"],
+                    "election_slug": row["source_election_slug"],
+                    "exposure_tier": row["exposure_tier"],
+                    "preliminary_caveat": caveat,
+                    "artifact_status": artifact_status,
+                    "evaluable": evaluable,
+                    "status_reasons": reasons,
+                    "canonical_input_hash": row["canonical_input_hash"],
+                    "manifest_hash": row["manifest_hash"],
+                    "provenance_hash": provenance_hash,
+                    "generated_at": row["generated_at"],
+                    "approved_at": row["approved_at"],
+                }
+            )
+        except ValueError as exc:
+            raise RepositoryUnavailableError(
+                "The approved analysis exposure metadata is invalid."
+            ) from exc
 
-    def anomalies(self, slug: str, version: str | None) -> list[AnalysisAnomaly]:
-        self._reject_context_analysis(version or self._active_release_id, slug)
-        self._legacy_public(slug, version)
-        return self._snapshot(version).anomalies(slug, version)
+    def analysis_summary(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> AnalysisSummary:
+        release_id = version or self._active_release_id
+        metadata = self.analysis_release_metadata(slug, release_id, analysis_release)
+        source_summary = self.normalized_summary(release_id, slug)
+        rows = self._normalized(
+            """SELECT family, count(*) AS count FROM analysis_anomalies
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e GROUP BY family ORDER BY family""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": slug},
+        )
+        diagnostics_rows = self._normalized(
+            """SELECT diagnostics FROM analysis_reports
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e AND report_kind='model_diagnostics'
+            ORDER BY report_id LIMIT 1""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": slug},
+        )
+        family_map = {
+            "arithmetic": "structural_arithmetic",
+            "structural_arithmetic": "structural_arithmetic",
+            "identity_coverage": "identity_coverage",
+            "cross_source_documentary": "cross_source_documentary",
+            "peer_distribution": "peer_distribution",
+            "spatial": "spatial",
+        }
+        counts = {kind: 0 for kind in family_map.values()}
+        for row in rows:
+            mapped = family_map.get(str(row["family"]))
+            if mapped is not None:
+                counts[mapped] += int(cast(Any, row["count"]))
+        anomaly_count = sum(counts.values())
+        diagnostics = diagnostics_rows[0]["diagnostics"] if diagnostics_rows else None
+        total_evaluated = (
+            diagnostics.get("total_records_evaluated") if isinstance(diagnostics, Mapping) else None
+        )
+        if type(total_evaluated) is not int or total_evaluated < 0:
+            total_evaluated = None
+        try:
+            return AnalysisSummary.model_validate(
+                {
+                    "election_slug": slug,
+                    "data_version": release_id,
+                    "methodology_version": metadata.methodology_version,
+                    "total_records_evaluated": {
+                        "value": total_evaluated,
+                        "status": "observed" if total_evaluated is not None else "unavailable",
+                    },
+                    "anomaly_count": {"value": anomaly_count, "status": "observed"},
+                    "anomaly_counts": {
+                        kind: {"value": count, "status": "observed"}
+                        for kind, count in counts.items()
+                    },
+                    "missingness": source_summary["coverage"],
+                    "research_preview": metadata.exposure_tier == "preliminary_research",
+                    "ineligible_reasons": metadata.status_reasons,
+                    "disclosure": {
+                        "es": ANALYTICAL_DISCLOSURE_ES,
+                        "en": ANALYTICAL_DISCLOSURE_EN,
+                    },
+                    "provenance": source_summary["provenance"],
+                    "analysis_release": metadata,
+                }
+            )
+        except (KeyError, ValueError) as exc:
+            raise RepositoryUnavailableError(
+                "The normalized analysis summary violates the public contract."
+            ) from exc
 
-    def anomaly(self, slug: str, anomaly_id: str, version: str | None) -> AnalysisAnomaly:
-        self._reject_context_analysis(version or self._active_release_id, slug)
-        self._legacy_public(slug, version)
-        return self._snapshot(version).anomaly(slug, anomaly_id, version)
+    def anomalies(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisAnomaly]:
+        release_id = version or self._active_release_id
+        metadata = self.analysis_release_metadata(slug, release_id, analysis_release)
+        source_summary = self.normalized_summary(release_id, slug)
+        rows = self._normalized(
+            """SELECT anomaly_id,family,evidence_tier,audit_priority,evaluability,
+            reason_code,geography_id,explanation_es,explanation_en,evidence,calculations,
+            limitations,provenance_hash
+            FROM analysis_anomalies WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e ORDER BY audit_priority DESC, anomaly_id""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": slug},
+        )
+        component_rows = self._normalized(
+            """SELECT anomaly_id,component_id,component_type,evidence_type,points,value,
+            unit,payload,provenance_hash FROM analysis_anomaly_components
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e ORDER BY anomaly_id,component_id""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": slug},
+        )
+        components_by_anomaly: dict[str, list[dict[str, object]]] = {}
+        for component in component_rows:
+            value = component["value"]
+            components_by_anomaly.setdefault(str(component["anomaly_id"]), []).append(
+                {
+                    "component_id": component["component_id"],
+                    "component_type": component["component_type"],
+                    "evidence_type": component["evidence_type"],
+                    "points": component["points"],
+                    "value": None if value is None else float(cast(Any, value)),
+                    "unit": component["unit"],
+                    "public_payload": _public_analysis_mapping(
+                        component["payload"], wrapped_key="public_payload"
+                    ),
+                    "provenance_hash": component["provenance_hash"],
+                }
+            )
+        family_map = {
+            "arithmetic": "structural_arithmetic",
+            "structural_arithmetic": "structural_arithmetic",
+            "identity_coverage": "identity_coverage",
+            "cross_source_documentary": "cross_source_documentary",
+            "peer_distribution": "peer_distribution",
+            "spatial": "spatial",
+        }
+        result: list[AnalysisAnomaly] = []
+        for row in rows:
+            evidence = row["evidence"] if isinstance(row["evidence"], Mapping) else {}
+            public_evidence = _public_analysis_mapping(evidence, wrapped_key="public_evidence")
+            calculations = row["calculations"]
+            limitations = row["limitations"]
+            if not isinstance(calculations, Mapping) or not isinstance(limitations, list):
+                raise RepositoryUnavailableError(
+                    "Analysis calculations or limitations are malformed."
+                )
+            family = family_map.get(str(row["family"]))
+            if family is None:
+                raise RepositoryUnavailableError(
+                    "Analysis anomaly family is not public-contract typed."
+                )
+            mesa_id = (
+                evidence.get("mesa_id")
+                or evidence.get("analysis_unit_id")
+                or row["geography_id"]
+                or row["anomaly_id"]
+            )
+            evaluable = row["evaluability"] == "evaluable"
+            tier = str(row["evidence_tier"])
+            if tier not in {
+                "descriptive",
+                "deterministic",
+                "research_preview",
+                "independently_validated",
+                "non_evaluable",
+            }:
+                raise RepositoryUnavailableError("Analysis anomaly evidence tier is invalid.")
+            try:
+                result.append(
+                    AnalysisAnomaly.model_validate(
+                        {
+                            "id": row["anomaly_id"],
+                            "mesa_id": mesa_id,
+                            "anomaly_types": [family],
+                            "is_anomaly": True,
+                            "audit_priority_score": row["audit_priority"],
+                            "explanation": {
+                                "status": (
+                                    "no_explanation_found_in_available_data"
+                                    if evaluable
+                                    else "non_evaluable"
+                                ),
+                                "preregistration_hash": None,
+                                "available_data_hash": None,
+                                "reviewed_at": None,
+                                "quantitative_effect": {"value": None, "status": "unknown"},
+                                "quantitative_p_value": {"value": None, "status": "unknown"},
+                                "notes": (
+                                    {
+                                        "es": row["explanation_es"],
+                                        "en": row["explanation_en"],
+                                    }
+                                    if evaluable
+                                    else None
+                                ),
+                            },
+                            "minimum_ballot_edits": {"value": None, "status": "unknown"},
+                            "minimum_ballot_edits_status": "not_evaluable",
+                            "minimum_ballot_edits_reason": "no_typed_documentary_vote_bound",
+                            "components": [],
+                            "research_preview": tier == "research_preview",
+                            "ineligible_reasons": (
+                                []
+                                if evaluable
+                                else [str(row["reason_code"] or "stored_as_not_evaluable")]
+                            ),
+                            "methodology_version": metadata.methodology_version,
+                            "disclosure": {
+                                "es": ANALYTICAL_DISCLOSURE_ES,
+                                "en": ANALYTICAL_DISCLOSURE_EN,
+                            },
+                            "provenance": source_summary["provenance"],
+                            "analysis_release": metadata,
+                            "family": row["family"],
+                            "evidence_tier": tier,
+                            "evaluability": row["evaluability"],
+                            "public_evidence": dict(public_evidence),
+                            "calculations": dict(calculations),
+                            "limitations": limitations,
+                            "provenance_hash": row["provenance_hash"],
+                            "typed_components": components_by_anomaly.get(
+                                str(row["anomaly_id"]), []
+                            ),
+                        }
+                    )
+                )
+            except (KeyError, ValueError) as exc:
+                raise RepositoryUnavailableError(
+                    "A normalized analysis anomaly violates the public contract."
+                ) from exc
+        return result
 
-    def analysis_report(self, slug: str, report_kind: str, version: str | None) -> AnalysisReport:
-        self._reject_context_analysis(version or self._active_release_id, slug)
-        self._legacy_public(slug, version)
-        return self._snapshot(version).analysis_report(slug, report_kind, version)
+    def anomaly(
+        self,
+        slug: str,
+        anomaly_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisAnomaly:
+        item = next(
+            (
+                value
+                for value in self.anomalies(slug, version, analysis_release)
+                if value.id == anomaly_id
+            ),
+            None,
+        )
+        if item is None:
+            raise ResourceNotFoundError(f"Analysis anomaly '{anomaly_id}' was not found.")
+        return item
+
+    def analysis_report(
+        self,
+        slug: str,
+        report_kind: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisReport:
+        if report_kind not in {"model_diagnostics", "validation", "local_sensitivity"}:
+            raise ResourceNotFoundError(f"Analysis report '{report_kind}' was not found.")
+        release_id = version or self._active_release_id
+        metadata = self.analysis_release_metadata(slug, release_id, analysis_release)
+        rows = self._normalized(
+            """SELECT r.report_kind,r.evaluability,r.status_reason,r.diagnostics,
+            r.validation,r.local_sensitivity,
+            a.content_hash AS artifact_hash FROM analysis_reports r
+            LEFT JOIN analysis_artifacts a ON (a.analysis_release_id=r.analysis_release_id
+              AND a.source_release_id=r.source_release_id
+              AND a.source_election_slug=r.source_election_slug
+              AND a.artifact_id=r.artifact_id)
+            WHERE r.analysis_release_id=:a AND r.source_release_id=:r
+            AND r.source_election_slug=:e AND r.report_kind=:kind""",
+            {
+                "a": metadata.analysis_release_id,
+                "r": release_id,
+                "e": slug,
+                "kind": report_kind,
+            },
+        )
+        if len(rows) != 1:
+            raise ResourceNotFoundError(f"Analysis report '{report_kind}' was not found.")
+        row = rows[0]
+        source_summary = self.normalized_summary(release_id, slug)
+        report_evaluability = str(row["evaluability"])
+        evaluable = report_evaluability in {"evaluable", "research_preview"}
+        preview = (
+            metadata.exposure_tier == "preliminary_research"
+            or report_evaluability == "research_preview"
+        )
+        status = (
+            "research_preview"
+            if evaluable and preview
+            else "available"
+            if evaluable
+            else "not_evaluable"
+        )
+        payload_column = {
+            "model_diagnostics": "diagnostics",
+            "validation": "validation",
+            "local_sensitivity": "local_sensitivity",
+        }[report_kind]
+        payload = row[payload_column]
+        if payload_column != "diagnostics" and payload == {}:
+            payload = row["diagnostics"]
+        metrics = payload.get("metrics", {}) if isinstance(payload, Mapping) else {}
+        if not isinstance(metrics, Mapping):
+            raise RepositoryUnavailableError("Analysis report metrics are invalid.")
+        try:
+            return AnalysisReport.model_validate(
+                {
+                    "report_kind": report_kind,
+                    "status": status,
+                    "research_preview": preview,
+                    "ineligible_reasons": ([row["status_reason"]] if row["status_reason"] else []),
+                    "methodology_version": metadata.methodology_version,
+                    "artifact_hash": row["artifact_hash"],
+                    "missingness": source_summary["coverage"],
+                    "provenance": source_summary["provenance"],
+                    "disclosure": {
+                        "es": ANALYTICAL_DISCLOSURE_ES,
+                        "en": ANALYTICAL_DISCLOSURE_EN,
+                    },
+                    "metrics": dict(metrics),
+                    "analysis_release": metadata,
+                }
+            )
+        except (KeyError, ValueError) as exc:
+            raise RepositoryUnavailableError(
+                "The normalized analysis report violates the public contract."
+            ) from exc
+
+    def analysis_artifacts(
+        self, slug: str, version: str | None, analysis_release: str | None = None
+    ) -> list[AnalysisArtifactMetadata]:
+        release_id = version or self._active_release_id
+        metadata = self.analysis_release_metadata(slug, release_id, analysis_release)
+        rows = self._normalized(
+            """SELECT artifact_id,kind,schema_version,media_type,record_count,byte_size,
+            byte_hash,content_hash,immutable_url,artifact_status,status_reason FROM analysis_artifacts
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e ORDER BY kind,artifact_id""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": slug},
+        )
+        try:
+            result: list[AnalysisArtifactMetadata] = []
+            for row in rows:
+                immutable_url = row["immutable_url"]
+                if row["artifact_status"] == "available":
+                    immutable_url = self._validated_analysis_artifact_url(
+                        immutable_url, row["byte_hash"]
+                    )
+                result.append(
+                    AnalysisArtifactMetadata.model_validate(
+                        {
+                            "artifact_id": row["artifact_id"],
+                            "kind": row["kind"],
+                            "schema_version": row["schema_version"],
+                            "media_type": row["media_type"],
+                            "record_count": row["record_count"],
+                            "byte_size": row["byte_size"],
+                            "byte_hash": row["byte_hash"],
+                            "content_hash": row["content_hash"],
+                            "url": immutable_url,
+                            "status": row["artifact_status"],
+                            "status_reasons": (
+                                []
+                                if row["artifact_status"] == "available"
+                                else [str(row["status_reason"])]
+                            ),
+                        }
+                    )
+                )
+            return result
+        except ValueError as exc:
+            raise RepositoryUnavailableError(
+                "An analysis artifact violates the public metadata contract."
+            ) from exc
+
+    def analysis_artifact(
+        self,
+        slug: str,
+        artifact_id: str,
+        version: str | None,
+        analysis_release: str | None = None,
+    ) -> AnalysisArtifactMetadata:
+        item = next(
+            (
+                artifact
+                for artifact in self.analysis_artifacts(slug, version, analysis_release)
+                if artifact.artifact_id == artifact_id
+            ),
+            None,
+        )
+        if item is None:
+            raise ResourceNotFoundError(f"Analysis artifact '{artifact_id}' was not found.")
+        return item
 
     # Normalized multirelease reads.  They intentionally do not fall back to a
     # JSON snapshot: an absent public exposure is not a legacy-preview request.
@@ -825,6 +1516,61 @@ class PostgresReadRepository:
         )
         if not rows:
             raise ReleaseNotFoundError("The requested release/election is not publicly exposed.")
+
+    def _authorized_analysis(
+        self,
+        release_id: str,
+        election_slug: str,
+        analysis_release: str | None,
+    ) -> dict[str, object]:
+        """Resolve exactly one approved analysis overlay through its own disjoint gate.
+
+        This intentionally does not call or weaken ``_authorized``. Preliminary
+        analysis is permitted only over a source release with an explicit
+        preliminary grant; certified analysis is permitted only over a distinct
+        published/public source release. Legacy review-signal tables are not in
+        this query or any query reachable from this guard.
+        """
+        explicit = " AND ar.analysis_release_id=:a" if analysis_release is not None else ""
+        values: dict[str, object] = {"r": release_id, "e": election_slug}
+        if analysis_release is not None:
+            values["a"] = analysis_release
+        rows = self._normalized(
+            f"""SELECT ar.analysis_release_id,ar.source_release_id,
+            ar.source_election_slug,ar.methodology_version,ar.canonical_input_hash,
+            ar.producer_runtime_fingerprint,ar.generated_at,ar.manifest_hash,
+            ax.exposure_tier,ax.approved_at,ax.caveat_es,ax.caveat_en
+            FROM analysis_releases ar
+            JOIN analysis_exposures ax USING (
+              analysis_release_id,source_release_id,source_election_slug
+            )
+            JOIN releases sr ON sr.id=ar.source_release_id
+            JOIN release_exposures sx ON (
+              sx.release_id=ar.source_release_id
+              AND sx.election_slug=ar.source_election_slug
+            )
+            WHERE ar.source_release_id=:r AND ar.source_election_slug=:e{explicit}
+              AND ar.lifecycle_state='validated'
+              AND ax.approved_at IS NOT NULL AND ax.revoked_at IS NULL
+              AND ax.manifest_hash=ar.manifest_hash
+              AND (
+                (ax.exposure_tier='preliminary_research'
+                 AND sr.status='candidate' AND sr.synthetic=false
+                 AND sx.access_scope='preliminary'
+                 AND sx.preliminary_approved_at IS NOT NULL)
+                OR
+                (ax.exposure_tier='certified_public'
+                 AND sr.status='published'
+                 AND sx.access_scope='public' AND sx.approved_at IS NOT NULL)
+              )
+            ORDER BY ax.approved_at DESC,ar.analysis_release_id DESC LIMIT 1""",
+            values,
+        )
+        if not rows:
+            raise ReleaseNotFoundError(
+                "No approved analysis release exists for the requested source release/election."
+            )
+        return rows[0]
 
     def _preliminary_grant(self, release_id: str, election_slug: str) -> dict[str, object] | None:
         """The second, disjoint door: a reviewed grant over a candidate release.
@@ -1131,6 +1877,31 @@ class PostgresReadRepository:
             )
         return value
 
+    def _validated_analysis_artifact_url(self, value: object, byte_hash: object) -> str:
+        if not isinstance(value, str) or value.strip() != value or not _is_sha256(byte_hash):
+            raise RepositoryUnavailableError("The analysis artifact has an invalid immutable URL.")
+        parsed = urlsplit(value)
+        try:
+            port = parsed.port
+        except ValueError as exc:
+            raise RepositoryUnavailableError(
+                "The analysis artifact has an invalid immutable URL."
+            ) from exc
+        allowed_hosts: set[str] = getattr(self, "_allowed_artifact_hosts", set())
+        if (
+            parsed.scheme != "https"
+            or port not in (None, 443)
+            or not parsed.hostname
+            or parsed.hostname.lower().rstrip(".") not in allowed_hosts
+            or parsed.username is not None
+            or parsed.password is not None
+            or bool(parsed.query)
+            or bool(parsed.fragment)
+            or str(byte_hash) not in parsed.path
+        ):
+            raise RepositoryUnavailableError("The analysis artifact has an invalid immutable URL.")
+        return value
+
     def _fetch_outcome_artifact(self, url: str, expected_size: int) -> bytes:
         fetcher = getattr(self, "_outcome_artifact_fetcher", None)
         if fetcher is not None:
@@ -1202,6 +1973,106 @@ class PostgresReadRepository:
         return payload
 
     def normalized_outcome_sensitivity(
+        self,
+        release_id: str,
+        election_slug: str,
+        analysis_release: str | None = None,
+    ) -> OutcomeSensitivity:
+        if not hasattr(self, "_sessions"):
+            return self._legacy_normalized_outcome_sensitivity(release_id, election_slug)
+        metadata = self.analysis_release_metadata(election_slug, release_id, analysis_release)
+        rows = self._normalized(
+            """SELECT artifact_id,media_type,record_count,byte_size,byte_hash,
+            content_hash,immutable_url,artifact_status FROM analysis_artifacts
+            WHERE analysis_release_id=:a AND source_release_id=:r
+            AND source_election_slug=:e AND kind='outcome_sensitivity'""",
+            {"a": metadata.analysis_release_id, "r": release_id, "e": election_slug},
+        )
+        if not rows:
+            raise ResourceNotFoundError(
+                "No immutable outcome sensitivity artifact is exposed for this analysis release."
+            )
+        if len(rows) != 1:
+            raise RepositoryUnavailableError(
+                "The analysis release declares ambiguous outcome sensitivity artifacts."
+            )
+        declaration = rows[0]
+        byte_size = declaration["byte_size"]
+        content_hash = declaration["content_hash"]
+        byte_hash = declaration["byte_hash"]
+        if (
+            declaration["media_type"] != "application/json"
+            or declaration["record_count"] != 1
+            or declaration["artifact_status"] != "available"
+            or type(byte_size) is not int
+            or not 0 < byte_size <= _MAX_OUTCOME_ARTIFACT_BYTES
+            or not _is_sha256(content_hash)
+            or not _is_sha256(byte_hash)
+        ):
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact declaration is invalid."
+            )
+        assert isinstance(byte_size, int)
+        assert isinstance(byte_hash, str)
+        location = self._validated_outcome_url(declaration["immutable_url"], content_hash=byte_hash)
+        raw_artifact = self._fetch_outcome_artifact(location, byte_size)
+        if hashlib.sha256(raw_artifact).hexdigest() != byte_hash:
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact bytes do not match their byte hash."
+            )
+        try:
+            candidate = json.loads(
+                raw_artifact.decode("utf-8"),
+                object_pairs_hook=_reject_duplicate_json_keys,
+                parse_constant=_reject_nonfinite_json,
+            )
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise RepositoryUnavailableError(
+                "The immutable outcome sensitivity artifact is not strict JSON."
+            ) from exc
+        if not isinstance(candidate, dict) or any(
+            key in candidate
+            for key in (
+                "artifact",
+                "release_id",
+                "election_slug",
+                "data_version",
+                "margin_shift_factor",
+                "analysis_release",
+            )
+        ):
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact must contain one unwrapped core artifact."
+            )
+        try:
+            OutcomeSensitivityArtifact.model_validate(candidate)
+            canonical_content_hash = hashlib.sha256(
+                json.dumps(
+                    candidate,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+            if canonical_content_hash != content_hash:
+                raise ValueError("content hash mismatch")
+            return OutcomeSensitivity.model_validate(
+                {
+                    **candidate,
+                    "release_id": release_id,
+                    "election_slug": election_slug,
+                    "data_version": release_id,
+                    "margin_shift_factor": 2,
+                    "analysis_release": metadata,
+                }
+            )
+        except ValueError as exc:
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact violates its typed analysis binding."
+            ) from exc
+
+    def _legacy_normalized_outcome_sensitivity(
         self, release_id: str, election_slug: str
     ) -> OutcomeSensitivity:
         """Return only a release-authenticated, pipeline-materialized outcome context.

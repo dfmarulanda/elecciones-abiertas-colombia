@@ -234,12 +234,12 @@ export type PublicExplorer = {
  */
 export async function getPublicOutcomeSensitivity(
   filters: PublicExplorerFilters = {},
-): Promise<S["OutcomeSensitivity"] | null> {
+): Promise<S["AnalysisOutcomeSensitivity"] | null> {
   if (!apiBase()) return null;
   try {
     const { selected } = await publicSelection(filters);
     if (!selected) return null;
-    return await apiJson<S["OutcomeSensitivity"]>(
+    return await apiJson<S["AnalysisOutcomeSensitivity"]>(
       `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}/outcome-sensitivity`,
     );
   } catch (error) {
@@ -416,11 +416,16 @@ export class PublicApiError extends Error {
   }
 }
 
-export async function publicApiJson<T>(pathname: string): Promise<T> {
+export async function publicApiJson<T>(
+  pathname: string,
+  cache: "immutable" | "exposure" = "immutable",
+): Promise<T> {
   const base = apiBase();
   if (!base) throw new Error("A public API URL is required.");
   const response = await fetch(`${base}${pathname}`, {
-    next: { revalidate: 3600 },
+    ...(cache === "exposure"
+      ? { cache: "no-store" as const }
+      : { next: { revalidate: 3600 } }),
     headers: { Accept: "application/json" },
   });
   if (!response.ok) {
@@ -473,9 +478,9 @@ function pickPublicRelease(
 }
 
 /**
- * The normalized explorer deliberately starts with references plus one keyset
- * page. Candidate/internal releases are absent because the API endpoint only
- * exposes approved published pairs.
+ * The normalized explorer deliberately starts with approved public references
+ * plus one keyset page. The catalogue is an exposure pointer, so it is always
+ * read without a framework cache; the selected release facts remain immutable.
  */
 export async function getPublicExplorer(
   filters: PublicExplorerFilters = {},
@@ -508,6 +513,7 @@ export async function getPublicExplorer(
   try {
     const releases = await apiJson<PublicReleaseRef[]>(
       "/api/v1/release-elections",
+      "exposure",
     );
     const selected = pickPublicRelease(releases, filters);
     if (!selected) {
@@ -594,9 +600,11 @@ export async function getPublicExplorer(
 
 export async function getPublicReleaseSelection(
   filters: PublicExplorerFilters,
+  cache: "immutable" | "exposure" = "exposure",
 ) {
   const releases = await apiJson<PublicReleaseRef[]>(
     "/api/v1/release-elections",
+    cache,
   );
   return { releases, selected: pickPublicRelease(releases, filters) };
 }
@@ -917,6 +925,7 @@ async function apiRelease(options: ReleaseOptions = {}): Promise<ReleaseView> {
 async function normalizedSummaryRelease(): Promise<ReleaseView | null> {
   const releases = await apiJson<PublicReleaseRef[]>(
     "/api/v1/release-elections",
+    "exposure",
   );
   const selected =
     releases.find((item) => item.election_slug === electionSlug) ?? releases[0];

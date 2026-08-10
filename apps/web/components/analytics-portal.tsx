@@ -304,7 +304,7 @@ export function AnalyticsPortal({
 }: {
   locale: Locale;
   release: ReleaseView;
-  outcomeSensitivity?: components["schemas"]["OutcomeSensitivity"] | null;
+  outcomeSensitivity?: components["schemas"]["AnalysisOutcomeSensitivity"] | null;
 }) {
   const c = copy[locale];
   const summary = release.summary;

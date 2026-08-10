@@ -126,6 +126,10 @@ class FederatedRepository:
         return self._postgres.normalized_children_results(release_id, *args, **kwargs)
 
     def normalized_outcome_sensitivity(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
+        if self.holds_historical(release_id):
+            raise ReleaseNotFoundError(
+                "Analysis is unavailable for a context-only historical release."
+            )
         return self._for(release_id).normalized_outcome_sensitivity(release_id, *args, **kwargs)
 
     def normalized_comparison(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
@@ -137,8 +141,57 @@ class FederatedRepository:
     def normalized_dataset_artifact(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
         return self._for(release_id).normalized_dataset_artifact(release_id, *args, **kwargs)
 
-    def analysis_summary_for(self, release_id: str, *args: Any, **kwargs: Any) -> Any:
-        return self._for(release_id).analysis_summary_for(release_id, *args, **kwargs)
+    def _analysis_backend(self, release_id: str) -> PostgresReadRepository:
+        if self.holds_historical(release_id):
+            raise ReleaseNotFoundError(
+                "Analysis is unavailable for a context-only historical release."
+            )
+        return self._postgres
+
+    def analysis_release_metadata(
+        self, slug: str, release_id: str, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._analysis_backend(release_id).analysis_release_metadata(
+            slug, release_id, *args, **kwargs
+        )
+
+    def analysis_summary(self, slug: str, release_id: str, *args: Any, **kwargs: Any) -> Any:
+        return self._analysis_backend(release_id).analysis_summary(
+            slug, release_id, *args, **kwargs
+        )
+
+    def anomalies(self, slug: str, release_id: str, *args: Any, **kwargs: Any) -> Any:
+        return self._analysis_backend(release_id).anomalies(
+            slug, release_id, *args, **kwargs
+        )
+
+    def anomaly(
+        self, slug: str, anomaly_id: str, release_id: str, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._analysis_backend(release_id).anomaly(
+            slug, anomaly_id, release_id, *args, **kwargs
+        )
+
+    def analysis_report(
+        self, slug: str, report_kind: str, release_id: str, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._analysis_backend(release_id).analysis_report(
+            slug, report_kind, release_id, *args, **kwargs
+        )
+
+    def analysis_artifacts(
+        self, slug: str, release_id: str, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._analysis_backend(release_id).analysis_artifacts(
+            slug, release_id, *args, **kwargs
+        )
+
+    def analysis_artifact(
+        self, slug: str, artifact_id: str, release_id: str, *args: Any, **kwargs: Any
+    ) -> Any:
+        return self._analysis_backend(release_id).analysis_artifact(
+            slug, artifact_id, release_id, *args, **kwargs
+        )
 
     # ── legacy-shaped reads that still name a release ────────────────────────
     #
