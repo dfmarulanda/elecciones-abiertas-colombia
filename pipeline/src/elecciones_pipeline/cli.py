@@ -8,10 +8,13 @@ import os
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 import httpx
 import typer
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Engine
 
 from .analytics.analysis_release import (
     build_analysis_bundle,
@@ -50,6 +53,21 @@ from .source_check import check_official_manifests
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 ROOT = Path(__file__).resolve().parents[3]
+
+
+def _postgresql_engine(database_url: str) -> Engine:
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import make_url
+
+    normalized_url = database_url
+    if database_url.startswith("postgresql://"):
+        normalized_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgres://"):
+        normalized_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    parsed = make_url(normalized_url)
+    if parsed.drivername != "postgresql+psycopg":
+        raise ValueError("database URL must use PostgreSQL with the installed psycopg3 driver")
+    return create_engine(parsed)
 
 
 def _trees_are_identical(left: Path, right: Path) -> bool:
@@ -360,11 +378,9 @@ def historical_2022_load_postgres(
     ],
 ) -> None:
     """Load a validated 2022 candidate internally; this never exposes or activates it."""
-    from sqlalchemy import create_engine
-
     try:
         outcome = load_historical_context_release(
-            create_engine(database_url),
+            _postgresql_engine(database_url),
             manifest_path,
             release_directory,
             year=2022,
@@ -388,11 +404,9 @@ def historical_2018_load_postgres(
     ],
 ) -> None:
     """Load validated 2018 context internally; never expose or activate it."""
-    from sqlalchemy import create_engine
-
     try:
         outcome = load_historical_context_release(
-            create_engine(database_url),
+            _postgresql_engine(database_url),
             manifest_path,
             release_directory,
             year=2018,
@@ -445,11 +459,9 @@ def standard_2026_load_postgres(
     ],
 ) -> None:
     """Load the standard 2026 release internally; this never exposes or activates it."""
-    from sqlalchemy import create_engine
-
     try:
         outcome = load_standard_2026_release(
-            create_engine(database_url), manifest_path, artifact_directory
+            _postgresql_engine(database_url), manifest_path, artifact_directory
         )
     except (ReleaseLoadError, OSError, RuntimeError, ValueError) as exc:
         typer.echo(f"Standard 2026 load failed: {exc}", err=True)
@@ -779,12 +791,11 @@ def analysis_release_load_postgres(
     ],
 ) -> None:
     """Load verified analysis bytes with an internal exposure; never approve them."""
-    from sqlalchemy import create_engine
     from sqlalchemy.exc import SQLAlchemyError
 
     try:
         outcome = load_analysis_release(
-            create_engine(database_url),
+            _postgresql_engine(database_url),
             manifest_path,
             producer_operator_id=producer_operator_id,
             artifact_base_url=artifact_base_url,
@@ -841,13 +852,12 @@ def analysis_release_approve_preliminary(
     ],
 ) -> None:
     """Approve one validated internal overlay as preliminary research only."""
-    from sqlalchemy import create_engine
     from sqlalchemy.exc import SQLAlchemyError
 
     try:
         timestamp = datetime.fromisoformat(approved_at.replace("Z", "+00:00"))
         outcome = approve_preliminary_analysis_release(
-            create_engine(database_url),
+            _postgresql_engine(database_url),
             analysis_release_id,
             approved_by=approved_by,
             approved_at=timestamp,

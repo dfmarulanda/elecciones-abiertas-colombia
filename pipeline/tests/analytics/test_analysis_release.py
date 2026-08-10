@@ -20,7 +20,7 @@ from elecciones_pipeline.analytics.analysis_release import (
     write_analysis_bundle,
 )
 from elecciones_pipeline.analytics.peer_signals import peer_signals
-from elecciones_pipeline.cli import app
+from elecciones_pipeline.cli import _postgresql_engine, app
 from typer.testing import CliRunner
 
 SOURCE_RELEASE = "candidate-2026-r2-dacb28aa766eec87"
@@ -300,6 +300,21 @@ def test_analysis_release_cli_builds_internal_bundle_without_exposure(tmp_path: 
     assert payload["exposure_tier"] == "internal"
     assert payload["publication_performed"] is False
     assert json.loads(replay.output) == payload
+
+
+@pytest.mark.parametrize(
+    "database_url",
+    (
+        "postgresql://operator:secret@db.example.test/elections",
+        "postgres://operator:secret@db.example.test/elections",
+        "postgresql+psycopg://operator:secret@db.example.test/elections",
+    ),
+)
+def test_postgresql_engine_uses_the_installed_psycopg3_driver(database_url: str) -> None:
+    engine = _postgresql_engine(database_url)
+
+    assert engine.url.drivername == "postgresql+psycopg"
+    engine.dispose()
 
 
 def test_documentary_attestations_are_links_only_and_require_two_reviewers() -> None:
