@@ -155,7 +155,32 @@ def test_bundle_reports_current_eligibility_and_three_reconciliation_exceptions(
     assert artifact_statuses["validation"] == "not_evaluable"
     assert artifact_statuses["local_sensitivity"] == "not_evaluable"
     assert artifact_statuses["spatial_status"] == "not_evaluable"
-    assert artifact_statuses["outcome_sensitivity"] == "not_evaluable"
+    assert artifact_statuses["outcome_sensitivity"] == "available"
+    outcome_artifact = next(
+        artifact for artifact in bundle.artifacts if artifact.kind == "outcome_sensitivity"
+    )
+    outcome_payload = json.loads(outcome_artifact.content)
+    assert outcome_artifact.record_count == 1
+    assert outcome_payload["status"] == "not_evaluable"
+    assert outcome_payload["evaluable"] is False
+    assert [issue["code"] for issue in outcome_payload["issues"]] == [
+        "documentary_trust_registry_unavailable",
+        "two_reviewer_attestations_unavailable",
+        "canonical_replay_bounds_unavailable",
+    ]
+    assert outcome_payload["verified_affected_votes"] is None
+    output_hash = outcome_payload.pop("output_hash")
+    assert (
+        output_hash
+        == hashlib.sha256(
+            json.dumps(
+                outcome_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode()
+        ).hexdigest()
+    )
     canonical_artifact = next(
         artifact for artifact in bundle.artifacts if artifact.kind == "canonical_input"
     )

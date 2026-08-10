@@ -1129,18 +1129,47 @@ def build_analysis_bundle(
         status="not_evaluable",
         status_reason="authenticated_coordinates_and_crosswalk_unavailable",
     )
+    outcome_issues = [
+        {"code": reason, "record_ids": []} for reason in eligibility["outcome_sensitivity"].reasons
+    ]
+    outcome_payload: dict[str, object] = {
+        "status": "not_evaluable",
+        "evaluable": False,
+        "issues": outcome_issues,
+        "scope": None,
+        "outcome_source": None,
+        "leader_id": None,
+        "runner_up_id": None,
+        "leader_votes": None,
+        "runner_up_votes": None,
+        "observed_margin_votes": None,
+        "verified_record_ids": None,
+        "unresolved_record_ids": None,
+        "verified_affected_votes": None,
+        "verified_margin_shift_bound": None,
+        "unresolved_affected_vote_upper_bound": None,
+        "unresolved_margin_shift_upper_bound": None,
+        "combined_affected_vote_upper_bound": None,
+        "combined_margin_shift_upper_bound": None,
+        "verified_margin_headroom": None,
+        "combined_margin_headroom": None,
+        "tie_possible_from_verified": None,
+        "lead_change_possible_from_verified": None,
+        "tie_possible_including_unresolved": None,
+        "lead_change_possible_including_unresolved": None,
+        "source_links": [],
+        "evidence_hash": None,
+        "methodology_version": "outcome-sensitivity-v3.0.0",
+        "calculation": "No outcome bound is calculated until every registered prerequisite passes.",
+        "limitations": list(eligibility["outcome_sensitivity"].reasons),
+    }
+    outcome_payload["output_hash"] = _hash(outcome_payload)
     outcome_status_artifact = _artifact(
         analysis_release_id=analysis_release_id,
         kind="outcome_sensitivity",
         schema_version="outcome-sensitivity-v3.0.0",
-        value={
-            **asdict(eligibility["outcome_sensitivity"]),
-            "methodology_version": "outcome-sensitivity-v3.0.0",
-            "affected_votes": None,
-            "margin_shift": None,
-        },
-        record_count=0,
-        status="not_evaluable",
+        value=outcome_payload,
+        record_count=1,
         status_reason="documentary_registry_two_reviewer_bounds_and_replay_unavailable",
     )
     artifact_values = [

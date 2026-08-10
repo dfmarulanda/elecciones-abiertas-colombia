@@ -315,6 +315,64 @@ def test_postgres_analysis_artifacts_keep_stored_reason_and_reject_unsafe_url() 
         )
 
 
+def test_normalized_outcome_reads_strict_content_addressed_analysis_artifact() -> None:
+    fixture = FixtureRepository(ROOT / "data/fixtures/fixture-release.json")
+    metadata = fixture.analysis_release_metadata(SLUG, fixture.data_version, None)
+    repository = object.__new__(PostgresReadRepository)
+    repository._sessions = object()
+    repository._allowed_artifact_hosts = {"github.com"}
+    repository.analysis_release_metadata = lambda *_args: metadata  # type: ignore[method-assign]
+    artifact = _outcome_artifact()
+    raw = json.dumps(artifact, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    byte_hash = hashlib.sha256(raw).hexdigest()
+
+    def normalized(_statement: str, _values: dict[str, object]) -> list[dict[str, object]]:
+        return [
+            {
+                "artifact_id": f"{metadata.analysis_release_id}:outcome_sensitivity",
+                "media_type": "application/json",
+                "record_count": 1,
+                "byte_size": len(raw),
+                "byte_hash": byte_hash,
+                "content_hash": byte_hash,
+                "immutable_url": (
+                    "https://github.com/example/releases/download/analysis/"
+                    f"{byte_hash}-outcome_sensitivity.json"
+                ),
+                "artifact_status": "available",
+            }
+        ]
+
+    repository._normalized = normalized  # type: ignore[method-assign,assignment]
+    repository._outcome_artifact_fetcher = lambda _url: raw
+
+    result = repository.normalized_outcome_sensitivity(
+        metadata.source_release_id,
+        metadata.election_slug,
+        metadata.analysis_release_id,
+    )
+
+    assert result.status == "not_evaluable"
+    assert result.analysis_release == metadata
+    assert result.output_hash == artifact["output_hash"]
+
+
+def test_outcome_artifact_redirects_are_limited_to_the_github_release_host() -> None:
+    repository = object.__new__(PostgresReadRepository)
+
+    accepted = repository._validated_outcome_redirect_url(  # noqa: SLF001
+        "https://release-assets.githubusercontent.com/download?signature=value",
+        "github.com",
+    )
+
+    assert accepted.startswith("https://release-assets.githubusercontent.com/")
+    with pytest.raises(RepositoryUnavailableError, match="invalid redirect"):
+        repository._validated_outcome_redirect_url(  # noqa: SLF001
+            "https://evil.example/download?signature=value",
+            "github.com",
+        )
+
+
 def test_sentry_events_drop_visitor_request_data() -> None:
     event = {
         "user": {"ip_address": "127.0.0.1"},

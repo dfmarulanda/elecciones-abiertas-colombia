@@ -1902,6 +1902,37 @@ class PostgresReadRepository:
             raise RepositoryUnavailableError("The analysis artifact has an invalid immutable URL.")
         return value
 
+    def _validated_outcome_redirect_url(self, value: object, initial_host: str) -> str:
+        if not isinstance(value, str) or value.strip() != value:
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact returned an invalid redirect."
+            )
+        parsed = urlsplit(value)
+        try:
+            port = parsed.port
+        except ValueError as exc:
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact returned an invalid redirect."
+            ) from exc
+        redirect_host = parsed.hostname.lower().rstrip(".") if parsed.hostname else None
+        allowed_redirect_hosts = (
+            {"release-assets.githubusercontent.com"}
+            if initial_host == "github.com"
+            else {initial_host}
+        )
+        if (
+            parsed.scheme != "https"
+            or port not in (None, 443)
+            or redirect_host not in allowed_redirect_hosts
+            or parsed.username is not None
+            or parsed.password is not None
+            or bool(parsed.fragment)
+        ):
+            raise RepositoryUnavailableError(
+                "The outcome sensitivity artifact returned an invalid redirect."
+            )
+        return value
+
     def _fetch_outcome_artifact(self, url: str, expected_size: int) -> bytes:
         fetcher = getattr(self, "_outcome_artifact_fetcher", None)
         if fetcher is not None:
@@ -1917,49 +1948,67 @@ class PostgresReadRepository:
                 )
         else:
             try:
-                with (
-                    httpx.Client(
-                        follow_redirects=False,
-                        timeout=httpx.Timeout(10.0, connect=3.0),
-                        trust_env=False,
-                        headers={"Accept": "application/json", "Accept-Encoding": "identity"},
-                    ) as client,
-                    client.stream("GET", url) as response,
-                ):
-                    if response.status_code != 200:
+                initial_host = urlsplit(url).hostname
+                assert initial_host is not None
+                current_url = url
+                with httpx.Client(
+                    follow_redirects=False,
+                    timeout=httpx.Timeout(10.0, connect=3.0),
+                    trust_env=False,
+                    headers={"Accept": "application/json", "Accept-Encoding": "identity"},
+                ) as client:
+                    for _hop in range(3):
+                        with client.stream("GET", current_url) as response:
+                            if response.is_redirect:
+                                current_url = self._validated_outcome_redirect_url(
+                                    response.headers.get("location"), initial_host
+                                )
+                                continue
+                            if response.status_code != 200:
+                                raise RepositoryUnavailableError(
+                                    "The immutable outcome sensitivity dataset is unavailable."
+                                )
+                            content_type = response.headers.get("content-type", "")
+                            media_type = content_type.split(";", 1)[0].strip().lower()
+                            if media_type not in {
+                                "application/json",
+                                "application/octet-stream",
+                            } or response.headers.get(
+                                "content-encoding", "identity"
+                            ).lower() not in {
+                                "",
+                                "identity",
+                            }:
+                                raise RepositoryUnavailableError(
+                                    "The immutable outcome sensitivity dataset is not plain JSON."
+                                )
+                            content_length = response.headers.get("content-length")
+                            if content_length is not None:
+                                try:
+                                    announced_size = int(content_length)
+                                except ValueError as exc:
+                                    raise RepositoryUnavailableError(
+                                        "The immutable outcome sensitivity dataset has an invalid size."
+                                    ) from exc
+                                if announced_size != expected_size:
+                                    raise RepositoryUnavailableError(
+                                        "The immutable outcome sensitivity dataset size does not match its declaration."
+                                    )
+                            chunks: list[bytes] = []
+                            size = 0
+                            for chunk in response.iter_bytes():
+                                size += len(chunk)
+                                if size > expected_size or size > _MAX_OUTCOME_ARTIFACT_BYTES:
+                                    raise RepositoryUnavailableError(
+                                        "The immutable outcome sensitivity dataset exceeds its declared size."
+                                    )
+                                chunks.append(chunk)
+                            payload = b"".join(chunks)
+                            break
+                    else:
                         raise RepositoryUnavailableError(
-                            "The immutable outcome sensitivity dataset is unavailable."
+                            "The immutable outcome sensitivity dataset redirected too many times."
                         )
-                    content_type = response.headers.get("content-type", "")
-                    media_type = content_type.split(";", 1)[0].strip().lower()
-                    if media_type != "application/json" or response.headers.get(
-                        "content-encoding", "identity"
-                    ).lower() not in {"", "identity"}:
-                        raise RepositoryUnavailableError(
-                            "The immutable outcome sensitivity dataset is not plain JSON."
-                        )
-                    content_length = response.headers.get("content-length")
-                    if content_length is not None:
-                        try:
-                            announced_size = int(content_length)
-                        except ValueError as exc:
-                            raise RepositoryUnavailableError(
-                                "The immutable outcome sensitivity dataset has an invalid size."
-                            ) from exc
-                        if announced_size != expected_size:
-                            raise RepositoryUnavailableError(
-                                "The immutable outcome sensitivity dataset size does not match its declaration."
-                            )
-                    chunks: list[bytes] = []
-                    size = 0
-                    for chunk in response.iter_bytes():
-                        size += len(chunk)
-                        if size > expected_size or size > _MAX_OUTCOME_ARTIFACT_BYTES:
-                            raise RepositoryUnavailableError(
-                                "The immutable outcome sensitivity dataset exceeds its declared size."
-                            )
-                        chunks.append(chunk)
-                    payload = b"".join(chunks)
             except RepositoryUnavailableError:
                 raise
             except httpx.HTTPError as exc:
@@ -2014,7 +2063,7 @@ class PostgresReadRepository:
             )
         assert isinstance(byte_size, int)
         assert isinstance(byte_hash, str)
-        location = self._validated_outcome_url(declaration["immutable_url"], content_hash=byte_hash)
+        location = self._validated_analysis_artifact_url(declaration["immutable_url"], byte_hash)
         raw_artifact = self._fetch_outcome_artifact(location, byte_size)
         if hashlib.sha256(raw_artifact).hexdigest() != byte_hash:
             raise RepositoryUnavailableError(
