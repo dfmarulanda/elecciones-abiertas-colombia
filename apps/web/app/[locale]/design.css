@@ -6,8 +6,8 @@
  * class names — `.rise`, `.fade`, `.fig`, `.mono`, `.mark`, `.blk`, `.head`,
  * `.claim`, `.ul`, `.skip`, `.field path`, the `rise`/`fade` keyframes — are
  * unchanged from the source. This file is NOT a translation onto the app's
- * ec-* Tailwind token system; it is the design's own CSS, imported only by
- * the home page.
+ * ec-* Tailwind token system; it is the design's own CSS, loaded once by the
+ * locale layout and activated only inside `.eac-design` subtrees.
  *
  * The one structural change: every rule is nested under `.eac-design`. The
  * source's stylesheet is written to own the whole document (`html`, `body`,
@@ -15,7 +15,7 @@
  * /resultados, /actas, /metodologia, etc., which still run on the older
  * ec-* token system. An unscoped `a{color:#211E1E}` or `:focus-visible{...}`
  * would silently repaint those unrelated routes. Nesting under `.eac-design`
- * — the class the redesigned home page's content tree renders inside —
+ * — the class each redesigned content tree renders inside —
  * keeps this stylesheet's reach exactly where the design lane is porting
  * verbatim markup, without touching anything selector-for-selector inside
  * that scope.
@@ -298,5 +298,66 @@
   .eac-design .field path,
   .eac-design .blk {
     transition: none;
+  }
+}
+
+.eac-design.eac-analysis {
+  min-width: 0;
+  overflow: clip;
+}
+.eac-design .eac-analysis-section {
+  border-bottom: 1px solid #211e1e;
+}
+.eac-design .eac-analysis-section--ink {
+  background: #151312;
+  color: #f4f1ea;
+}
+.eac-design .eac-analysis-section__inner {
+  padding-top: clamp(3rem, 7vw, 7rem);
+  padding-bottom: clamp(3rem, 7vw, 7rem);
+}
+.eac-design .eac-analysis-section__header {
+  align-items: start;
+}
+.eac-design .eac-analysis-section__number,
+.eac-design .eac-analysis-section__eyebrow {
+  margin: 0;
+}
+.eac-design .eac-analysis-section--ink .eac-analysis-section__number,
+.eac-design .eac-analysis-section--ink .eac-analysis-section__eyebrow {
+  color: #c4ff00;
+}
+.eac-design .eac-analysis-section__intro {
+  max-width: 46rem;
+  margin-top: 1rem;
+  color: #928979;
+}
+.eac-design .eac-analysis-section--ink .eac-analysis-section__intro {
+  color: #cfc8bc;
+}
+.eac-design .eac-analysis-state-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0 1rem 1.25rem;
+  border-left: 4px solid #c4ff00;
+}
+.eac-design .eac-analysis-state-band__labels {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.eac-design .eac-analysis-state-band__reasons p {
+  margin: 0 0 0.5rem;
+}
+.eac-design .eac-analysis-state-band__reasons ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+@media (max-width: 720px) {
+  .eac-design .eac-analysis-state-band {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

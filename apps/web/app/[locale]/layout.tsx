@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "../globals.css";
+import "./design.css";
 import { FontPreloads } from "@/components/font-preloads";
 import { SiteShell } from "@/components/site-shell";
 import { publicSiteOrigin } from "@/lib/seo";

@@ -4,7 +4,6 @@ import {
   getTranslations,
   setRequestLocale,
 } from "next-intl/server";
-import "./design.css";
 import { ConteoHero } from "@/components/conteo-hero";
 import { ClaimsRegister } from "@/components/claims-register";
 import {
