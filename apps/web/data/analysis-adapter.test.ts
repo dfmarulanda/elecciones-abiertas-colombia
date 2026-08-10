@@ -85,6 +85,7 @@ const anomaly = {
   provenance_hash: hash,
   typed_components: [],
 };
+const scopedAnomalyId = "analysis-release-1:reconciliation:unlocated:1";
 const releases = [
   {
     release_id: releaseId,
@@ -162,6 +163,12 @@ function mockPublicApi(
         });
       if (url.includes("/analysis/anomalies/anomaly-1"))
         return json(options.invalidDetail ? { id: "anomaly-1" } : anomaly);
+      if (
+        url.includes(
+          "/analysis/anomalies/analysis-release-1%3Areconciliation%3Aunlocated%3A1",
+        )
+      )
+        return json({ ...anomaly, id: scopedAnomalyId });
       if (url.includes("/analysis/artifacts?"))
         return json({ items: [], analysis_release: analysisRelease });
       if (
@@ -262,6 +269,31 @@ describe("frozen public analysis adapter", () => {
       expect(state.error?.message).toMatch(
         /does not match the frozen contract/i,
       );
+  });
+
+  it("normalizes one encoded route layer before requesting a scoped anomaly id", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:9999");
+    const requested = mockPublicApi();
+    const { getPublicAnalysisAnomaly } = await import("./analysis-adapter");
+
+    const state = await getPublicAnalysisAnomaly(
+      encodeURIComponent(scopedAnomalyId),
+      {
+        release: releaseId,
+        election,
+        analysisRelease: analysisReleaseId,
+      },
+    );
+
+    expect(state.status).toBe("ready");
+    expect(
+      requested.some((url) =>
+        url.includes(
+          "/analysis/anomalies/analysis-release-1%3Areconciliation%3Aunlocated%3A1?",
+        ),
+      ),
+    ).toBe(true);
+    expect(requested.some((url) => url.includes("%253A"))).toBe(false);
   });
 
   it("keeps an unconfigured fixture explicit instead of inventing analysis", async () => {

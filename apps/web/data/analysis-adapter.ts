@@ -88,6 +88,14 @@ function prefixFor(selected: PublicReleaseRef) {
   return `/api/v1/releases/${encodeURIComponent(selected.release_id)}/elections/${encodeURIComponent(selected.election_slug)}`;
 }
 
+function canonicalPathSegment(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function withAnalysisRelease(pathname: string, analysisRelease: string) {
   const [path, rawQuery = ""] = pathname.split("?", 2);
   const query = new URLSearchParams(rawQuery);
@@ -488,7 +496,7 @@ export async function getPublicAnalysisAnomaly(
     selected = selection.selected;
     if (!selected) return { status: "no_release", releases };
     const prefix = prefixFor(selected);
-    const detailPath = `${prefix}/analysis/anomalies/${encodeURIComponent(anomalyId)}`;
+    const detailPath = `${prefix}/analysis/anomalies/${encodeURIComponent(canonicalPathSegment(anomalyId))}`;
     const value = await publicApiJson<unknown>(
       filters.analysisRelease
         ? withAnalysisRelease(detailPath, filters.analysisRelease)
