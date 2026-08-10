@@ -6,14 +6,16 @@ export function AnalysisV2Shell({
   children,
   ariaLabel,
   busy = false,
+  mainId = "main-content",
 }: {
   children: ReactNode;
   ariaLabel?: string;
   busy?: boolean;
+  mainId?: string;
 }) {
   return (
     <main
-      id="main-content"
+      id={mainId}
       tabIndex={-1}
       className="eac-design eac-analysis"
       data-design-version="v2"

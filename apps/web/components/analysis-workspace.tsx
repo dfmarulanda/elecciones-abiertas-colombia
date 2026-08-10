@@ -3,7 +3,11 @@ import Link from "next/link";
 import React from "react";
 
 import { OutcomeSensitivityPanel } from "@/components/investigation-details";
-import { Page } from "@/components/page-primitives";
+import {
+  AnalysisV2Section,
+  AnalysisV2Shell,
+  AnalysisV2StateBand,
+} from "@/components/analysis-v2-primitives";
 import { StatusBadge } from "@/components/ui";
 import { analysisArtifactDownloadUrl } from "@/data/analysis-adapter";
 import type {
@@ -456,26 +460,12 @@ function EvidenceState({
 }) {
   const a = analysisCatalog[locale];
   return (
-    <div className="mt-4 border-l-4 border-neon pl-4 text-xs">
-      <div className="flex flex-wrap gap-2">
-        <StatusBadge tone={tier === "research_preview" ? "fixture" : "neutral"}>
-          {a.evidenceTier}: {evidenceTierLabel(tier, locale)}
-        </StatusBadge>
-        <StatusBadge>
-          {a.evaluability}: {signalStatusLabel(status, locale)}
-        </StatusBadge>
-      </div>
-      {reasons.length ? (
-        <div className="mt-3">
-          <p className="font-bold uppercase">{a.reasons}</p>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
-            {reasons.map((reason) => (
-              <li key={reason}>{sentenceCode(reason, locale)}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </div>
+    <AnalysisV2StateBand
+      tierLabel={`${a.evidenceTier}: ${evidenceTierLabel(tier, locale)}`}
+      statusLabel={`${a.evaluability}: ${signalStatusLabel(status, locale)}`}
+      reasons={reasons.map((reason) => sentenceCode(reason, locale))}
+      reasonsLabel={a.reasons}
+    />
   );
 }
 
@@ -509,7 +499,7 @@ function CoverageTable({
     [c.excluded, coverage.excluded],
   ] as const;
   return (
-    <div className="overflow-x-auto border border-ink" tabIndex={0}>
+    <div className="eac-analysis-table-wrap" tabIndex={0}>
       <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-ink text-paper">
@@ -550,10 +540,7 @@ function ResearchGate({
 }) {
   const c = copy[locale];
   return (
-    <section
-      className="border border-ink bg-neon p-5 text-ink sm:p-6"
-      role="status"
-    >
+    <aside className="eac-analysis-research-gate" role="status">
       <div className="flex items-start gap-3">
         <FlaskConical className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
         <div>
@@ -570,7 +557,7 @@ function ResearchGate({
           ) : null}
         </div>
       </div>
-    </section>
+    </aside>
   );
 }
 
@@ -588,7 +575,7 @@ function ReleaseRail({
   const c = copy[locale];
   const a = analysisCatalog[locale];
   return (
-    <dl className="grid gap-px border border-ink bg-ink text-sm sm:grid-cols-2 lg:grid-cols-4">
+    <dl className="eac-analysis-release-rail">
       {[
         [c.release, selected.release_id],
         [c.election, selected.election_slug],
@@ -604,7 +591,7 @@ function ReleaseRail({
           `${a.generated}: ${formatDate(analysisRelease.generated_at, locale)} · ${a.approved}: ${formatDate(analysisRelease.approved_at, locale)}`,
         ],
       ].map(([label, value]) => (
-        <div className="min-w-0 bg-paper p-4" key={label}>
+        <div className="eac-analysis-release-rail__item" key={label}>
           <dt className="font-mono text-[11px] font-bold tracking-[.08em] text-muted uppercase">
             {label}
           </dt>
@@ -640,8 +627,8 @@ function PlainConclusion({
         : c.recordsMet(anomalies, evaluated);
   }
   return (
-    <section className="grid border-x border-b border-ink lg:grid-cols-12">
-      <div className="px-4 py-8 sm:px-6 lg:col-span-8 lg:px-8">
+    <div className="eac-analysis-conclusion-grid">
+      <div className="eac-analysis-conclusion-grid__copy">
         <p className="font-mono text-[11px] font-bold tracking-[.12em] text-muted uppercase">
           01 / {c.plainAnswer}
         </p>
@@ -652,7 +639,7 @@ function PlainConclusion({
           {c.doesNotMean}
         </p>
       </div>
-      <dl className="grid border-t border-ink bg-ink text-paper sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1 lg:border-t-0 lg:border-l">
+      <dl className="eac-analysis-conclusion-grid__figures">
         <div className="p-5 sm:p-6">
           <dt className="text-xs text-[#9B9B9B]">{c.evaluated}</dt>
           <dd className="mt-2 font-display text-4xl font-bold tabular-nums">
@@ -672,7 +659,7 @@ function PlainConclusion({
           </dd>
         </div>
       </dl>
-    </section>
+    </div>
   );
 }
 
@@ -698,8 +685,8 @@ function AnomalyCard({
     anomaly.analysis_release.analysis_release_id,
   );
   return (
-    <li className="border-b border-ink py-6 last:border-b-0">
-      <article>
+    <li className="eac-analysis-anomaly-item">
+      <article className="eac-analysis-anomaly-card">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_12rem]">
           <div className="min-w-0">
             <div className="flex flex-wrap gap-2">
@@ -748,7 +735,7 @@ function AnomalyCard({
               </div>
             </dl>
           </div>
-          <div className="border border-ink bg-ink p-5 text-paper lg:text-right">
+          <div className="eac-analysis-anomaly-score">
             <p className="font-display text-5xl font-bold tabular-nums">
               {anomaly.audit_priority_score}
               <span className="text-base">/100</span>
@@ -759,7 +746,7 @@ function AnomalyCard({
             </p>
           </div>
         </div>
-        <p className="mt-5 border border-ink p-4 text-sm leading-6">
+        <p className="eac-analysis-anomaly-disclosure">
           {anomaly.disclosure[locale]}
         </p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -791,7 +778,7 @@ function ExpertReport({
   const c = copy[locale];
   const metrics = Object.entries(report.metrics);
   return (
-    <details className="group border-b border-ink last:border-b-0">
+    <details className="group eac-analysis-expert-report">
       <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-bold after:text-xl after:content-['+'] group-open:after:content-['−'] [&::-webkit-details-marker]:hidden">
         <span>
           {reportLabels[report.report_kind][locale]} ·{" "}
@@ -832,7 +819,7 @@ function ExpertReport({
           </div>
         </dl>
         {metrics.length ? (
-          <div className="mt-5 overflow-x-auto border border-ink" tabIndex={0}>
+          <div className="eac-analysis-table-wrap mt-5" tabIndex={0}>
             <table className="w-full min-w-[30rem] border-collapse text-left text-sm">
               <caption className="sr-only">
                 {reportLabels[report.report_kind][locale]}
@@ -879,27 +866,37 @@ function ExpertReport({
 
 function ExpectedEvidence({
   locale,
+  number,
+  dataSection,
   title,
   intro,
   tier,
   status,
   reasons,
+  tone = "paper",
   children,
 }: {
   locale: Locale;
+  number: string;
+  dataSection: string;
   title: string;
   intro: string;
   tier: EvidenceTier;
   status: string;
   reasons: string[];
+  tone?: "paper" | "ink";
   children?: React.ReactNode;
 }) {
+  const a = analysisCatalog[locale];
   return (
-    <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
-      <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
-        {title}
-      </h2>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{intro}</p>
+    <AnalysisV2Section
+      dataSection={dataSection}
+      eyebrow={a.evidenceTier}
+      intro={intro}
+      number={number}
+      title={title}
+      tone={tone}
+    >
       <EvidenceState
         locale={locale}
         tier={tier}
@@ -907,7 +904,7 @@ function ExpectedEvidence({
         reasons={reasons}
       />
       {children}
-    </section>
+    </AnalysisV2Section>
   );
 }
 
@@ -924,12 +921,12 @@ function ArtifactDownloads({
 }) {
   const a = analysisCatalog[locale];
   return (
-    <div className="mt-8">
+    <div className="eac-analysis-artifacts">
       <h3 className="font-display text-xl font-bold uppercase">
         {a.downloads}
       </h3>
       {artifacts.length ? (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+        <ul className="eac-analysis-artifact-grid">
           {artifacts.map((artifact) => {
             const href = analysisArtifactDownloadUrl(
               selected,
@@ -938,7 +935,7 @@ function ArtifactDownloads({
             );
             return (
               <li
-                className="min-w-0 border border-ink p-4"
+                className="eac-analysis-artifact-card"
                 key={artifact.artifact_id}
               >
                 <p className="break-words font-bold">{artifact.kind}</p>
@@ -1025,57 +1022,64 @@ export function AnalysisWorkspace({
     }
     return value.toString();
   };
+  const releaseFraming =
+    selected.status === "published"
+      ? locale === "es"
+        ? "Release publicado · lectura certificada."
+        : "Published release · certified reading."
+      : locale === "es"
+        ? "Release candidato · lectura preliminar."
+        : "Candidate release · preliminary reading.";
   return (
-    <Page
-      locale={locale}
-      eyebrow={c.eyebrow}
-      title={c.title}
-      synthetic={false}
-      releaseStatus={selected.status}
-    >
-      <p className="max-w-3xl text-base leading-7 text-muted">{c.intro}</p>
-      <div className="mt-6">
-        <ReleaseRail
-          locale={locale}
-          selected={selected}
-          summary={summary}
-          analysisRelease={analysis.analysisRelease}
-        />
-      </div>
-      {summary.research_preview || summary.ineligible_reasons.length ? (
-        <div className="mt-6">
-          <ResearchGate locale={locale} reasons={summary.ineligible_reasons} />
-        </div>
-      ) : null}
-      {analysis.analysisRelease.preliminary_caveat ? (
-        <p
-          className="mt-6 border border-ink bg-neon p-4 text-sm leading-6"
-          role="status"
-        >
-          {analysis.analysisRelease.preliminary_caveat[locale]}
-        </p>
-      ) : null}
-      <div className="mt-6">
-        <PlainConclusion locale={locale} summary={summary} />
-      </div>
-      <p className="border-x border-b border-ink p-4 text-sm leading-6 sm:p-6">
-        {summary.disclosure[locale]}
-      </p>
-
+    <AnalysisV2Shell ariaLabel={c.title}>
       <section
-        className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8"
-        aria-labelledby="analysis-coverage"
+        className="eac-analysis-hero"
+        data-analysis-section="conclusion"
+        aria-labelledby="analysis-title"
       >
-        <h2
-          id="analysis-coverage"
-          className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl"
-        >
-          {a.releaseStatus}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-          {c.coverageIntro}
-        </p>
-        <div className="mt-6">
+        <div className="eac-gutter eac-analysis-hero__inner">
+          <p className="mark eac-analysis-hero__eyebrow">{c.eyebrow}</p>
+          <div className="eac-analysis-hero__heading">
+            <h1 className="head eac-analysis-hero__title" id="analysis-title">
+              {c.title}
+            </h1>
+            <p className="eac-analysis-hero__intro">{c.intro}</p>
+            <p className="mono eac-analysis-hero__framing">{releaseFraming}</p>
+          </div>
+          <div className="eac-analysis-hero__release">
+            <ReleaseRail
+              locale={locale}
+              selected={selected}
+              summary={summary}
+              analysisRelease={analysis.analysisRelease}
+            />
+          </div>
+          {summary.research_preview || summary.ineligible_reasons.length ? (
+            <ResearchGate
+              locale={locale}
+              reasons={summary.ineligible_reasons}
+            />
+          ) : null}
+          {analysis.analysisRelease.preliminary_caveat ? (
+            <p className="eac-analysis-preliminary-caveat" role="status">
+              {analysis.analysisRelease.preliminary_caveat[locale]}
+            </p>
+          ) : null}
+          <PlainConclusion locale={locale} summary={summary} />
+          <p className="eac-analysis-disclosure">
+            {summary.disclosure[locale]}
+          </p>
+        </div>
+      </section>
+
+      <AnalysisV2Section
+        dataSection="coverage"
+        eyebrow={c.coverage}
+        intro={c.coverageIntro}
+        number="02"
+        title={a.releaseStatus}
+      >
+        <div className="eac-analysis-section__body">
           <CoverageTable
             locale={locale}
             coverage={summary.missingness}
@@ -1088,140 +1092,139 @@ export function AnalysisWorkspace({
           status={analysis.analysisRelease.artifact_status}
           reasons={analysis.analysisRelease.status_reasons}
         />
-      </section>
+      </AnalysisV2Section>
 
-      <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
-        <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
-          {a.descriptive}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-          {a.descriptiveIntro}
-        </p>
-        <h3 className="mt-7 font-bold">{c.qualifyingByRule}</h3>
-        <dl className="mt-3 grid gap-px border border-ink bg-ink sm:grid-cols-2 lg:grid-cols-5">
-          {Object.entries(summary.anomaly_counts).map(([type, count]) => (
-            <div className="min-w-0 bg-paper p-4" key={type}>
-              <dt className="text-xs leading-5 text-muted">
-                {anomalyTypeLabels[type as AnalysisAnomalyType]?.[locale] ??
-                  type}
-              </dt>
-              <dd className="mt-3 font-display text-3xl font-bold tabular-nums">
-                {signalDisplay(count, locale)}
-              </dd>
-              <dd className="mt-1 font-mono text-[10px] text-muted uppercase">
-                {signalStatusLabel(count.status, locale)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <EvidenceState locale={locale} tier="descriptive" status="available" />
-      </section>
-
-      <section
-        className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8"
-        aria-labelledby="analysis-explorer"
+      <AnalysisV2Section
+        dataSection="descriptive"
+        eyebrow={c.qualifyingByRule}
+        intro={a.descriptiveIntro}
+        number="03"
+        title={a.descriptive}
+        tone="ink"
       >
-        <h2
-          id="analysis-explorer"
-          className="mt-3 font-display text-2xl font-bold uppercase sm:text-3xl"
-        >
-          {a.deterministic}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-          {a.deterministicIntro} {c.explorerIntro}
-        </p>
-        <form
-          className="mt-6 grid gap-4 border-y border-ink py-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_auto] lg:items-end"
-          aria-label={c.explorer}
-        >
-          <label className="grid gap-2 font-mono text-[11px] font-bold uppercase">
-            {a.context}
-            <select
-              className="min-h-11 min-w-0 border border-ink bg-paper px-3 text-sm font-normal normal-case"
-              name="context"
-              defaultValue={contextValue(selected)}
-            >
-              {analysis.releases.map((release) => (
-                <option
-                  value={contextValue(release)}
-                  key={`${release.release_id}:${release.election_slug}`}
-                >
-                  {locale === "es" ? release.name_es : release.name_en} ·{" "}
-                  {release.release_id}
-                  {release.release_id === selected.release_id
-                    ? ` · ${analysis.analysisRelease.analysis_release_id}`
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 font-mono text-[11px] font-bold uppercase">
-            {c.anomalyType}
-            <select
-              className="min-h-11 min-w-0 border border-ink bg-paper px-3 text-sm font-normal normal-case"
-              name="tipo"
-              defaultValue={analysis.filters.anomalyType ?? ""}
-            >
-              <option value="">{c.allTypes}</option>
-              {Object.entries(anomalyTypeLabels).map(([type, labels]) => (
-                <option value={type} key={type}>
-                  {labels[locale]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            className="inline-flex min-h-11 items-center justify-center gap-2 border border-ink bg-ink px-4 font-mono text-xs font-bold uppercase text-paper hover:bg-neon hover:text-ink"
-            type="submit"
-          >
-            <Search className="size-4" aria-hidden="true" /> {c.apply}
-          </button>
-        </form>
-        {analysis.filters.anomalyType ? (
-          <Link
-            className="mt-4 inline-flex min-h-11 items-center underline underline-offset-4"
-            href={`/${locale}/analitica?${resetQuery}`}
-          >
-            {c.reset}
-          </Link>
-        ) : null}
-        {anomalies.items.length ? (
-          <ol className="mt-4 border-t border-ink">
-            {anomalies.items.map((anomaly) => (
-              <AnomalyCard
-                locale={locale}
-                anomaly={anomaly}
-                selected={selected}
-                key={anomaly.id}
-              />
+        <div className="eac-analysis-section__body">
+          <h3 className="claim eac-analysis-subheading">
+            {c.qualifyingByRule}
+          </h3>
+          <dl className="eac-analysis-metric-grid">
+            {Object.entries(summary.anomaly_counts).map(([type, count]) => (
+              <div className="eac-analysis-metric" key={type}>
+                <dt className="eac-analysis-metric__label">
+                  {anomalyTypeLabels[type as AnalysisAnomalyType]?.[locale] ??
+                    type}
+                </dt>
+                <dd className="fig eac-analysis-metric__value">
+                  {signalDisplay(count, locale)}
+                </dd>
+                <dd className="mono eac-analysis-metric__status">
+                  {signalStatusLabel(count.status, locale)}
+                </dd>
+              </div>
             ))}
-          </ol>
-        ) : (
-          <div className="mt-6 border border-ink p-5" role="status">
-            <p className="font-bold">{c.empty}</p>
-            <p className="mt-2 text-sm leading-6 text-muted">{c.emptyCaveat}</p>
-          </div>
-        )}
-        <nav
-          className="mt-6 flex flex-col gap-3 border-t border-ink pt-5 sm:flex-row sm:items-center sm:justify-between"
-          aria-label={c.explorer}
-        >
-          <p className="text-sm text-muted">
-            {anomalies.page.has_more ? c.explorerIntro : c.end}
-          </p>
-          {anomalies.page.has_more && anomalies.page.next_cursor ? (
-            <Link
-              className="inline-flex min-h-11 items-center justify-center gap-2 border border-ink px-4 font-mono text-xs font-bold uppercase hover:bg-neon"
-              href={`/${locale}/analitica?${nextQuery}`}
+          </dl>
+          <EvidenceState
+            locale={locale}
+            tier="descriptive"
+            status="available"
+          />
+        </div>
+      </AnalysisV2Section>
+
+      <AnalysisV2Section
+        dataSection="deterministic"
+        eyebrow={c.explorer}
+        intro={`${a.deterministicIntro} ${c.explorerIntro}`}
+        number="04"
+        title={a.deterministic}
+      >
+        <div className="eac-analysis-section__body">
+          <form className="eac-analysis-filters" aria-label={c.explorer}>
+            <label className="mono eac-analysis-field">
+              {a.context}
+              <select
+                className="eac-analysis-select"
+                name="context"
+                defaultValue={contextValue(selected)}
+              >
+                {analysis.releases.map((release) => (
+                  <option
+                    value={contextValue(release)}
+                    key={`${release.release_id}:${release.election_slug}`}
+                  >
+                    {locale === "es" ? release.name_es : release.name_en} ·{" "}
+                    {release.release_id}
+                    {release.release_id === selected.release_id
+                      ? ` · ${analysis.analysisRelease.analysis_release_id}`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mono eac-analysis-field">
+              {c.anomalyType}
+              <select
+                className="eac-analysis-select"
+                name="tipo"
+                defaultValue={analysis.filters.anomalyType ?? ""}
+              >
+                <option value="">{c.allTypes}</option>
+                {Object.entries(anomalyTypeLabels).map(([type, labels]) => (
+                  <option value={type} key={type}>
+                    {labels[locale]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="mono eac-analysis-action eac-analysis-action--primary"
+              type="submit"
             >
-              {c.next} <ArrowRight className="size-4" aria-hidden="true" />
+              <Search className="size-4" aria-hidden="true" /> {c.apply}
+            </button>
+          </form>
+          {analysis.filters.anomalyType ? (
+            <Link
+              className="eac-analysis-clear"
+              href={`/${locale}/analitica?${resetQuery}`}
+            >
+              {c.reset}
             </Link>
           ) : null}
-        </nav>
-      </section>
+          {anomalies.items.length ? (
+            <ol className="eac-analysis-anomaly-list">
+              {anomalies.items.map((anomaly) => (
+                <AnomalyCard
+                  locale={locale}
+                  anomaly={anomaly}
+                  selected={selected}
+                  key={anomaly.id}
+                />
+              ))}
+            </ol>
+          ) : (
+            <div className="eac-analysis-empty" role="status">
+              <p className="claim">{c.empty}</p>
+              <p>{c.emptyCaveat}</p>
+            </div>
+          )}
+          <nav className="eac-analysis-pagination" aria-label={c.explorer}>
+            <p>{anomalies.page.has_more ? c.explorerIntro : c.end}</p>
+            {anomalies.page.has_more && anomalies.page.next_cursor ? (
+              <Link
+                className="mono eac-analysis-action"
+                href={`/${locale}/analitica?${nextQuery}`}
+              >
+                {c.next} <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </nav>
+        </div>
+      </AnalysisV2Section>
 
       <ExpectedEvidence
+        dataSection="peer"
         locale={locale}
+        number="05"
         title={a.peer}
         intro={a.peerIntro}
         tier="research_preview"
@@ -1238,7 +1241,9 @@ export function AnalysisWorkspace({
       </ExpectedEvidence>
 
       <ExpectedEvidence
+        dataSection="spatial"
         locale={locale}
+        number="06"
         title={a.spatial}
         intro={a.spatialIntro}
         tier={spatialAnomalies.length ? "research_preview" : "non_evaluable"}
@@ -1248,6 +1253,7 @@ export function AnalysisWorkspace({
             ? spatialAnomalies.flatMap((item) => item.ineligible_reasons)
             : ["authenticated_coordinates_not_available"]
         }
+        tone="ink"
       >
         {!spatialAnomalies.length ? (
           <p className="mt-5 text-sm">{a.noSpatial}</p>
@@ -1255,7 +1261,9 @@ export function AnalysisWorkspace({
       </ExpectedEvidence>
 
       <ExpectedEvidence
+        dataSection="outcome"
         locale={locale}
+        number="07"
         title={a.outcome}
         intro={a.outcomeIntro}
         tier={
@@ -1290,85 +1298,88 @@ export function AnalysisWorkspace({
         </div>
       </ExpectedEvidence>
 
-      <section className="border-x border-b border-ink px-4 py-8 sm:px-6 lg:px-8">
-        <h2 className="font-display text-2xl font-bold uppercase sm:text-3xl">
-          {a.expert}
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-muted">{a.expertIntro}</p>
-        <div className="mt-6 border-t border-ink">
-          {Object.entries(analysis.reports).map(([kind, resource]) =>
-            resource.status === "available" ? (
-              <ExpertReport
-                locale={locale}
-                report={resource.value}
-                key={kind}
-              />
-            ) : (
-              <div className="border-b border-ink py-5" key={kind}>
-                <p className="font-bold">
-                  {reportLabels[kind as AnalysisReportKind][locale]}
-                </p>
-                <p className="mt-2 text-sm text-muted">{a.reportUnavailable}</p>
-                <EvidenceState
+      <AnalysisV2Section
+        dataSection="expert"
+        eyebrow={a.downloads}
+        intro={a.expertIntro}
+        number="08"
+        title={a.expert}
+        tone="ink"
+      >
+        <div className="eac-analysis-section__body">
+          <div className="eac-analysis-reports">
+            {Object.entries(analysis.reports).map(([kind, resource]) =>
+              resource.status === "available" ? (
+                <ExpertReport
                   locale={locale}
-                  tier="non_evaluable"
-                  status="unavailable"
-                  reasons={[resource.reason]}
+                  report={resource.value}
+                  key={kind}
                 />
-              </div>
-            ),
-          )}
-        </div>
-        <ArtifactDownloads
-          locale={locale}
-          artifacts={
-            analysis.artifacts.status === "available"
-              ? analysis.artifacts.value
-              : []
-          }
-          selected={selected}
-          analysisRelease={analysis.analysisRelease}
-        />
-        {analysis.artifacts.status === "unavailable" ? (
-          <EvidenceState
+              ) : (
+                <div className="eac-analysis-report-unavailable" key={kind}>
+                  <p className="claim">
+                    {reportLabels[kind as AnalysisReportKind][locale]}
+                  </p>
+                  <p className="mt-2 text-sm text-muted">
+                    {a.reportUnavailable}
+                  </p>
+                  <EvidenceState
+                    locale={locale}
+                    tier="non_evaluable"
+                    status="unavailable"
+                    reasons={[resource.reason]}
+                  />
+                </div>
+              ),
+            )}
+          </div>
+          <ArtifactDownloads
             locale={locale}
-            tier="non_evaluable"
-            status="unavailable"
-            reasons={[analysis.artifacts.reason]}
+            artifacts={
+              analysis.artifacts.status === "available"
+                ? analysis.artifacts.value
+                : []
+            }
+            selected={selected}
+            analysisRelease={analysis.analysisRelease}
           />
-        ) : null}
-      </section>
+          {analysis.artifacts.status === "unavailable" ? (
+            <EvidenceState
+              locale={locale}
+              tier="non_evaluable"
+              status="unavailable"
+              reasons={[analysis.artifacts.reason]}
+            />
+          ) : null}
+        </div>
+      </AnalysisV2Section>
 
-      <section className="border-x border-b border-ink bg-ink p-5 text-paper sm:p-7">
-        <p className="text-sm leading-6">{summary.disclosure[locale]}</p>
-        <dl className="mt-5 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt className="text-[#9B9B9B]">{c.source}</dt>
-            <dd className="mt-1">
-              {sourceTypeLabel(locale, summary.provenance.source_type)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.legal}</dt>
-            <dd className="mt-1">
-              {legalStatusLabel(locale, summary.provenance.legal_status)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.retrievedAt}</dt>
-            <dd className="mt-1">
-              {formatDate(summary.provenance.retrieved_at, locale)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.hash}</dt>
-            <dd className="mt-1 break-all font-mono">
-              {summary.provenance.content_hash}
-            </dd>
-          </div>
-        </dl>
-      </section>
-    </Page>
+      <footer className="eac-analysis-provenance">
+        <div className="eac-gutter eac-analysis-provenance__inner">
+          <p>{summary.disclosure[locale]}</p>
+          <dl className="eac-analysis-provenance__grid">
+            <div>
+              <dt className="mark">{c.source}</dt>
+              <dd>{sourceTypeLabel(locale, summary.provenance.source_type)}</dd>
+            </div>
+            <div>
+              <dt className="mark">{c.legal}</dt>
+              <dd>
+                {legalStatusLabel(locale, summary.provenance.legal_status)}
+              </dd>
+            </div>
+            <div>
+              <dt className="mark">{c.retrievedAt}</dt>
+              <dd>{formatDate(summary.provenance.retrieved_at, locale)}</dd>
+            </div>
+            <div>
+              <dt className="mark">{c.hash}</dt>
+              <dd className="mono">{summary.provenance.content_hash}</dd>
+            </div>
+          </dl>
+        </div>
+      </footer>
+    </AnalysisV2Shell>
   );
 }
 
@@ -1405,30 +1416,43 @@ export function AnalysisUnavailable({
             : es
               ? "El análisis preliminar no está disponible"
               : "The preliminary analysis is unavailable";
+  const framing =
+    sourceStatus === "published"
+      ? es
+        ? "Release publicado · lectura certificada."
+        : "Published release · certified reading."
+      : es
+        ? "Release candidato · lectura preliminar."
+        : "Candidate release · preliminary reading.";
   return (
-    <Page
-      locale={locale}
-      eyebrow={es ? "Estado del análisis" : "Analysis status"}
-      title={title}
-      synthetic={status === "fixture"}
-      releaseStatus={sourceStatus}
-    >
-      <section className="border border-ink p-5 sm:p-7" role="alert">
-        <p className="max-w-3xl text-sm leading-6">
-          {es
-            ? "No se sustituyen recursos ausentes por datos de muestra ni por ceros. Revise la conexión o seleccione un release público compatible."
-            : "Missing resources are not replaced with sample data or zeros. Check the connection or select a compatible public release."}
-        </p>
-        {message ? (
-          <details className="group mt-5 border-t border-ink pt-2">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-2 font-mono text-xs font-bold uppercase after:text-lg after:content-['+'] group-open:after:content-['−'] [&::-webkit-details-marker]:hidden">
-              {es ? "Detalle técnico" : "Technical detail"}
-            </summary>
-            <p className="break-words text-sm text-muted">{message}</p>
-          </details>
-        ) : null}
+    <AnalysisV2Shell ariaLabel={title}>
+      <section className="eac-analysis-state-hero">
+        <div className="eac-gutter eac-analysis-state-hero__inner">
+          <p className="mark">
+            {es ? "Estado del análisis" : "Analysis status"}
+          </p>
+          <h1 className="head">{title}</h1>
+          <p className="mono eac-analysis-state-hero__framing">{framing}</p>
+        </div>
       </section>
-    </Page>
+      <section className="eac-analysis-state-body" role="alert">
+        <div className="eac-gutter eac-analysis-state-body__inner">
+          <p>
+            {es
+              ? "No se sustituyen recursos ausentes por datos de muestra ni por ceros. Revise la conexión o seleccione un release público compatible."
+              : "Missing resources are not replaced with sample data or zeros. Check the connection or select a compatible public release."}
+          </p>
+          {message ? (
+            <details className="eac-analysis-disclosure-panel">
+              <summary className="mono">
+                {es ? "Detalle técnico" : "Technical detail"}
+              </summary>
+              <p>{message}</p>
+            </details>
+          ) : null}
+        </div>
+      </section>
+    </AnalysisV2Shell>
   );
 }
 
@@ -1465,7 +1489,7 @@ function ComponentEvidence({
       ].includes(key),
   );
   return (
-    <article className="border-t border-ink py-6">
+    <article className="eac-analysis-component-evidence">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-mono text-[11px] font-bold text-muted uppercase">
@@ -1589,229 +1613,245 @@ export function AnalysisAnomalyDetail({
   );
   const notes = anomaly.explanation.notes?.[locale];
   return (
-    <Page
-      locale={locale}
-      eyebrow={c.eyebrow}
-      title={`${c.anomalyTitle} · ${anomaly.mesa_id}`}
-      synthetic={false}
-      releaseStatus={selected.status}
-    >
-      <nav aria-label={c.back}>
-        <Link
-          className="inline-flex min-h-11 items-center underline underline-offset-4"
-          href={`/${locale}/analitica?${query}`}
-        >
-          {c.back}
-        </Link>
-      </nav>
-      {anomaly.research_preview || anomaly.ineligible_reasons.length ? (
-        <ResearchGate locale={locale} reasons={anomaly.ineligible_reasons} />
-      ) : null}
-      <div className="mt-6">
-        <ReleaseRail
-          locale={locale}
-          selected={selected}
-          summary={{
-            data_version: anomaly.provenance.data_version,
-            methodology_version: anomaly.methodology_version,
-          }}
-          analysisRelease={anomaly.analysis_release}
-        />
-      </div>
-      <section className="mt-6 grid border border-ink lg:grid-cols-12">
-        <div className="p-5 sm:p-7 lg:col-span-8">
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge
-              tone={anomaly.research_preview ? "fixture" : "neutral"}
+    <AnalysisV2Shell ariaLabel={`${c.anomalyTitle} · ${anomaly.mesa_id}`}>
+      <section className="eac-analysis-detail-hero">
+        <div className="eac-gutter eac-analysis-detail-hero__inner">
+          <nav className="eac-analysis-detail-back" aria-label={c.back}>
+            <Link
+              className="mono ul inline-flex min-h-11 items-center"
+              href={`/${locale}/analitica?${query}`}
             >
-              {anomaly.research_preview
-                ? c.researchCandidate
-                : anomaly.is_anomaly
-                  ? c.detected
-                  : c.notDetected}
-            </StatusBadge>
-            {anomaly.anomaly_types.map((type) => (
-              <StatusBadge key={type}>
-                {anomalyTypeLabels[type][locale]}
-              </StatusBadge>
-            ))}
+              {c.back}
+            </Link>
+          </nav>
+          <p className="mark eac-analysis-detail-hero__eyebrow">{c.eyebrow}</p>
+          <h1 className="head eac-analysis-detail-hero__title">
+            {c.anomalyTitle} · {anomaly.mesa_id}
+          </h1>
+          {anomaly.research_preview || anomaly.ineligible_reasons.length ? (
+            <ResearchGate
+              locale={locale}
+              reasons={anomaly.ineligible_reasons}
+            />
+          ) : null}
+          <div className="mt-6">
+            <ReleaseRail
+              locale={locale}
+              selected={selected}
+              summary={{
+                data_version: anomaly.provenance.data_version,
+                methodology_version: anomaly.methodology_version,
+              }}
+              analysisRelease={anomaly.analysis_release}
+            />
           </div>
-          <h2 className="mt-5 font-display text-2xl font-bold uppercase sm:text-4xl">
-            {explanationLabels[anomaly.explanation.status]?.[locale] ??
-              anomaly.explanation.status}
-          </h2>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
-            {c.explanationMeaning}
+          <section className="eac-analysis-detail-summary mt-6 grid border border-ink lg:grid-cols-12">
+            <div className="p-5 sm:p-7 lg:col-span-8">
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge
+                  tone={anomaly.research_preview ? "fixture" : "neutral"}
+                >
+                  {anomaly.research_preview
+                    ? c.researchCandidate
+                    : anomaly.is_anomaly
+                      ? c.detected
+                      : c.notDetected}
+                </StatusBadge>
+                {anomaly.anomaly_types.map((type) => (
+                  <StatusBadge key={type}>
+                    {anomalyTypeLabels[type][locale]}
+                  </StatusBadge>
+                ))}
+              </div>
+              <h2 className="mt-5 font-display text-2xl font-bold uppercase sm:text-4xl">
+                {explanationLabels[anomaly.explanation.status]?.[locale] ??
+                  anomaly.explanation.status}
+              </h2>
+              <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
+                {c.explanationMeaning}
+              </p>
+              <EvidenceState
+                locale={locale}
+                tier={anomaly.evidence_tier}
+                status={anomaly.evaluability}
+                reasons={anomaly.ineligible_reasons}
+              />
+            </div>
+            <aside className="border-t border-ink bg-ink p-5 text-paper sm:p-7 lg:col-span-4 lg:border-t-0 lg:border-l">
+              <p className="font-display text-5xl font-bold tabular-nums">
+                {anomaly.audit_priority_score}
+                <span className="text-base">/100</span>
+              </p>
+              <p className="mt-2 text-xs text-[#9B9B9B]">{c.priority}</p>
+              <p className="mt-5 text-xs leading-5 text-[#9B9B9B]">
+                {reviewDisclosure[locale]}
+              </p>
+            </aside>
+          </section>
+          <p className="border-x border-b border-ink p-5 text-sm leading-6 sm:p-6">
+            {anomaly.disclosure[locale]}
           </p>
-          <EvidenceState
-            locale={locale}
-            tier={anomaly.evidence_tier}
-            status={anomaly.evaluability}
-            reasons={anomaly.ineligible_reasons}
-          />
         </div>
-        <aside className="border-t border-ink bg-ink p-5 text-paper sm:p-7 lg:col-span-4 lg:border-t-0 lg:border-l">
-          <p className="font-display text-5xl font-bold tabular-nums">
-            {anomaly.audit_priority_score}
-            <span className="text-base">/100</span>
-          </p>
-          <p className="mt-2 text-xs text-[#9B9B9B]">{c.priority}</p>
-          <p className="mt-5 text-xs leading-5 text-[#9B9B9B]">
-            {reviewDisclosure[locale]}
-          </p>
-        </aside>
       </section>
-      <p className="border-x border-b border-ink p-5 text-sm leading-6 sm:p-6">
-        {anomaly.disclosure[locale]}
-      </p>
 
       <section
-        className="border-x border-b border-ink p-5 sm:p-7"
+        className="eac-analysis-detail-section"
         aria-labelledby="explanation-review"
       >
-        <h2
-          id="explanation-review"
-          className="font-display text-2xl font-bold uppercase"
-        >
-          {c.explanationReview}
-        </h2>
-        <dl className="mt-6 grid gap-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="font-bold">{c.explanation}</dt>
-            <dd className="mt-1 text-muted">
-              {explanationLabels[anomaly.explanation.status]?.[locale] ??
-                anomaly.explanation.status}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">{c.effect}</dt>
-            <dd className="mt-1 text-muted">
-              {signalDisplay(anomaly.explanation.quantitative_effect, locale)}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">{c.pValue}</dt>
-            <dd className="mt-1 text-muted">
-              {signalDisplay(anomaly.explanation.quantitative_p_value, locale)}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">{c.reviewedAt}</dt>
-            <dd className="mt-1 text-muted">
-              {anomaly.explanation.reviewed_at
-                ? formatDate(anomaly.explanation.reviewed_at, locale)
-                : c.unavailable}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">{c.preregistration}</dt>
-            <dd className="mt-1 break-all font-mono text-xs text-muted">
-              {anomaly.explanation.preregistration_hash ?? c.unavailable}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-bold">{c.availableData}</dt>
-            <dd className="mt-1 break-all font-mono text-xs text-muted">
-              {anomaly.explanation.available_data_hash ?? c.unavailable}
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-5 border-l-4 border-neon pl-4 text-sm leading-6">
-          {notes || c.noNotes}
-        </p>
+        <div className="eac-gutter eac-analysis-detail-section__inner">
+          <h2
+            id="explanation-review"
+            className="font-display text-2xl font-bold uppercase"
+          >
+            {c.explanationReview}
+          </h2>
+          <dl className="mt-6 grid gap-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt className="font-bold">{c.explanation}</dt>
+              <dd className="mt-1 text-muted">
+                {explanationLabels[anomaly.explanation.status]?.[locale] ??
+                  anomaly.explanation.status}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">{c.effect}</dt>
+              <dd className="mt-1 text-muted">
+                {signalDisplay(anomaly.explanation.quantitative_effect, locale)}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">{c.pValue}</dt>
+              <dd className="mt-1 text-muted">
+                {signalDisplay(
+                  anomaly.explanation.quantitative_p_value,
+                  locale,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">{c.reviewedAt}</dt>
+              <dd className="mt-1 text-muted">
+                {anomaly.explanation.reviewed_at
+                  ? formatDate(anomaly.explanation.reviewed_at, locale)
+                  : c.unavailable}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">{c.preregistration}</dt>
+              <dd className="mt-1 break-all font-mono text-xs text-muted">
+                {anomaly.explanation.preregistration_hash ?? c.unavailable}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-bold">{c.availableData}</dt>
+              <dd className="mt-1 break-all font-mono text-xs text-muted">
+                {anomaly.explanation.available_data_hash ?? c.unavailable}
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-5 border-l-4 border-neon pl-4 text-sm leading-6">
+            {notes || c.noNotes}
+          </p>
+        </div>
       </section>
 
       <section
-        className="border-x border-b border-ink p-5 sm:p-7"
+        className="eac-analysis-detail-section eac-analysis-detail-section--ink"
         aria-labelledby="ballot-edits"
       >
-        <h2
-          id="ballot-edits"
-          className="font-display text-2xl font-bold uppercase"
-        >
-          {c.ballotEdits}
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {c.ballotEditsMeaning}
-        </p>
-        <p className="mt-5 font-display text-4xl font-bold tabular-nums">
-          {signalDisplay(anomaly.minimum_ballot_edits, locale)}
-        </p>
-        <p className="mt-2 font-mono text-xs uppercase text-muted">
-          {signalStatusLabel(anomaly.minimum_ballot_edits_status, locale)}
-        </p>
-        {anomaly.minimum_ballot_edits_reason ? (
-          <p className="mt-4 text-sm text-muted">
-            {readableCode(anomaly.minimum_ballot_edits_reason, locale)}
+        <div className="eac-gutter eac-analysis-detail-section__inner">
+          <h2
+            id="ballot-edits"
+            className="font-display text-2xl font-bold uppercase"
+          >
+            {c.ballotEdits}
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            {c.ballotEditsMeaning}
           </p>
-        ) : null}
+          <p className="mt-5 font-display text-4xl font-bold tabular-nums">
+            {signalDisplay(anomaly.minimum_ballot_edits, locale)}
+          </p>
+          <p className="mt-2 font-mono text-xs uppercase text-muted">
+            {signalStatusLabel(anomaly.minimum_ballot_edits_status, locale)}
+          </p>
+          {anomaly.minimum_ballot_edits_reason ? (
+            <p className="mt-4 text-sm text-muted">
+              {readableCode(anomaly.minimum_ballot_edits_reason, locale)}
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <section
-        className="border-x border-b border-ink p-5 sm:p-7"
+        className="eac-analysis-detail-section"
         aria-labelledby="anomaly-components"
       >
-        <h2
-          id="anomaly-components"
-          className="font-display text-2xl font-bold uppercase"
-        >
-          {c.components}
-        </h2>
-        <div className="mt-5">
-          {anomaly.components.map((component, index) => (
-            <ComponentEvidence
-              locale={locale}
-              component={component}
-              index={index}
-              key={`${component.component_type}-${index}`}
-            />
-          ))}
+        <div className="eac-gutter eac-analysis-detail-section__inner">
+          <h2
+            id="anomaly-components"
+            className="font-display text-2xl font-bold uppercase"
+          >
+            {c.components}
+          </h2>
+          <div className="mt-5">
+            {anomaly.components.map((component, index) => (
+              <ComponentEvidence
+                locale={locale}
+                component={component}
+                index={index}
+                key={`${component.component_type}-${index}`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="border-x border-b border-ink bg-ink p-5 text-paper sm:p-7">
-        <p className="text-sm leading-6">{anomaly.disclosure[locale]}</p>
-        <dl className="mt-5 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <dt className="text-[#9B9B9B]">{c.source}</dt>
-            <dd className="mt-1">
-              {sourceTypeLabel(locale, anomaly.provenance.source_type)}
-            </dd>
+      <section className="eac-analysis-detail-footer">
+        <div className="eac-gutter eac-analysis-detail-footer__inner">
+          <p className="text-sm leading-6">{anomaly.disclosure[locale]}</p>
+          <dl className="mt-5 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-[#9B9B9B]">{c.source}</dt>
+              <dd className="mt-1">
+                {sourceTypeLabel(locale, anomaly.provenance.source_type)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[#9B9B9B]">{c.legal}</dt>
+              <dd className="mt-1">
+                {legalStatusLabel(locale, anomaly.provenance.legal_status)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[#9B9B9B]">{c.retrievedAt}</dt>
+              <dd className="mt-1">
+                {formatDate(anomaly.provenance.retrieved_at, locale)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[#9B9B9B]">{c.hash}</dt>
+              <dd className="mt-1 break-all font-mono">
+                {anomaly.provenance.content_hash}
+              </dd>
+            </div>
+          </dl>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <Link
+              className="inline-flex min-h-11 items-center justify-center border border-neon bg-neon px-4 font-mono text-xs font-bold uppercase text-ink"
+              href={`/${locale}/resultados/mesa/${encodeURIComponent(anomaly.mesa_id)}?${query}`}
+            >
+              {c.result}
+            </Link>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center border border-paper px-4 font-mono text-xs font-bold uppercase"
+              href={`/${locale}/analitica?${query}`}
+            >
+              {c.back}
+            </Link>
           </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.legal}</dt>
-            <dd className="mt-1">
-              {legalStatusLabel(locale, anomaly.provenance.legal_status)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.retrievedAt}</dt>
-            <dd className="mt-1">
-              {formatDate(anomaly.provenance.retrieved_at, locale)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-[#9B9B9B]">{c.hash}</dt>
-            <dd className="mt-1 break-all font-mono">
-              {anomaly.provenance.content_hash}
-            </dd>
-          </div>
-        </dl>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-          <Link
-            className="inline-flex min-h-11 items-center justify-center border border-neon bg-neon px-4 font-mono text-xs font-bold uppercase text-ink"
-            href={`/${locale}/resultados/mesa/${encodeURIComponent(anomaly.mesa_id)}?${query}`}
-          >
-            {c.result}
-          </Link>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center border border-paper px-4 font-mono text-xs font-bold uppercase"
-            href={`/${locale}/analitica?${query}`}
-          >
-            {c.back}
-          </Link>
         </div>
       </section>
-    </Page>
+    </AnalysisV2Shell>
   );
 }

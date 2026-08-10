@@ -10,6 +10,11 @@ test.describe("normalized public release explorer", () => {
     page,
   }) => {
     await page.goto(`/es/analitica?${scope}`);
+    await expect(page.locator("#main-content")).toHaveAttribute(
+      "data-design-version",
+      "v2",
+    );
+    await expect(page.locator("[data-analysis-section]")).toHaveCount(8);
     await expect(
       page.getByRole("heading", {
         name: /qué encontró el análisis.*qué no puede afirmar/i,
@@ -91,6 +96,10 @@ test.describe("normalized public release explorer", () => {
     await expect(
       page.getByRole("heading", { name: /análisis de mesa.*mesa-001/i }),
     ).toBeVisible();
+    await expect(page.locator("#main-content")).toHaveAttribute(
+      "data-design-version",
+      "v2",
+    );
     await expect(
       page.getByRole("heading", {
         name: /no se pudo evaluar una explicación/i,
@@ -105,12 +114,17 @@ test.describe("normalized public release explorer", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /ver resultado de la mesa/i }),
-    ).toHaveAttribute(
-      "href",
-      /release=candidate-2026-r2-dacb28aa766eec87/,
-    );
+    ).toHaveAttribute("href", /release=candidate-2026-r2-dacb28aa766eec87/);
+    await page.screenshot({
+      path: "output/playwright/analysis-detail-desktop.png",
+      fullPage: true,
+    });
 
     await page.goto(`/es/analitica/anomalias/no-existe?${scope}`);
+    await expect(page.locator("#main-content")).toHaveAttribute(
+      "data-design-version",
+      "v2",
+    );
     await expect(
       page.getByRole("heading", { name: /análisis no encontrado/i }),
     ).toBeVisible();
@@ -203,9 +217,9 @@ test.describe("normalized public release explorer", () => {
     ).toBeVisible();
     const releases = page.getByLabel("Release");
     await expect(releases.locator("option")).toHaveCount(4);
-    await expect(
-      releases.locator("option").first(),
-    ).toContainText("candidate-2026-r2-dacb28aa766eec87");
+    await expect(releases.locator("option").first()).toContainText(
+      "candidate-2026-r2-dacb28aa766eec87",
+    );
     await expect(
       page.getByRole("table", { name: /resultados preliminares/i }),
     ).toBeVisible();

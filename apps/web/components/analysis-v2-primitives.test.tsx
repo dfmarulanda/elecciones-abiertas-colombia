@@ -25,10 +25,20 @@ describe("analytics v2 primitives", () => {
       "data-design-version",
       "v2",
     );
-    expect(screen.getByRole("main")).toHaveClass(
-      "eac-design",
-      "eac-analysis",
+    expect(screen.getByRole("main")).toHaveClass("eac-design", "eac-analysis");
+  });
+
+  it("allows suspense fallbacks to use a unique landmark id", () => {
+    render(
+      <AnalysisV2Shell ariaLabel="Loading analytics" mainId="analysis-loading">
+        <p>Loading</p>
+      </AnalysisV2Shell>,
     );
+
+    expect(
+      screen.getByRole("main", { name: "Loading analytics" }),
+    ).toHaveAttribute("id", "analysis-loading");
+    expect(document.querySelector("#main-content")).toBeNull();
   });
 
   it("renders a numbered section with an explicit tone", () => {

@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 
+import { AnalysisV2Shell } from "@/components/analysis-v2-primitives";
 import enMessages from "@/messages/en.json";
 import esMessages from "@/messages/es.json";
 
@@ -10,25 +11,27 @@ export default function AnalysisError({ reset }: { reset: () => void }) {
   const text =
     params.locale === "en" ? enMessages.analysis : esMessages.analysis;
   return (
-    <main
-      id="main-content"
-      className="mx-auto max-w-[1440px] px-[clamp(1rem,5.55vw,5rem)] py-12"
-    >
-      <section className="border border-ink p-6" role="alert">
-        <h1 className="font-display text-3xl font-bold uppercase">
-          {text.errorTitle}
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-          {text.errorBody}
-        </p>
-        <button
-          className="mt-6 min-h-11 border border-ink bg-ink px-4 font-mono text-xs font-bold uppercase text-paper hover:bg-neon hover:text-ink"
-          onClick={reset}
-          type="button"
-        >
-          {text.retry}
-        </button>
+    <AnalysisV2Shell ariaLabel={text.errorTitle}>
+      <section className="eac-analysis-state-hero">
+        <div className="eac-gutter eac-analysis-state-hero__inner">
+          <p className="mark">
+            {params.locale === "en" ? "Analysis status" : "Estado del análisis"}
+          </p>
+          <h1 className="head">{text.errorTitle}</h1>
+        </div>
       </section>
-    </main>
+      <section className="eac-analysis-state-body" role="alert">
+        <div className="eac-gutter eac-analysis-state-body__inner">
+          <p>{text.errorBody}</p>
+          <button
+            className="mono eac-analysis-action eac-analysis-action--primary"
+            onClick={reset}
+            type="button"
+          >
+            {text.retry}
+          </button>
+        </div>
+      </section>
+    </AnalysisV2Shell>
   );
 }

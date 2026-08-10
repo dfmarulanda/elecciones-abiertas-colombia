@@ -161,6 +161,17 @@ describe("analysis evidence portal", () => {
     const { container } = render(
       <AnalysisWorkspace locale="en" analysis={state} />,
     );
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-design-version",
+      "v2",
+    );
+    expect(screen.getByRole("main")).toHaveClass("eac-design", "eac-analysis");
+    expect(
+      container.querySelector('[data-analysis-section="conclusion"]'),
+    ).toBeTruthy();
+    expect(
+      container.querySelector('[data-analysis-section="expert"]'),
+    ).toBeTruthy();
     const text = container.textContent ?? "";
     const ordered = [
       "The short answer",
@@ -222,6 +233,11 @@ describe("analysis evidence portal", () => {
         status="unavailable"
         selected={state.selected}
       />,
+    );
+
+    expect(screen.getByRole("main")).toHaveAttribute(
+      "data-design-version",
+      "v2",
     );
 
     expect(
